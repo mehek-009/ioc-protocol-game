@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Host Forensics - Insider Threat Investigation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #0f0a0f 0%, #2e1a2e 50%, #3e263e 100%);
+            color: #ffaa00;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 170, 136, 0.1);
+            border: 2px solid #ffaa88;
+            border-radius: 15px;
+        }
+
+        .header-left h1 {
+            font-size: 2.5rem;
+            color: #ff9966;
+            text-shadow: 0 0 20px #ff9966;
+            margin-bottom: 10px;
+        }
+
+        .header-left p {
+            color: #ffaa00;
+            font-size: 1.1rem;
+        }
+
+        .game-stats {
+            display: flex;
+            gap: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            min-width: 100px;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #ff9966;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #ffaa00;
+            font-size: 0.9rem;
+        }
+
+        .timer {
+            color: #ff6666;
+        }
+
+        .analysis-panel {
+            background: rgba(200, 120, 100, 0.2);
+            border: 2px solid #dd7744;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #dd7744;
+        }
+
+        .panel-icon {
+            font-size: 2.5rem;
+            margin-right: 20px;
+            color: #ff9966;
+        }
+
+        .panel-title {
+            font-size: 1.8rem;
+            color: #ffaa00;
+        }
+
+        .host-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #ffaa00;
+            text-align: center;
+        }
+
+        .metric-card.alert {
+            border-left-color: #ff6666;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ff9966;
+            margin-bottom: 10px;
+        }
+
+        .metric-value.danger {
+            color: #ff6666;
+        }
+
+        .host-log {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            padding: 20px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #dd7744;
+        }
+
+        .log-entry {
+            background: rgba(0, 0, 0, 0.3);
+            margin: 8px 0;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 4px solid #dd7744;
+            font-family: 'Courier New', monospace;
+        }
+
+        .log-entry:hover {
+            background: rgba(255, 170, 136, 0.1);
+            border-left-color: #ffaa88;
+            transform: translateX(5px);
+        }
+
+        .log-entry.selected {
+            background: rgba(255, 153, 102, 0.2);
+            border-left-color: #ff9966;
+            box-shadow: 0 0 15px rgba(255, 153, 102, 0.3);
+        }
+
+        .log-entry.wrong {
+            background: rgba(255, 102, 102, 0.2);
+            border-left-color: #ff6666;
+            box-shadow: 0 0 15px rgba(255, 102, 102, 0.3);
+        }
+
+        .log-timestamp {
+            color: #888;
+            margin-right: 15px;
+            font-weight: bold;
+        }
+
+        .log-process {
+            color: #ff9966;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+
+        .log-action {
+            color: #ffaa00;
+            margin-right: 15px;
+        }
+
+        .log-target {
+            color: #ffaa88;
+        }
+
+        .log-details {
+            color: #ccc;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .staging-indicator {
+            background: rgba(255, 102, 102, 0.2);
+            color: #ff6666;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
+        .compression-tool {
+            background: rgba(255, 170, 136, 0.2);
+            color: #ffaa88;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
+        .controls {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+        }
+
+        .btn {
+            background: rgba(255, 170, 136, 0.2);
+            border: 2px solid #ffaa88;
+            color: #ffaa88;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            margin: 5px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            background: rgba(255, 170, 136, 0.3);
+            box-shadow: 0 0 15px rgba(255, 170, 136, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .feedback {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            max-width: 400px;
+        }
+
+        .feedback.show {
+            transform: translateX(0);
+        }
+
+        .feedback.success {
+            background: #ff9966;
+            color: white;
+            box-shadow: 0 0 20px rgba(255, 153, 102, 0.5);
+        }
+
+        .feedback.error {
+            background: #ff6666;
+            box-shadow: 0 0 20px rgba(255, 102, 102, 0.5);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6666, #ff9966);
+            transition: width 0.5s ease;
+        }
+
+        .alert-banner {
+            background: rgba(255, 102, 102, 0.2);
+            border: 1px solid #ff6666;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #ff6666;
+            font-weight: bold;
+        }
+
+        .staging-locations {
+            background: rgba(255, 170, 136, 0.1);
+            border: 1px solid #ffaa88;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .staging-location {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+
+        .location-path {
+            color: #ffaa00;
+            font-weight: bold;
+        }
+
+        .location-size {
+            color: #ff9966;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.02); }
+        }
+
+        .host-log::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .host-log::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .host-log::-webkit-scrollbar-thumb {
+            background: #ffaa88;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <a href="index.html" class="btn">← Back to Investigation Hub</a>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <h1>💻 HOST FORENSICS</h1>
+                <p>Analyzing endpoint activities, process execution, and data staging operations</p>
+            </div>
+            <div class="game-stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="score">0</div>
+                    <div class="stat-label">Score</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="iocsFound">0/2</div>
+                    <div class="stat-label">IoCs Found</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value timer" id="timer">12:00</div>
+                    <div class="stat-label">Time Left</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="host-metrics">
+            <div class="metric-card">
+                <div class="metric-value">15,447</div>
+                <div>Processes Monitored</div>
+            </div>
+            <div class="metric-card alert">
+                <div class="metric-value danger">4</div>
+                <div>Staging Areas</div>
+            </div>
+            <div class="metric-card alert">
+                <div class="metric-value danger">892</div>
+                <div>Archive Operations</div>
+            </div>
+            <div class="metric-card alert">
+                <div class="metric-value danger">23.7 GB</div>
+                <div>Data Compressed</div>
+            </div>
+        </div>
+
+        <div class="alert-banner">
+            🚨 DATA STAGING DETECTED: Multiple compression and archiving operations identified
+        </div>
+
+        <div class="staging-locations">
+            <h4 style="color: #ff9966; margin-bottom: 10px;">📁 Identified Staging Locations</h4>
+            <div class="staging-location">
+                <span class="location-path">C:\Temp\collection\</span>
+                <span class="location-size">8.2 GB</span>
+            </div>
+            <div class="staging-location">
+                <span class="location-path">D:\backup\intel_archive\</span>
+                <span class="location-size">6.5 GB</span>
+            </div>
+            <div class="staging-location">
+                <span class="location-path">C:\Users\esnowden\Documents\work\</span>
+                <span class="location-size">4.8 GB</span>
+            </div>
+            <div class="staging-location">
+                <span class="location-path">\\staging-server\exfil\</span>
+                <span class="location-size">4.2 GB</span>
+            </div>
+        </div>
+
+        <div class="analysis-panel">
+            <div class="panel-header">
+                <div class="panel-icon">🔍</div>
+                <div class="panel-title">Endpoint Activity Monitor</div>
+            </div>
+            
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+
+            <div class="host-log" id="hostLog">
+                <div class="log-header">
+                    <h3>Host Forensic Events - March to May 2013</h3>
+                    <span>Tracking: Data Staging & Compression Activities</span>
+                </div>
+                
+                <!-- Host forensic entries will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <script>
+        let gameState = {
+            score: 0,
+            iocsFound: 0,
+            totalIocs: 2,
+            timeLeft: 720, // 12 minutes
+            gameActive: true
+        };
+
+        const hostData = [
+            // IoCs (suspicious host activities)
+            { 
+                id: 'host1', 
+                timestamp: '2013-05-09 03:22:47',
+                process: '7z.exe',
+                action: 'MASS_COMPRESSION',
+                target: 'C:\\Temp\\collection\\intelligence_docs.7z',
+                details: 'Compressed 15,247 classified documents into encrypted archive',
+                size: '8.2 GB → 2.1 GB',
+                command_line: '7z.exe a -p[REDACTED] -mhe=on intelligence_docs.7z C:\\staging\\classified\\*',
+                isIoc: true,
+                explanation: 'Mass compression of classified documents with password protection and header encryption - clear preparation for exfiltration',
+                type: 'data_preparation'
+            },
+            { 
+                id: 'host2', 
+                timestamp: '2013-05-13 02:15:33',
+                process: 'robocopy.exe',
+                action: 'AUTOMATED_STAGING',
+                target: '\\\\staging-server\\exfil\\final_collection\\',
+                details: 'Automated copying of compressed archives to staging server',
+                size: '6.5 GB transferred',
+                command_line: 'robocopy.exe C:\\Temp\\collection\\ \\\\staging-server\\exfil\\ *.7z /MIR /R:0',
+                isIoc: true,
+                explanation: 'Automated transfer of compressed intelligence data to external staging server - final step before exfiltration',
+                type: 'exfiltration_staging'
+            },
+            
+            // Red herrings (legitimate host activities)
+            { 
+                id: 'host3', 
+                timestamp: '2013-04-15 09:30:22',
+                process: 'backup.exe',
+                action: 'SCHEDULED_BACKUP',
+                target: 'D:\\backups\\system_backup_20130415.zip',
+                details: 'Routine system backup operation',
+                size: '2.3 GB',
+                command_line: 'backup.exe /system /destination:D:\\backups\\ /compress',
+                isIoc: false,
+                type: 'routine_backup'
+            },
+            { 
+                id: 'host4', 
+                timestamp: '2013-04-28 14:45:12',
+                process: 'winrar.exe',
+                action: 'USER_ARCHIVE',
+                target: 'C:\\Users\\mharris\\Documents\\project_files.rar',
+                details: 'User creating personal project archive',
+                size: '145 MB',
+                command_line: 'winrar.exe a project_files.rar C:\\Users\\mharris\\work\\project\\*',
+                isIoc: false,
+                type: 'user_activity'
+            },
+            { 
+                id: 'host5', 
+                timestamp: '2013-05-03 10:15:45',
+                process: 'powershell.exe',
+                action: 'SCRIPT_EXECUTION',
+                target: 'maintenance_cleanup.ps1',
+                details: 'Automated cleanup script execution',
+                size: 'N/A',
+                command_line: 'powershell.exe -ExecutionPolicy Bypass -File maintenance_cleanup.ps1',
+                isIoc: false,
+                type: 'maintenance'
+            },
+            { 
+                id: 'host6', 
+                timestamp: '2013-04-20 16:22:30',
+                process: 'xcopy.exe',
+                action: 'FILE_COPY',
+                target: 'C:\\Admin\\tools\\network_diagnostics\\',
+                details: 'Administrative file operations',
+                size: '47 MB',
+                command_line: 'xcopy.exe \\\\shared\\admin_tools\\* C:\\Admin\\tools\\ /S /E',
+                isIoc: false,
+                type: 'admin_work'
+            },
+            { 
+                id: 'host7', 
+                timestamp: '2013-05-01 11:30:15',
+                process: 'zip.exe',
+                action: 'DOCUMENT_ARCHIVE',
+                target: 'C:\\Users\\asmith\\training_materials.zip',
+                details: 'Training materials compression',
+                size: '234 MB',
+                command_line: 'zip.exe training_materials.zip C:\\Training\\materials\\*',
+                isIoc: false,
+                type: 'training_prep'
+            },
+            { 
+                id: 'host8', 
+                timestamp: '2013-04-25 13:45:20',
+                process: 'schtasks.exe',
+                action: 'TASK_CREATION',
+                target: 'Daily_System_Health_Check',
+                details: 'Scheduled task for system monitoring',
+                size: 'N/A',
+                command_line: 'schtasks.exe /create /tn "Daily_System_Health_Check" /tr "health_check.exe"',
+                isIoc: false,
+                type: 'system_admin'
+            },
+            { 
+                id: 'host9', 
+                timestamp: '2013-05-08 08:20:45',
+                process: 'diskpart.exe',
+                action: 'DISK_MANAGEMENT',
+                target: 'External Storage Configuration',
+                details: 'External drive preparation',
+                size: 'N/A',
+                command_line: 'diskpart.exe /s disk_config_script.txt',
+                isIoc: false,
+                type: 'hardware_config'
+            },
+            { 
+                id: 'host10', 
+                timestamp: '2013-04-18 15:30:25',
+                process: 'notepad.exe',
+                action: 'TEXT_EDITING',
+                target: 'C:\\Users\\esnowden\\Documents\\notes.txt',
+                details: 'Text file editing',
+                size: '12 KB',
+                command_line: 'notepad.exe C:\\Users\\esnowden\\Documents\\notes.txt',
+                isIoc: false,
+                type: 'document_work'
+            }
+        ];
+
+        function initGame() {
+            loadHostEntries();
+            startTimer();
+            attachEventListeners();
+            updateProgressBar();
+        }
+
+        function loadHostEntries() {
+            const log = document.getElementById('hostLog');
+            const header = log.querySelector('.log-header');
+            
+            // Clear existing entries except header
+            log.innerHTML = '';
+            log.appendChild(header);
+            
+            // Sort by timestamp for realistic display
+            const sortedEntries = [...hostData].sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+            
+            sortedEntries.forEach(entry => {
+                const logEntry = document.createElement('div');
+                logEntry.className = `log-entry ${entry.type}`;
+                logEntry.dataset.id = entry.id;
+                logEntry.dataset.isIoc = entry.isIoc;
+                
+                const stagingClass = entry.target.includes('staging') || entry.target.includes('exfil') ? 'staging-indicator' : '';
+                const compressionClass = entry.process.includes('7z') || entry.process.includes('zip') || entry.process.includes('rar') ? 'compression-tool' : '';
+                
+                logEntry.innerHTML = `
+                    <div>
+                        <span class="log-timestamp">${entry.timestamp}</span>
+                        <span class="log-process ${compressionClass}">${entry.process}</span>
+                        <span class="log-action">${entry.action}</span>
+                        <span class="log-target ${stagingClass}">${entry.target}</span>
+                    </div>
+                    <div class="log-details">
+                        ${entry.details} | Size: ${entry.size}
+                        <br><small>Command: ${entry.command_line}</small>
+                    </div>
+                `;
+                
+                log.appendChild(logEntry);
+            });
+        }
+
+        function startTimer() {
+            const timer = setInterval(() => {
+                if (!gameState.gameActive) {
+                    clearInterval(timer);
+                    return;
+                }
+                
+                gameState.timeLeft--;
+                updateTimerDisplay();
+                
+                if (gameState.timeLeft <= 0) {
+                    endGame();
+                    clearInterval(timer);
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(gameState.timeLeft / 60);
+            const seconds = gameState.timeLeft % 60;
+            document.getElementById('timer').textContent = 
+                `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function updateProgressBar() {
+            const progress = (gameState.iocsFound / gameState.totalIocs) * 100;
+            document.getElementById('progressFill').style.width = `${progress}%`;
+        }
+
+        function attachEventListeners() {
+            document.addEventListener('click', (e) => {
+                const logEntry = e.target.closest('.log-entry');
+                if (!logEntry || !gameState.gameActive) return;
+
+                const isIoc = logEntry.dataset.isIoc === 'true';
+                const isAlreadySelected = logEntry.classList.contains('selected') || logEntry.classList.contains('wrong');
+                
+                if (isAlreadySelected) return;
+
+                const entryData = hostData.find(entry => entry.id === logEntry.dataset.id);
+
+                if (isIoc) {
+                    logEntry.classList.add('selected');
+                    gameState.iocsFound++;
+                    gameState.score += 100;
+                    showFeedback(`Correct! ${entryData.explanation}`, 'success');
+                } else {
+                    logEntry.classList.add('wrong');
+                    gameState.score = Math.max(0, gameState.score - 50);
+                    showFeedback('Wrong! This appears to be legitimate system administration or user activity.', 'error');
+                }
+
+                updateDisplay();
+                
+                if (gameState.iocsFound >= gameState.totalIocs) {
+                    setTimeout(() => {
+                        showCompletion();
+                    }, 1500);
+                }
+            });
+        }
+
+        function showFeedback(message, type) {
+            const feedback = document.getElementById('feedback');
+            feedback.textContent = message;
+            feedback.className = `feedback ${type}`;
+            feedback.classList.add('show');
+            
+            setTimeout(() => {
+                feedback.classList.remove('show');
+            }, 4000);
+        }
+
+        function updateDisplay() {
+            document.getElementById('score').textContent = gameState.score;
+            document.getElementById('iocsFound').textContent = `${gameState.iocsFound}/${gameState.totalIocs}`;
+            updateProgressBar();
+        }
+
+        function showCompletion() {
+            gameState.gameActive = false;
+            
+            const completionMessage = document.createElement('div');
+            completionMessage.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: linear-gradient(135deg, #2e1a2e, #3e263e);
+                padding: 40px;
+                border-radius: 15px;
+                border: 2px solid #ff9966;
+                text-align: center;
+                z-index: 2000;
+                box-shadow: 0 0 50px rgba(255, 153, 102, 0.3);
+            `;
+            
+            completionMessage.innerHTML = `
+                <h2 style="color: #ff9966; margin-bottom: 20px; font-size: 2rem;">💻 Host Forensics Complete!</h2>
+                <p style="color: #ffaa00; margin-bottom: 20px; font-size: 1.2rem;">
+                    You've identified all host forensic IoCs in the investigation!
+                </p>
+                <div style="color: #ff9966; font-size: 1.1rem; margin-bottom: 30px;">
+                    <p>✅ Data Compression Operations Detected</p>
+                    <p>✅ Exfiltration Staging Activities Found</p>
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <p style="color: #ffaa88;">Score: ${gameState.score} points</p>
+                    <p style="color: #ffaa88;">Data Staged: 23.7 GB across 4 locations</p>
+                </div>
+                <a href="index.html" class="btn" style="margin: 10px;">Continue Investigation</a>
+                <button onclick="location.reload()" class="btn" style="margin: 10px;">Analyze Again</button>
+            `;
+            
+            document.body.appendChild(completionMessage);
+        }
+
+        function endGame() {
+            gameState.gameActive = false;
+            showFeedback(`Time's up! You found ${gameState.iocsFound}/${gameState.totalIocs} IoCs.`, 'error');
+            
+            setTimeout(() => {
+                if (confirm('Time expired! Would you like to try again?')) {
+                    location.reload();
+                } else {
+                    window.location.href = 'index.html';
+                }
+            }, 2000);
+        }
+
+        // Initialize the game when page loads
+        window.addEventListener('load', initGame);
+    </script>
+</body>
+</html>
