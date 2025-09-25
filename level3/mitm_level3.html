@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Level 3: Advanced APT - MITM Campaign Investigation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #0a1a0a 0%, #1a2e1a 50%, #162e16 100%);
+            color: #00ff00;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+            padding: 40px 0;
+            background: linear-gradient(135deg, rgba(0, 255, 0, 0.1), rgba(0, 255, 0, 0.05));
+            border: 2px solid #00ff00;
+            border-radius: 15px;
+        }
+
+        .header h1 {
+            font-size: 3.5rem;
+            color: #00ff00;
+            text-shadow: 0 0 30px #00ff00;
+            margin-bottom: 20px;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        .header h2 {
+            font-size: 1.8rem;
+            color: #66ff66;
+            margin-bottom: 15px;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: #99ff99;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 20px #00ff00; }
+            to { text-shadow: 0 0 40px #00ff00, 0 0 60px #00ff00; }
+        }
+
+        .game-status {
+            background: rgba(0, 255, 0, 0.1);
+            border: 2px solid #00ff00;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 50px;
+            text-align: center;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .status-item {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #ff6600;
+        }
+
+        .status-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ff6600;
+            margin-bottom: 5px;
+        }
+
+        .status-label {
+            color: #00ff00;
+            font-size: 0.9rem;
+        }
+
+        .rooms-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            margin-bottom: 50px;
+        }
+
+        .room-card {
+            background: linear-gradient(135deg, rgba(0, 100, 0, 0.3), rgba(0, 150, 0, 0.2));
+            border: 2px solid #00cc00;
+            border-radius: 20px;
+            padding: 30px;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .room-card:hover {
+            border-color: #00ff00;
+            box-shadow: 0 10px 40px rgba(0, 255, 0, 0.3);
+            transform: translateY(-5px) scale(1.02);
+        }
+
+        .room-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(0, 255, 0, 0.1), transparent);
+            transform: rotate(-45deg);
+            transition: all 0.5s ease;
+            opacity: 0;
+        }
+
+        .room-card:hover::before {
+            animation: sweep 1s ease-in-out;
+        }
+
+        @keyframes sweep {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(-45deg); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateX(100%) translateY(100%) rotate(-45deg); opacity: 0; }
+        }
+
+        .room-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .room-icon {
+            font-size: 3rem;
+            margin-right: 20px;
+            filter: drop-shadow(0 0 10px currentColor);
+        }
+
+        .room-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #00ff00;
+        }
+
+        .room-description {
+            color: #99ff99;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .room-stats {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #00ff00;
+        }
+
+        .room-stats div {
+            margin: 5px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .threat-level {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .threat-critical {
+            background: #ff3300;
+            color: white;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .threat-high {
+            background: #ff6600;
+            color: white;
+        }
+
+        .threat-medium {
+            background: #ffaa00;
+            color: black;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.05); }
+        }
+
+        .footer {
+            text-align: center;
+            padding: 30px;
+            border-top: 2px solid #00cc00;
+            margin-top: 50px;
+        }
+
+        .footer h3 {
+            color: #ff6600;
+            margin-bottom: 15px;
+        }
+
+        .instructions {
+            background: rgba(255, 102, 0, 0.1);
+            border: 2px solid #ff6600;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 40px;
+        }
+
+        .instructions h3 {
+            color: #ff6600;
+            margin-bottom: 15px;
+            font-size: 1.4rem;
+        }
+
+        .instructions ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .instructions li {
+            margin: 10px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .instructions li::before {
+            content: "▶";
+            position: absolute;
+            left: 0;
+            color: #00ff00;
+        }
+
+        .alert-banner {
+            background: linear-gradient(90deg, #ff3300, #ff6600);
+            color: white;
+            text-align: center;
+            padding: 15px;
+            margin-bottom: 30px;
+            border-radius: 10px;
+            animation: alertPulse 3s ease-in-out infinite;
+            font-weight: bold;
+        }
+
+        @keyframes alertPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        .controls {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+        }
+
+        .btn {
+            background: rgba(0, 255, 0, 0.2);
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            margin: 5px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            background: rgba(0, 255, 0, 0.3);
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <a href="index.html" class="btn">← Back to Main Menu</a>
+    </div>
+
+    <div class="container">
+        <div class="alert-banner">
+            🚨 EXPERT-LEVEL INVESTIGATION - ADVANCED PERSISTENT THREAT ANALYSIS 🚨
+        </div>
+
+        <div class="header">
+            <h1>LEVEL 3: ADVANCED APT</h1>
+            <h2>Man-in-the-Middle Campaign Investigation</h2>
+            <p>A sophisticated adversary has deployed a multi-stage MITM attack to intercept and manipulate network communications. Analyze the attack chain across multiple detection systems to understand the full scope of compromise.</p>
+        </div>
+
+        <div class="game-status">
+            <h3>🎯 THREAT ASSESSMENT</h3>
+            <div class="status-grid">
+                <div class="status-item">
+                    <div class="status-value">ACTIVE</div>
+                    <div class="status-label">Campaign Status</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-value">CRITICAL</div>
+                    <div class="status-label">Threat Level</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-value">8</div>
+                    <div class="status-label">Total IoCs</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-value">15:00</div>
+                    <div class="status-label">Time Limit</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="instructions">
+            <h3>📋 ADVANCED INVESTIGATION PROTOCOL</h3>
+            <ul>
+                <li>Investigate each specialized detection room to uncover attack vectors</li>
+                <li>Identify sophisticated IoCs across endpoint, network, and certificate systems</li>
+                <li>Map attack chain progression from initial access to full compromise</li>
+                <li>Each correct IoC identification awards +150 points (-75 for false positives)</li>
+                <li>Complete investigation across all rooms to reconstruct the full attack</li>
+                <li>Advanced threats require correlation between multiple data sources</li>
+            </ul>
+        </div>
+
+        <div class="rooms-grid">
+            <a href="endpoint-forensics.html" class="room-card">
+                <div class="threat-level threat-critical">CRITICAL</div>
+                <div class="room-header">
+                    <div class="room-icon">🖥️</div>
+                    <div class="room-title">ENDPOINT FORENSICS</div>
+                </div>
+                <div class="room-description">
+                    Deep dive into Alice's workstation telemetry. Analyze process execution chains, file system changes, and registry modifications that enabled the initial compromise and persistence mechanisms.
+                </div>
+                <div class="room-stats">
+                    <div><span>Processes Monitored:</span><span>1,247</span></div>
+                    <div><span>Suspicious Executions:</span><span style="color: #ff6600;">3</span></div>
+                    <div><span>Registry Changes:</span><span style="color: #ff6600;">12</span></div>
+                    <div><span>IoCs Expected:</span><span style="color: #00ff00;">2</span></div>
+                </div>
+            </a>
+
+            <a href="certificate-analysis.html" class="room-card">
+                <div class="threat-level threat-critical">CRITICAL</div>
+                <div class="room-header">
+                    <div class="room-icon">🔒</div>
+                    <div class="room-title">CERTIFICATE ANALYSIS</div>
+                </div>
+                <div class="room-description">
+                    Examine certificate store modifications and TLS handshake anomalies. Identify rogue CA installations and TLS interception mechanisms used to bypass security warnings.
+                </div>
+                <div class="room-stats">
+                    <div><span>Certificates Analyzed:</span><span>156</span></div>
+                    <div><span>Trust Store Changes:</span><span style="color: #ff6600;">1</span></div>
+                    <div><span>TLS Anomalies:</span><span style="color: #ff6600;">8</span></div>
+                    <div><span>IoCs Expected:</span><span style="color: #00ff00;">2</span></div>
+                </div>
+            </a>
+
+            <a href="network-interception.html" class="room-card">
+                <div class="threat-level threat-high">HIGH RISK</div>
+                <div class="room-header">
+                    <div class="room-icon">🌐</div>
+                    <div class="room-title">NETWORK INTERCEPTION</div>
+                </div>
+                <div class="room-description">
+                    Investigate DNS poisoning, ARP spoofing, and traffic redirection techniques. Analyze network-layer attacks that enable man-in-the-middle positioning.
+                </div>
+                <div class="room-stats">
+                    <div><span>DNS Queries:</span><span>2,341</span></div>
+                    <div><span>ARP Table Changes:</span><span style="color: #ff6600;">4</span></div>
+                    <div><span>Routing Anomalies:</span><span style="color: #ff6600;">6</span></div>
+                    <div><span>IoCs Expected:</span><span style="color: #00ff00;">2</span></div>
+                </div>
+            </a>
+
+            <a href="proxy-infrastructure.html" class="room-card">
+                <div class="threat-level threat-high">HIGH RISK</div>
+                <div class="room-header">
+                    <div class="room-icon">🔄</div>
+                    <div class="room-title">PROXY INFRASTRUCTURE</div>
+                </div>
+                <div class="room-description">
+                    Analyze the rogue proxy deployment and configuration. Examine local proxy settings, traffic routing, and external command & control communications.
+                </div>
+                <div class="room-stats">
+                    <div><span>Proxy Processes:</span><span>47</span></div>
+                    <div><span>Rogue Configurations:</span><span style="color: #ff6600;">2</span></div>
+                    <div><span>External Connections:</span><span style="color: #ff6600;">5</span></div>
+                    <div><span>IoCs Expected:</span><span style="color: #00ff00;">2</span></div>
+                </div>
+            </a>
+        </div>
+
+        <div class="footer">
+            <h3>🎯 INVESTIGATION OBJECTIVES</h3>
+            <p>This advanced investigation simulates a real-world APT campaign. Success requires identifying all 8 IoCs across the attack chain: Initial Access → Execution → Persistence → Defense Evasion → Collection → Command & Control. Each investigation room provides critical pieces of the attack puzzle.</p>
+            <br>
+            <p style="color: #ff6600;">Advanced Threat Hunting: Correlation across multiple detection systems is key to understanding sophisticated attack campaigns.</p>
+        </div>
+    </div>
+
+    <script>
+        // Add dynamic effects
+        document.addEventListener('DOMContentLoaded', function() {
+            // Animate room cards on load
+            const cards = document.querySelectorAll('.room-card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(50px)';
+                
+                setTimeout(() => {
+                    card.style.transition = 'all 0.6s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 200);
+            });
+
+            // Add clicking effect
+            cards.forEach(card => {
+                card.addEventListener('click', function(e) {
+                    const flash = document.createElement('div');
+                    flash.style.cssText = `
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        background: rgba(0, 255, 0, 0.1);
+                        pointer-events: none;
+                        z-index: 9999;
+                        animation: flashEffect 0.3s ease;
+                    `;
+                    
+                    const style = document.createElement('style');
+                    style.textContent = `
+                        @keyframes flashEffect {
+                            0% { opacity: 0; }
+                            50% { opacity: 1; }
+                            100% { opacity: 0; }
+                        }
+                    `;
+                    document.head.appendChild(style);
+                    document.body.appendChild(flash);
+                    
+                    setTimeout(() => {
+                        flash.remove();
+                        style.remove();
+                    }, 300);
+                });
+            });
+        });
+
+        // Random threat alerts
+        setInterval(() => {
+            if (Math.random() < 0.15) {
+                const cards = document.querySelectorAll('.room-card');
+                const randomCard = cards[Math.floor(Math.random() * cards.length)];
+                
+                const alert = document.createElement('div');
+                alert.style.cssText = `
+                    position: absolute;
+                    top: 10px;
+                    right: 60px;
+                    background: #ff3300;
+                    color: white;
+                    padding: 5px 10px;
+                    border-radius: 5px;
+                    font-size: 0.8rem;
+                    z-index: 100;
+                    animation: alertFlash 3s ease forwards;
+                `;
+                alert.textContent = 'NEW ACTIVITY';
+                
+                randomCard.appendChild(alert);
+                
+                setTimeout(() => alert.remove(), 3000);
+            }
+        }, 8000);
+    </script>
+
+    <style>
+        @keyframes alertFlash {
+            0% { opacity: 0; transform: scale(0.5); }
+            20% { opacity: 1; transform: scale(1.1); }
+            80% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(0.5); }
+        }
+    </style>
+</body>
+</html>

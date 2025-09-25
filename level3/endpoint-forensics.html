@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Endpoint Forensics - MITM Investigation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #0a1a0a 0%, #1a2e1a 50%, #162e16 100%);
+            color: #00ff00;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(0, 255, 0, 0.1);
+            border: 2px solid #00ff00;
+            border-radius: 15px;
+        }
+
+        .header-left h1 {
+            font-size: 2.5rem;
+            color: #00ff00;
+            text-shadow: 0 0 20px #00ff00;
+            margin-bottom: 10px;
+        }
+
+        .header-left p {
+            color: #99ff99;
+            font-size: 1.1rem;
+        }
+
+        .game-stats {
+            display: flex;
+            gap: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            min-width: 100px;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #00ff00;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #99ff99;
+            font-size: 0.9rem;
+        }
+
+        .timer {
+            color: #ff6600;
+        }
+
+        .story-banner {
+            background: linear-gradient(45deg, rgba(255, 102, 0, 0.2), rgba(255, 140, 0, 0.1));
+            border: 2px solid #ff6600;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .story-banner h3 {
+            color: #ff6600;
+            margin-bottom: 10px;
+        }
+
+        .story-banner p {
+            color: #99ff99;
+            line-height: 1.4;
+        }
+
+        .analysis-panel {
+            background: rgba(0, 100, 0, 0.2);
+            border: 2px solid #00cc00;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #00cc00;
+        }
+
+        .panel-icon {
+            font-size: 2.5rem;
+            margin-right: 20px;
+            color: #00ff00;
+        }
+
+        .panel-title {
+            font-size: 1.8rem;
+            color: #00ff00;
+        }
+
+        .endpoint-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #00ff00;
+            text-align: center;
+        }
+
+        .metric-card.alert {
+            border-left-color: #ff6600;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #00ff00;
+            margin-bottom: 10px;
+        }
+
+        .metric-value.danger {
+            color: #ff6600;
+        }
+
+        .event-viewer {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            padding: 20px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .viewer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #00cc00;
+        }
+
+        .event-entry {
+            background: rgba(0, 0, 0, 0.3);
+            margin: 8px 0;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 4px solid #00cc00;
+            font-family: 'Courier New', monospace;
+        }
+
+        .event-entry:hover {
+            background: rgba(0, 255, 0, 0.1);
+            border-left-color: #00ff00;
+            transform: translateX(5px);
+        }
+
+        .event-entry.selected {
+            background: rgba(0, 255, 0, 0.2);
+            border-left-color: #00ff00;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
+        }
+
+        .event-entry.wrong {
+            background: rgba(255, 102, 0, 0.2);
+            border-left-color: #ff6600;
+            box-shadow: 0 0 15px rgba(255, 102, 0, 0.3);
+        }
+
+        .event-timestamp {
+            color: #888;
+            margin-right: 15px;
+            font-weight: bold;
+        }
+
+        .event-level {
+            margin-right: 15px;
+            font-weight: bold;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        .level-create {
+            background: rgba(0, 255, 255, 0.3);
+            color: #00ffff;
+        }
+
+        .level-write {
+            background: rgba(255, 255, 0, 0.3);
+            color: #ffff00;
+        }
+
+        .level-registry {
+            background: rgba(255, 102, 0, 0.3);
+            color: #ff6600;
+        }
+
+        .event-details {
+            color: #99ff99;
+        }
+
+        .suspicious-file {
+            background: rgba(255, 102, 0, 0.3);
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
+        .controls {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+        }
+
+        .btn {
+            background: rgba(0, 255, 0, 0.2);
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            margin: 5px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            background: rgba(0, 255, 0, 0.3);
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .feedback {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            max-width: 400px;
+        }
+
+        .feedback.show {
+            transform: translateX(0);
+        }
+
+        .feedback.success {
+            background: #00ff00;
+            color: black;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+        }
+
+        .feedback.error {
+            background: #ff6600;
+            box-shadow: 0 0 20px rgba(255, 102, 0, 0.5);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6600, #00ff00);
+            transition: width 0.5s ease;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.02); }
+        }
+
+        .event-viewer::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .event-viewer::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .event-viewer::-webkit-scrollbar-thumb {
+            background: #00ff00;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <a href="mitm_level3.html" class="btn">← Back to Investigation Hub</a>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <h1>🖥️ ENDPOINT FORENSICS</h1>
+                <p>Deep analysis of Alice's workstation during the MITM compromise</p>
+            </div>
+            <div class="game-stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="score">0</div>
+                    <div class="stat-label">Score</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="iocsFound">0/2</div>
+                    <div class="stat-label">IoCs Found</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value timer" id="timer">05:00</div>
+                    <div class="stat-label">Time Left</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="story-banner">
+            <h3>📋 FORENSIC CONTEXT</h3>
+            <p><strong>Investigation Focus:</strong> Alice downloaded a "helper tool" moments before portal issues began. Examine process execution chains, file system modifications, and registry changes that occurred around 09:04-09:05 timeframe to identify the initial compromise vector.</p>
+        </div>
+
+        <div class="endpoint-metrics">
+            <div class="metric-card">
+                <div class="metric-value">1,247</div>
+                <div>Processes Monitored</div>
+            </div>
+            <div class="metric-card alert">
+                <div class="metric-value danger">3</div>
+                <div>Suspicious Executions</div>
+            </div>
+            <div class="metric-card alert">
+                <div class="metric-value danger">12</div>
+                <div>Registry Modifications</div>
+            </div>
+            <div class="metric-card alert">
+                <div class="metric-value danger">1</div>
+                <div>Persistence Mechanisms</div>
+            </div>
+        </div>
+
+        <div class="analysis-panel">
+            <div class="panel-header">
+                <div class="panel-icon">📊</div>
+                <div class="panel-title">Windows Event Log Analysis</div>
+            </div>
+            
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+
+            <div class="event-viewer" id="eventViewer">
+                <div class="viewer-header">
+                    <h3>Security & System Event Timeline</h3>
+                    <span>Host: ALICE-WKS | Focus: 09:04-09:06</span>
+                </div>
+                
+                <!-- Event entries will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <script>
+        let gameState = {
+            score: 0,
+            iocsFound: 0,
+            totalIocs: 2,
+            timeLeft: 300, // 5 minutes
+            gameActive: true
+        };
+
+        const eventData = [
+            // IoCs (malicious endpoint activity)
+            { 
+                id: 'endpoint1', 
+                timestamp: '09:04:59',
+                level: 'CREATE',
+                event: 'FILE_CREATE | user=alice | path="C:\\Users\\alice\\Downloads\\ACME_Helper_Tools.exe" | sha1=77d99ac3b1f | size=2,457,600',
+                isIoc: true,
+                explanation: 'Initial attack vector - malicious installer masquerading as legitimate helper tool (MITRE T1204 User Execution, T1036 Masquerading)',
+                category: 'file'
+            },
+            { 
+                id: 'endpoint2', 
+                timestamp: '09:05:04',
+                level: 'CREATE',
+                event: 'PROC_CREATE | user=alice | proc=rogueproxy.exe | pid=8012 | parent_pid=4500 | cmdline="rogueproxy.exe --listen 127.0.0.1:3128"',
+                isIoc: true,
+                explanation: 'Rogue proxy process spawned by malicious installer - core MITM infrastructure component (MITRE T1557 Adversary-in-the-Middle, T1090 Proxy)',
+                category: 'process'
+            },
+            
+            // Red herrings (normal system activity)
+            { 
+                id: 'normal1', 
+                timestamp: '09:04:55',
+                level: 'CREATE',
+                event: 'PROC_CREATE | user=alice | proc=explorer.exe | pid=2200 | parent_pid=1024 | cmdline="explorer.exe"',
+                isIoc: false,
+                category: 'process'
+            },
+            { 
+                id: 'normal2', 
+                timestamp: '09:04:57',
+                level: 'WRITE',
+                event: 'FILE_WRITE | user=alice | path="C:\\Users\\alice\\Documents\\report.docx" | bytes=45678',
+                isIoc: false,
+                category: 'file'
+            },
+            { 
+                id: 'normal3', 
+                timestamp: '09:04:58',
+                level: 'CREATE',
+                event: 'PROC_CREATE | user=alice | proc=explorer.exe | pid=2320 | parent_pid=2200 | cmdline="explorer.exe"',
+                isIoc: false,
+                category: 'process'
+            },
+            { 
+                id: 'normal4', 
+                timestamp: '09:05:00',
+                level: 'CREATE',
+                event: 'PROC_CREATE | user=alice | proc=ACME_Helper_Tools.exe | pid=4500 | parent_pid=2320 | cmdline="ACME_Helper_Tools.exe"',
+                isIoc: false, // This is the execution but not the initial vector
+                category: 'process'
+            },
+            { 
+                id: 'normal5', 
+                timestamp: '09:05:01',
+                level: 'CREATE',
+                event: 'PROC_CREATE | user=alice | proc=svchost.exe | pid=500 | parent_pid=4 | cmdline="svchost.exe -k netsvcs"',
+                isIoc: false,
+                category: 'process'
+            },
+            { 
+                id: 'normal6', 
+                timestamp: '09:05:02',
+                level: 'REGISTRY',
+                event: 'REG_ADD | user=alice | key="HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run" | value="UpdateChecker" | data="C:\\Windows\\System32\\updater.exe"',
+                isIoc: false,
+                category: 'registry'
+            },
+            { 
+                id: 'normal7', 
+                timestamp: '09:05:03',
+                level: 'WRITE',
+                event: 'FILE_WRITE | user=alice | path="C:\\Users\\alice\\AppData\\Local\\Temp\\update.log" | bytes=1024',
+                isIoc: false,
+                category: 'file'
+            },
+            { 
+                id: 'normal8', 
+                timestamp: '09:05:05',
+                level: 'WRITE',
+                event: 'FILE_WRITE | user=alice | path="C:\\Users\\alice\\AppData\\Local\\Temp\\proxy.log" | bytes=512',
+                isIoc: false,
+                category: 'file'
+            },
+            { 
+                id: 'normal9', 
+                timestamp: '09:05:06',
+                level: 'CREATE',
+                event: 'PROC_CREATE | user=alice | proc=notepad.exe | pid=3201 | parent_pid=2200 | cmdline="notepad.exe"',
+                isIoc: false,
+                category: 'process'
+            },
+            { 
+                id: 'normal10', 
+                timestamp: '09:05:07',
+                level: 'WRITE',
+                event: 'AV_SCAN_RESULT | host=ALICE-WKS | scanner=WindowsDefender | result=CLEAN | files_scanned=45672 | threats=0',
+                isIoc: false,
+                category: 'security'
+            }
+        ];
+
+        function initGame() {
+            loadEventEntries();
+            startTimer();
+            attachEventListeners();
+            updateProgressBar();
+        }
+
+        function loadEventEntries() {
+            const viewer = document.getElementById('eventViewer');
+            const header = viewer.querySelector('.viewer-header');
+            
+            // Clear existing entries except header
+            viewer.innerHTML = '';
+            viewer.appendChild(header);
+            
+            // Sort by timestamp for chronological display
+            const sortedEvents = [...eventData].sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+            
+            sortedEvents.forEach(event => {
+                const eventEntry = document.createElement('div');
+                eventEntry.className = `event-entry ${event.category}`;
+                eventEntry.dataset.id = event.id;
+                eventEntry.dataset.isIoc = event.isIoc;
+                
+                // Highlight suspicious elements
+                const eventText = event.event
+                    .replace(/ACME_Helper_Tools\.exe/g, '<span class="suspicious-file">ACME_Helper_Tools.exe</span>')
+                    .replace(/rogueproxy\.exe/g, '<span class="suspicious-file">rogueproxy.exe</span>');
+                
+                eventEntry.innerHTML = `
+                    <div style="margin-bottom: 8px;">
+                        <span class="event-timestamp">[${event.timestamp}]</span>
+                        <span class="event-level level-${event.level.toLowerCase()}">${event.level}</span>
+                    </div>
+                    <div class="event-details">${eventText}</div>
+                `;
+                
+                viewer.appendChild(eventEntry);
+            });
+        }
+
+        function startTimer() {
+            const timer = setInterval(() => {
+                if (!gameState.gameActive) {
+                    clearInterval(timer);
+                    return;
+                }
+                
+                gameState.timeLeft--;
+                updateTimerDisplay();
+                
+                if (gameState.timeLeft <= 0) {
+                    endGame();
+                    clearInterval(timer);
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(gameState.timeLeft / 60);
+            const seconds = gameState.timeLeft % 60;
+            document.getElementById('timer').textContent = 
+                `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function updateProgressBar() {
+            const progress = (gameState.iocsFound / gameState.totalIocs) * 100;
+            document.getElementById('progressFill').style.width = `${progress}%`;
+        }
+
+        function attachEventListeners() {
+            document.addEventListener('click', (e) => {
+                const eventEntry = e.target.closest('.event-entry');
+                if (!eventEntry || !gameState.gameActive) return;
+
+                const isIoc = eventEntry.dataset.isIoc === 'true';
+                const isAlreadySelected = eventEntry.classList.contains('selected') || eventEntry.classList.contains('wrong');
+                
+                if (isAlreadySelected) return;
+
+                const eventInfo = eventData.find(event => event.id === eventEntry.dataset.id);
+
+                if (isIoc) {
+                    eventEntry.classList.add('selected');
+                    gameState.iocsFound++;
+                    gameState.score += 150;
+                    showFeedback(`Correct! ${eventInfo.explanation}`, 'success');
+                } else {
+                    eventEntry.classList.add('wrong');
+                    gameState.score = Math.max(0, gameState.score - 75);
+                    showFeedback('Wrong! This appears to be legitimate system activity. Focus on the attack timeline and suspicious file operations.', 'error');
+                }
+
+                updateDisplay();
+                
+                if (gameState.iocsFound >= gameState.totalIocs) {
+                    setTimeout(() => {
+                        showCompletion();
+                    }, 1500);
+                }
+            });
+        }
+
+        function showFeedback(message, type) {
+            const feedback = document.getElementById('feedback');
+            feedback.textContent = message;
+            feedback.className = `feedback ${type}`;
+            feedback.classList.add('show');
+            
+            setTimeout(() => {
+                feedback.classList.remove('show');
+            }, 5000);
+        }
+
+        function updateDisplay() {
+            document.getElementById('score').textContent = gameState.score;
+            document.getElementById('iocsFound').textContent = `${gameState.iocsFound}/${gameState.totalIocs}`;
+            updateProgressBar();
+        }
+
+        function showCompletion() {
+            gameState.gameActive = false;
+            
+            const completionMessage = document.createElement('div');
+            completionMessage.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: linear-gradient(135deg, #1a2e1a, #162e16);
+                padding: 40px;
+                border-radius: 15px;
+                border: 2px solid #00ff00;
+                text-align: center;
+                z-index: 2000;
+                box-shadow: 0 0 50px rgba(0, 255, 0, 0.3);
+                max-width: 600px;
+            `;
+            
+            completionMessage.innerHTML = `
+                <h2 style="color: #00ff00; margin-bottom: 20px; font-size: 2rem;">🖥️ Endpoint Forensics Complete!</h2>
+                <p style="color: #99ff99; margin-bottom: 20px; font-size: 1.2rem;">
+                    You've successfully identified the endpoint compromise indicators!
+                </p>
+                <div style="color: #00ff00; font-size: 1.1rem; margin-bottom: 30px;">
+                    <p>✅ Initial Attack Vector Identified</p>
+                    <p>✅ Rogue Process Deployment Detected</p>
+                    <p>✅ Attack Timeline Reconstructed</p>
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <p style="color: #ff6600; margin-bottom: 10px;">Room Score: ${gameState.score} points</p>
+                    <p style="color: #99ff99; font-size: 0.9rem;">Continue to other investigation rooms to complete the full attack analysis</p>
+                </div>
+                <a href="mitm_level3.html" class="btn" style="margin: 10px;">Continue Investigation</a>
+                <button onclick="location.reload()" class="btn" style="margin: 10px;">Re-analyze</button>
+            `;
+            
+            document.body.appendChild(completionMessage);
+        }
+
+        function endGame() {
+            gameState.gameActive = false;
+            showFeedback(`Time's up! You found ${gameState.iocsFound}/${gameState.totalIocs} IoCs in this room.`, 'error');
+            
+            setTimeout(() => {
+                if (confirm('Time expired! Would you like to try this room again?')) {
+                    location.reload();
+                } else {
+                    window.location.href = 'mitm_level3.html';
+                }
+            }, 3000);
+        }
+
+        window.addEventListener('load', initGame);
+    </script>
+</body>
+</html>
