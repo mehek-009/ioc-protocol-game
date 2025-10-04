@@ -314,7 +314,9 @@
             text-align: center;
             z-index: 2000;
             display: none;
-            max-width: 600px;
+            max-width: 700px;
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
         .alert-banner {
@@ -382,7 +384,7 @@
             </div>
 
             <div class="instructions">
-                <h3>MISSION BRIEFING - Subject: Edward Snowden</h3>
+                <h3>MISSION BRIEFING - Subject: Insider Threat Analysis</h3>
                 <p><strong>Objective:</strong> Identify 15 IoCs across 6 investigation areas.</p>
                 <p><strong>Timeline:</strong> March-May 2013 - Mass document access before departure.</p>
                 <p><strong>Sequence:</strong> Database → SharePoint → File Server → Authentication → Host Forensics → Network</p>
@@ -393,7 +395,7 @@
                             <div id="progressDetails">Starting investigation...</div>
                         </div>
                         <button onclick="if(confirm('Start a new investigation? This will clear all current progress.')) { clearGameState(); location.reload(); }" style="background: rgba(255, 107, 107, 0.2); border: 2px solid #ff6b6b; color: #ff6b6b; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-family: inherit; font-size: 0.9rem; font-weight: bold;">
-                            🔄 New Investigation
+                            New Investigation
                         </button>
                     </div>
                 </div>
@@ -409,7 +411,7 @@
     <div id="database" class="page">
         <div class="dashboard">
             <div class="game-header">
-                <h2>🗃️ DATABASE ACCESS LOGS</h2>
+                <h2>DATABASE ACCESS LOGS</h2>
                 <button class="back-btn" onclick="showPage('dashboard')">Back</button>
             </div>
             
@@ -419,7 +421,7 @@
             </div>
 
             <div class="alert-banner">
-                🚨 AUTOMATED SCRAPING DETECTED: Sequential document queries with crawler-like patterns identified
+                AUTOMATED SCRAPING DETECTED: Sequential document queries with crawler-like patterns identified
             </div>
 
             <div class="analysis-panel">
@@ -436,7 +438,7 @@
     <div id="sharepoint" class="page">
         <div class="dashboard">
             <div class="game-header">
-                <h2>🔗 SHAREPOINT PORTAL LOGS</h2>
+                <h2>SHAREPOINT PORTAL LOGS</h2>
                 <button class="back-btn" onclick="showPage('dashboard')">Back</button>
             </div>
             
@@ -446,7 +448,7 @@
             </div>
 
             <div class="alert-banner">
-                🚨 SYSTEMATIC ENUMERATION DETECTED: Cross-program document access beyond authorized scope
+                SYSTEMATIC ENUMERATION DETECTED: Cross-program document access beyond authorized scope
             </div>
 
             <div class="analysis-panel">
@@ -463,7 +465,7 @@
     <div id="fileserver" class="page">
         <div class="dashboard">
             <div class="game-header">
-                <h2>📂 FILE SERVER ACCESS</h2>
+                <h2>FILE SERVER ACCESS</h2>
                 <button class="back-btn" onclick="showPage('dashboard')">Back</button>
             </div>
             
@@ -473,7 +475,7 @@
             </div>
 
             <div class="alert-banner">
-                🚨 AUTOMATED FILE ENUMERATION: Systematic crawling of classified file repositories detected
+                AUTOMATED FILE ENUMERATION: Systematic crawling of classified file repositories detected
             </div>
 
             <div class="analysis-panel">
@@ -490,7 +492,7 @@
     <div id="authentication" class="page">
         <div class="dashboard">
             <div class="game-header">
-                <h2>🔐 AUTHENTICATION ANALYSIS</h2>
+                <h2>AUTHENTICATION ANALYSIS</h2>
                 <button class="back-btn" onclick="showPage('dashboard')">Back</button>
             </div>
             
@@ -500,7 +502,7 @@
             </div>
 
             <div class="alert-banner">
-                🚨 PRIVILEGE ABUSE DETECTED: Systematic off-hours access with credential sharing patterns
+                PRIVILEGE ABUSE DETECTED: Systematic off-hours access with credential sharing patterns
             </div>
 
             <div class="analysis-panel">
@@ -517,7 +519,7 @@
     <div id="host" class="page">
         <div class="dashboard">
             <div class="game-header">
-                <h2>💻 HOST FORENSICS</h2>
+                <h2>HOST FORENSICS</h2>
                 <button class="back-btn" onclick="showPage('dashboard')">Back</button>
             </div>
             
@@ -527,7 +529,7 @@
             </div>
 
             <div class="alert-banner">
-                🚨 DATA STAGING DETECTED: Multiple compression and archiving operations identified
+                DATA STAGING DETECTED: Multiple compression and archiving operations identified
             </div>
 
             <div class="analysis-panel">
@@ -544,7 +546,7 @@
     <div id="network" class="page">
         <div class="dashboard">
             <div class="game-header">
-                <h2>🌐 NETWORK ANALYSIS</h2>
+                <h2>NETWORK ANALYSIS</h2>
                 <button class="back-btn" onclick="showPage('dashboard')">Back</button>
             </div>
             
@@ -554,7 +556,7 @@
             </div>
 
             <div class="alert-banner">
-                🚨 MASSIVE INTERNAL DATA MOVEMENT: Large-scale transfers to staging systems detected
+                MASSIVE INTERNAL DATA MOVEMENT: Large-scale transfers to staging systems detected
             </div>
 
             <div class="analysis-panel">
@@ -570,8 +572,7 @@
     <div class="feedback" id="feedback"></div>
     <div class="completion-modal" id="completionModal">
         <h2 id="completionTitle">Room Complete!</h2>
-        <p id="completionMessage">You found all IoCs!</p>
-        <button class="back-btn" onclick="completeRoom()">Continue</button>
+        <div id="completionMessage">You found all IoCs!</div>
     </div>
 
     <script>
@@ -579,7 +580,7 @@
             totalScore: 0,
             totalIocsFound: 0,
             totalIocs: 15,
-            timeLeft: 1800, // 30 minutes
+            timeLeft: 1800,
             gameActive: false,
             currentRoom: null,
             roomsCompleted: 0,
@@ -588,7 +589,6 @@
             sessionId: null
         };
 
-        // Session Management
         function generateSessionId() {
             return 'insider_session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         }
@@ -600,17 +600,17 @@
                 roomsCompleted: gameState.roomsCompleted,
                 completedRooms: gameState.completedRooms,
                 sessionId: gameState.sessionId,
+                timeLeft: gameState.timeLeft,
                 lastSaved: Date.now()
             };
             
             try {
                 var dataString = JSON.stringify(sessionData);
                 localStorage.setItem('insiderProgress', dataString);
-                console.log('Progress saved');
-                return true;
+                console.log('Progress saved to localStorage');
             } catch (e) {
-                console.log('Save failed:', e);
-                return false;
+                console.log('localStorage not available, using memory only:', e);
+                window.insiderSession = sessionData;
             }
         }
 
@@ -619,9 +619,10 @@
                 var savedData = localStorage.getItem('insiderProgress');
                 if (savedData) {
                     var sessionData = JSON.parse(savedData);
-                    var sessionAge = Date.now() - (sessionData.lastSaved || 0);
                     
+                    var sessionAge = Date.now() - (sessionData.lastSaved || 0);
                     if (sessionAge > 7 * 24 * 60 * 60 * 1000) {
+                        console.log('Session expired');
                         clearGameState();
                         return false;
                     }
@@ -631,21 +632,38 @@
                     gameState.roomsCompleted = sessionData.roomsCompleted || 0;
                     gameState.completedRooms = sessionData.completedRooms || [];
                     gameState.sessionId = sessionData.sessionId || generateSessionId();
+                    gameState.timeLeft = sessionData.timeLeft || 1800;
                     
-                    console.log('Session restored - Rooms:', gameState.roomsCompleted);
+                    console.log('Session restored from localStorage');
                     return true;
                 }
             } catch (e) {
-                console.log('Load failed:', e);
+                console.log('Cannot load from localStorage:', e);
             }
+            
+            if (window.insiderSession) {
+                var sessionData = window.insiderSession;
+                gameState.totalScore = sessionData.totalScore || 0;
+                gameState.totalIocsFound = sessionData.totalIocsFound || 0;
+                gameState.roomsCompleted = sessionData.roomsCompleted || 0;
+                gameState.completedRooms = sessionData.completedRooms || [];
+                gameState.sessionId = sessionData.sessionId || generateSessionId();
+                gameState.timeLeft = sessionData.timeLeft || 1800;
+                console.log('Session restored from memory');
+                return true;
+            }
+            
             return false;
         }
 
         function clearGameState() {
             try {
                 localStorage.removeItem('insiderProgress');
-                console.log('Progress cleared');
-            } catch (e) {}
+                console.log('localStorage cleared');
+            } catch (e) {
+                console.log('Cannot clear localStorage:', e);
+            }
+            window.insiderSession = null;
         }
 
         var roomConfigs = {
@@ -1012,8 +1030,11 @@
                 var isCompleted = gameState.completedRooms.indexOf(roomId) !== -1;
                 var isLocked = index > gameState.roomsCompleted;
 
+                var iocsFound = countRoomIocs(roomId);
+
                 var card = document.createElement('div');
                 card.className = 'room-card' + (isCompleted ? ' completed' : '') + (isLocked ? ' locked' : '');
+                card.setAttribute('data-room-id', roomId);
                 
                 if (!isLocked) {
                     card.onclick = function() { enterRoom(roomId); };
@@ -1027,11 +1048,40 @@
                     '<div class="room-description">Analyze system for IoCs</div>' +
                     '<div class="room-progress">' +
                         '<div><span>Status:</span><span>' + (isCompleted ? 'Complete' : isLocked ? 'Locked' : 'Available') + '</span></div>' +
-                        '<div><span>IoCs:</span><span>0/' + config.iocsCount + '</span></div>' +
+                        '<div><span>IoCs:</span><span class="room-ioc-count">' + iocsFound + '/' + config.iocsCount + '</span></div>' +
                     '</div>';
 
                 grid.appendChild(card);
             });
+        }
+
+        function countRoomIocs(roomId) {
+            var containerMap = {
+                'database': 'db-evidence',
+                'sharepoint': 'sp-evidence',
+                'fileserver': 'fs-evidence',
+                'authentication': 'auth-evidence',
+                'host': 'host-evidence',
+                'network': 'net-evidence'
+            };
+            
+            var containerId = containerMap[roomId];
+            var container = document.getElementById(containerId);
+            if (!container) return 0;
+            
+            return container.querySelectorAll('.evidence-item.selected').length;
+        }
+
+        function updateRoomProgress(roomId) {
+            var card = document.querySelector('[data-room-id="' + roomId + '"]');
+            if (!card) return;
+            
+            var iocsFound = countRoomIocs(roomId);
+            var config = roomConfigs[roomId];
+            var iocCounter = card.querySelector('.room-ioc-count');
+            if (iocCounter) {
+                iocCounter.textContent = iocsFound + '/' + config.iocsCount;
+            }
         }
 
         function startTimer() {
@@ -1107,6 +1157,8 @@
                 var containerId = containerMap[gameState.currentRoom];
                 var foundInRoom = document.querySelectorAll('#' + containerId + ' .evidence-item.selected').length;
                 
+                updateRoomProgress(gameState.currentRoom);
+                
                 if (foundInRoom >= config.iocsCount) {
                     setTimeout(function() { showRoomCompletion(); }, 1000);
                 }
@@ -1171,7 +1223,9 @@
         function showRoomCompletion() {
             var config = roomConfigs[gameState.currentRoom];
             document.getElementById('completionTitle').textContent = config.title + ' Complete!';
-            document.getElementById('completionMessage').textContent = 'You found all ' + config.iocsCount + ' IoCs in this room!';
+            document.getElementById('completionMessage').innerHTML = 
+                '<p style="color: #00ffff; font-size: 1.2rem; margin-bottom: 20px;">You found all ' + config.iocsCount + ' IoCs!</p>' +
+                '<button class="back-btn" onclick="completeRoom()" style="padding: 12px 30px; font-size: 1.1rem;">Continue</button>';
             document.getElementById('completionModal').style.display = 'block';
         }
 
@@ -1182,15 +1236,126 @@
             document.getElementById('completionModal').style.display = 'none';
             
             if (gameState.roomsCompleted >= 6) {
-                var finalModal = document.getElementById('completionModal');
-                document.getElementById('completionTitle').textContent = 'Investigation Complete!';
-                document.getElementById('completionMessage').textContent = 'Congratulations! You identified all 15 IoCs. Final Score: ' + gameState.totalScore;
-                finalModal.style.display = 'block';
+                showFinalResults();
             } else {
                 showPage('dashboard');
                 loadRooms();
                 updateStats();
             }
+        }
+
+        function showFinalResults() {
+            gameState.gameActive = false;
+            
+            var totalPossibleIocs = 15;
+            var correctIocs = gameState.totalIocsFound;
+            var accuracy = Math.round((correctIocs / totalPossibleIocs) * 100);
+            
+            var wrongCount = 0;
+            var containerIds = ['db-evidence', 'sp-evidence', 'fs-evidence', 'auth-evidence', 'host-evidence', 'net-evidence'];
+            containerIds.forEach(function(id) {
+                var container = document.getElementById(id);
+                if (container) {
+                    wrongCount += container.querySelectorAll('.evidence-item.wrong').length;
+                }
+            });
+            
+            var totalSelections = correctIocs + wrongCount;
+            var selectionAccuracy = totalSelections > 0 ? Math.round((correctIocs / totalSelections) * 100) : 0;
+            
+            var rating = '';
+            var ratingColor = '';
+            var ratingMessage = '';
+            
+            if (accuracy >= 90 && wrongCount <= 2) {
+                rating = 'EXCELLENT';
+                ratingColor = '#00ff41';
+                ratingMessage = 'Outstanding work! You identified all critical insider threat indicators with minimal errors.';
+            } else if (accuracy >= 75 && wrongCount <= 5) {
+                rating = 'GOOD';
+                ratingColor = '#00a8cc';
+                ratingMessage = 'Great job! You detected most insider threat patterns and maintained good accuracy.';
+            } else if (accuracy >= 50) {
+                rating = 'FAIR';
+                ratingColor = '#ffa500';
+                ratingMessage = 'Decent effort. Review the missed indicators to improve your insider threat detection skills.';
+            } else {
+                rating = 'NEEDS IMPROVEMENT';
+                ratingColor = '#ff6b6b';
+                ratingMessage = 'More practice needed. Focus on recognizing behavioral anomalies and access patterns.';
+            }
+            
+            var timeTaken = 1800 - gameState.timeLeft;
+            var minutes = Math.floor(timeTaken / 60);
+            var seconds = timeTaken % 60;
+            var timeString = minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
+            
+            var resultsHTML = 
+                '<div style="text-align: center; color: ' + ratingColor + '; font-size: 2.5rem; font-weight: bold; margin-bottom: 20px;">' +
+                    rating +
+                '</div>' +
+                '<div style="color: #00ffff; font-size: 1.2rem; margin-bottom: 30px; line-height: 1.6;">' +
+                    ratingMessage +
+                '</div>' +
+                '<div style="background: rgba(0, 0, 0, 0.4); border-radius: 10px; padding: 20px; margin-bottom: 20px;">' +
+                    '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; text-align: left;">' +
+                        '<div>' +
+                            '<div style="color: #00a8cc; font-size: 0.9rem;">FINAL SCORE</div>' +
+                            '<div style="color: #00ff41; font-size: 2rem; font-weight: bold;">' + gameState.totalScore + '</div>' +
+                        '</div>' +
+                        '<div>' +
+                            '<div style="color: #00a8cc; font-size: 0.9rem;">IoCs FOUND</div>' +
+                            '<div style="color: #00ff41; font-size: 2rem; font-weight: bold;">' + correctIocs + '/' + totalPossibleIocs + '</div>' +
+                        '</div>' +
+                        '<div>' +
+                            '<div style="color: #00a8cc; font-size: 0.9rem;">DETECTION RATE</div>' +
+                            '<div style="color: ' + (accuracy >= 75 ? '#00ff41' : '#ffa500') + '; font-size: 2rem; font-weight: bold;">' + accuracy + '%</div>' +
+                        '</div>' +
+                        '<div>' +
+                            '<div style="color: #00a8cc; font-size: 0.9rem;">TIME TAKEN</div>' +
+                            '<div style="color: #00ffff; font-size: 2rem; font-weight: bold;">' + timeString + '</div>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>' +
+                '<div style="background: rgba(0, 100, 150, 0.2); border-radius: 10px; padding: 15px; margin-bottom: 20px; text-align: left;">' +
+                    '<div style="color: #00ff41; font-weight: bold; margin-bottom: 10px;">PERFORMANCE BREAKDOWN</div>' +
+                    '<div style="color: #00ffff; margin: 5px 0;">Correct IoCs: <span style="color: #00ff41;">' + correctIocs + '</span></div>' +
+                    '<div style="color: #00ffff; margin: 5px 0;">Wrong Selections: <span style="color: #ff6b6b;">' + wrongCount + '</span></div>' +
+                    '<div style="color: #00ffff; margin: 5px 0;">Missed IoCs: <span style="color: #ffa500;">' + (totalPossibleIocs - correctIocs) + '</span></div>' +
+                    '<div style="color: #00ffff; margin: 5px 0;">Selection Accuracy: <span style="color: ' + (selectionAccuracy >= 80 ? '#00ff41' : '#ffa500') + ';">' + selectionAccuracy + '%</span></div>' +
+                    '<div style="color: #00ffff; margin: 5px 0;">Rooms Completed: <span style="color: #00ff41;">' + gameState.roomsCompleted + '/6</span></div>' +
+                '</div>' +
+                '<div style="background: rgba(255, 170, 0, 0.1); border: 1px solid #ffa500; border-radius: 10px; padding: 15px; margin-bottom: 20px; text-align: left;">' +
+                    '<div style="color: #ffa500; font-weight: bold; margin-bottom: 10px; font-size: 1.1rem;">INSIDER THREAT MITIGATION</div>' +
+                    '<div style="color: #00ffff; font-size: 0.9rem; line-height: 1.6;">' +
+                        '<div style="margin: 8px 0;"><span style="color: #00ff41;">1. User Behavior Analytics (UBA):</span> Deploy UEBA solutions to detect anomalous access patterns</div>' +
+                        '<div style="margin: 8px 0;"><span style="color: #00ff41;">2. Data Loss Prevention (DLP):</span> Implement DLP to monitor and block unauthorized data transfers</div>' +
+                        '<div style="margin: 8px 0;"><span style="color: #00ff41;">3. Access Governance:</span> Enforce principle of least privilege and regular access reviews</div>' +
+                        '<div style="margin: 8px 0;"><span style="color: #00ff41;">4. Data Classification:</span> Label sensitive data and restrict access based on classification</div>' +
+                        '<div style="margin: 8px 0;"><span style="color: #00ff41;">5. Audit Logging:</span> Enable comprehensive logging of all privileged actions and database queries</div>' +
+                        '<div style="margin: 8px 0;"><span style="color: #00ff41;">6. Separation of Duties:</span> Implement role-based controls to prevent single-person abuse</div>' +
+                    '</div>' +
+                '</div>' +
+                '<div style="background: rgba(0, 255, 65, 0.1); border: 1px solid #00ff41; border-radius: 10px; padding: 15px; margin-bottom: 20px; text-align: left;">' +
+                    '<div style="color: #00ff41; font-weight: bold; margin-bottom: 10px; font-size: 1.1rem;">BEST PRACTICES</div>' +
+                    '<div style="color: #00ffff; font-size: 0.9rem; line-height: 1.6;">' +
+                        '<div style="margin: 8px 0;"><span style="color: #00a8cc;">Pre-Employment Screening:</span> Conduct thorough background checks and continuous vetting</div>' +
+                        '<div style="margin: 8px 0;"><span style="color: #00a8cc;">Off-Hours Monitoring:</span> Alert on unusual access during non-business hours</div>' +
+                        '<div style="margin: 8px 0;"><span style="color: #00a8cc;">Data Exfiltration Detection:</span> Monitor for bulk downloads, compression, and staging activities</div>' +
+                        '<div style="margin: 8px 0;"><span style="color: #00a8cc;">Exit Procedures:</span> Revoke access immediately upon resignation or termination</div>' +
+                        '<div style="margin: 8px 0;"><span style="color: #00a8cc;">Behavioral Indicators:</span> Watch for disgruntlement, policy violations, or personal issues</div>' +
+                        '<div style="margin: 8px 0;"><span style="color: #00a8cc;">Database Activity Monitoring:</span> Track abnormal query patterns and bulk data access</div>' +
+                        '<div style="margin: 8px 0;"><span style="color: #00a8cc;">Privileged Access Management:</span> Use PAM solutions with session recording and JIT access</div>' +
+                        '<div style="margin: 8px 0;"><span style="color: #00a8cc;">Security Culture:</span> Foster environment where employees report suspicious behavior</div>' +
+                    '</div>' +
+                '</div>' +
+                '<button class="back-btn" onclick="location.reload()" style="padding: 12px 30px; font-size: 1.1rem;">Start New Investigation</button>';
+            
+            document.getElementById('completionTitle').innerHTML = 'INVESTIGATION COMPLETE!';
+            document.getElementById('completionMessage').innerHTML = resultsHTML;
+            document.getElementById('completionModal').style.display = 'block';
+            
+            clearGameState();
         }
 
         function showPage(pageId) {

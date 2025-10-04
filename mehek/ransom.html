@@ -565,14 +565,47 @@
                 roomsCompleted: gameState.roomsCompleted,
                 completedRooms: gameState.completedRooms,
                 sessionId: gameState.sessionId,
+                timeLeft: gameState.timeLeft,
                 lastSaved: Date.now()
             };
             
-            var dataString = JSON.stringify(sessionData);
-            window.socAnalystSession = sessionData;
+            try {
+                var dataString = JSON.stringify(sessionData);
+                localStorage.setItem('socAnalystProgress', dataString);
+                console.log('Progress saved to localStorage');
+            } catch (e) {
+                console.log('localStorage not available, using memory only:', e);
+                window.socAnalystSession = sessionData;
+            }
         }
 
         function loadGameState() {
+            try {
+                var savedData = localStorage.getItem('socAnalystProgress');
+                if (savedData) {
+                    var sessionData = JSON.parse(savedData);
+                    
+                    var sessionAge = Date.now() - (sessionData.lastSaved || 0);
+                    if (sessionAge > 7 * 24 * 60 * 60 * 1000) {
+                        console.log('Session expired');
+                        clearGameState();
+                        return false;
+                    }
+                    
+                    gameState.totalScore = sessionData.totalScore || 0;
+                    gameState.totalIocsFound = sessionData.totalIocsFound || 0;
+                    gameState.roomsCompleted = sessionData.roomsCompleted || 0;
+                    gameState.completedRooms = sessionData.completedRooms || [];
+                    gameState.sessionId = sessionData.sessionId || generateSessionId();
+                    gameState.timeLeft = sessionData.timeLeft || 1500;
+                    
+                    console.log('Session restored from localStorage');
+                    return true;
+                }
+            } catch (e) {
+                console.log('Cannot load from localStorage:', e);
+            }
+            
             if (window.socAnalystSession) {
                 var sessionData = window.socAnalystSession;
                 gameState.totalScore = sessionData.totalScore || 0;
@@ -580,12 +613,21 @@
                 gameState.roomsCompleted = sessionData.roomsCompleted || 0;
                 gameState.completedRooms = sessionData.completedRooms || [];
                 gameState.sessionId = sessionData.sessionId || generateSessionId();
+                gameState.timeLeft = sessionData.timeLeft || 1500;
+                console.log('Session restored from memory');
                 return true;
             }
+            
             return false;
         }
 
         function clearGameState() {
+            try {
+                localStorage.removeItem('socAnalystProgress');
+                console.log('localStorage cleared');
+            } catch (e) {
+                console.log('Cannot clear localStorage:', e);
+            }
             window.socAnalystSession = null;
         }
 
@@ -1313,6 +1355,29 @@
                     '<div style="color: #00ffff; margin: 5px 0;">Missed IoCs: <span style="color: #ffa500;">' + (totalPossibleIocs - correctIocs) + '</span></div>' +
                     '<div style="color: #00ffff; margin: 5px 0;">Selection Accuracy: <span style="color: ' + (selectionAccuracy >= 80 ? '#00ff41' : '#ffa500') + ';">' + selectionAccuracy + '%</span></div>' +
                     '<div style="color: #00ffff; margin: 5px 0;">Rooms Completed: <span style="color: #00ff41;">' + gameState.roomsCompleted + '/6</span></div>' +
+                '</div>' +
+                '<div style="background: rgba(255, 170, 0, 0.1); border: 1px solid #ffa500; border-radius: 10px; padding: 15px; margin-bottom: 20px; text-align: left;">' +
+                    '<div style="color: #ffa500; font-weight: bold; margin-bottom: 10px; font-size: 1.1rem;">MITIGATION STRATEGIES</div>' +
+                    '<div style="color: #00ffff; font-size: 0.9rem; line-height: 1.6;">' +
+                        '<div style="margin: 8px 0;"><span style="color: #00ff41;">1. Network Segmentation:</span> Isolate critical systems to limit ransomware spread</div>' +
+                        '<div style="margin: 8px 0;"><span style="color: #00ff41;">2. Email Filtering:</span> Block suspicious attachments and phishing attempts at gateway</div>' +
+                        '<div style="margin: 8px 0;"><span style="color: #00ff41;">3. EDR/XDR Solutions:</span> Deploy endpoint detection for real-time threat hunting</div>' +
+                        '<div style="margin: 8px 0;"><span style="color: #00ff41;">4. Backup Strategy:</span> Maintain offline, immutable backups with 3-2-1 rule</div>' +
+                        '<div style="margin: 8px 0;"><span style="color: #00ff41;">5. Privilege Management:</span> Implement least privilege and disable unnecessary admin access</div>' +
+                        '<div style="margin: 8px 0;"><span style="color: #00ff41;">6. Application Whitelisting:</span> Block unauthorized executables from running</div>' +
+                    '</div>' +
+                '</div>' +
+                '<div style="background: rgba(0, 255, 65, 0.1); border: 1px solid #00ff41; border-radius: 10px; padding: 15px; margin-bottom: 20px; text-align: left;">' +
+                    '<div style="color: #00ff41; font-weight: bold; margin-bottom: 10px; font-size: 1.1rem;">BEST PRACTICES</div>' +
+                    '<div style="color: #00ffff; font-size: 0.9rem; line-height: 1.6;">' +
+                        '<div style="margin: 8px 0;"><span style="color: #00a8cc;">MFA Everywhere:</span> Enforce multi-factor authentication on all remote access points</div>' +
+                        '<div style="margin: 8px 0;"><span style="color: #00a8cc;">Patch Management:</span> Apply security patches within 48-72 hours of release</div>' +
+                        '<div style="margin: 8px 0;"><span style="color: #00a8cc;">User Training:</span> Conduct regular phishing simulations and security awareness training</div>' +
+                        '<div style="margin: 8px 0;"><span style="color: #00a8cc;">Incident Response Plan:</span> Test and update IR playbooks quarterly</div>' +
+                        '<div style="margin: 8px 0;"><span style="color: #00a8cc;">Network Monitoring:</span> Enable logging and monitor for lateral movement indicators</div>' +
+                        '<div style="margin: 8px 0;"><span style="color: #00a8cc;">Disable RDP:</span> Use VPN with MFA instead of exposing RDP to internet</div>' +
+                        '<div style="margin: 8px 0;"><span style="color: #00a8cc;">File Integrity Monitoring:</span> Alert on unauthorized changes to critical files</div>' +
+                    '</div>' +
                 '</div>' +
                 '<button class="back-btn" onclick="location.reload()" style="padding: 12px 30px; font-size: 1.1rem;">Start New Investigation</button>';
             
