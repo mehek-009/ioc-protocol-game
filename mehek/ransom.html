@@ -369,8 +369,15 @@
                 <p><strong>Instructions:</strong> Click on suspicious entries. Correct selections earn points.</p>
                 <p><strong>Sequence:</strong> File System → Network → Processes → Authentication → Downloads → Registry</p>
                 <div id="progressInfo" style="margin-top: 15px; padding: 10px; background: rgba(0, 100, 150, 0.2); border-radius: 8px; font-size: 0.9rem;">
-                    <div style="color: #00ff41; font-weight: bold; margin-bottom: 5px;">Investigation Progress</div>
-                    <div id="progressDetails">Starting new investigation...</div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="color: #00ff41; font-weight: bold; margin-bottom: 5px;">Investigation Progress</div>
+                            <div id="progressDetails">Starting new investigation...</div>
+                        </div>
+                        <button onclick="if(confirm('Start a new investigation? This will clear all current progress.')) { clearGameState(); location.reload(); }" style="background: rgba(255, 107, 107, 0.2); border: 2px solid #ff6b6b; color: #ff6b6b; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-family: inherit; font-size: 0.9rem; font-weight: bold;">
+                            🔄 New Investigation
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -559,6 +566,38 @@
         }
 
         function saveGameState() {
+            // Collect selected evidence from all rooms by ID (not index)
+            var selectedEvidence = {};
+            var containerMap = {
+                'filesystem': 'fs-evidence',
+                'network': 'net-evidence',
+                'processes': 'proc-evidence',
+                'authentication': 'auth-evidence',
+                'downloads': 'dl-evidence',
+                'registry': 'reg-evidence'
+            };
+            
+            for (var roomId in containerMap) {
+                var container = document.getElementById(containerMap[roomId]);
+                if (container) {
+                    var selected = [];
+                    var items = container.querySelectorAll('.evidence-item.selected');
+                    items.forEach(function(item) {
+                        // Find the matching evidence item by text content
+                        var evidence = evidenceData[roomId] || [];
+                        for (var i = 0; i < evidence.length; i++) {
+                            if (evidence[i].text === item.textContent) {
+                                selected.push(evidence[i].id);
+                                break;
+                            }
+                        }
+                    });
+                    if (selected.length > 0) {
+                        selectedEvidence[roomId] = selected;
+                    }
+                }
+            }
+            
             var sessionData = {
                 totalScore: gameState.totalScore,
                 totalIocsFound: gameState.totalIocsFound,
@@ -566,6 +605,7 @@
                 completedRooms: gameState.completedRooms,
                 sessionId: gameState.sessionId,
                 timeLeft: gameState.timeLeft,
+                selectedEvidence: selectedEvidence,
                 lastSaved: Date.now()
             };
             
@@ -629,6 +669,15 @@
                 console.log('Cannot clear localStorage:', e);
             }
             window.socAnalystSession = null;
+            
+            // Also reset the gameState object immediately
+            gameState.totalScore = 0;
+            gameState.totalIocsFound = 0;
+            gameState.timeLeft = 1500;
+            gameState.roomsCompleted = 0;
+            gameState.completedRooms = [];
+            gameState.sessionId = null;
+            gameState.gameActive = false;
         }
 
         function showSessionFeedback(message, type) {
@@ -990,13 +1039,30 @@
         function loadRooms() {
             var grid = document.getElementById('roomsGrid');
             grid.innerHTML = '';
+            
+            // Get saved evidence counts
+            var savedEvidence = {};
+            try {
+                var savedData = localStorage.getItem('socAnalystProgress');
+                if (savedData) {
+                    var sessionData = JSON.parse(savedData);
+                    if (sessionData.selectedEvidence) {
+                        savedEvidence = sessionData.selectedEvidence;
+                    }
+                }
+            } catch (e) {
+                if (window.socAnalystSession && window.socAnalystSession.selectedEvidence) {
+                    savedEvidence = window.socAnalystSession.selectedEvidence;
+                }
+            }
 
             gameState.roomSequence.forEach(function(roomId, index) {
                 var config = roomConfigs[roomId];
                 var isCompleted = gameState.completedRooms.indexOf(roomId) !== -1;
                 var isLocked = index > gameState.roomsCompleted;
 
-                var iocsFound = countRoomIocs(roomId);
+                // Count from saved data instead of DOM
+                var iocsFound = savedEvidence[roomId] ? savedEvidence[roomId].length : 0;
 
                 var card = document.createElement('div');
                 card.className = 'room-card' + (isCompleted ? ' completed' : '') + (isLocked ? ' locked' : '');
@@ -1158,9 +1224,40 @@
             container.innerHTML = '';
             var evidence = evidenceData[roomId] || [];
             
-            evidence.forEach(function(item) {
+            // Shuffle evidence array to randomize order
+            var shuffledEvidence = evidence.slice(); // Create a copy
+            for (var i = shuffledEvidence.length - 1; i > 0; i--) {
+                var j = Math.floor(Math.random() * (i + 1));
+                var temp = shuffledEvidence[i];
+                shuffledEvidence[i] = shuffledEvidence[j];
+                shuffledEvidence[j] = temp;
+            }
+            
+            // Get saved selected evidence by matching item IDs
+            var savedSelectedIds = [];
+            try {
+                var savedData = localStorage.getItem('socAnalystProgress');
+                if (savedData) {
+                    var sessionData = JSON.parse(savedData);
+                    if (sessionData.selectedEvidence && sessionData.selectedEvidence[roomId]) {
+                        savedSelectedIds = sessionData.selectedEvidence[roomId];
+                    }
+                }
+            } catch (e) {
+                if (window.socAnalystSession && window.socAnalystSession.selectedEvidence && window.socAnalystSession.selectedEvidence[roomId]) {
+                    savedSelectedIds = window.socAnalystSession.selectedEvidence[roomId];
+                }
+            }
+            
+            shuffledEvidence.forEach(function(item) {
                 var div = document.createElement('div');
                 div.className = 'evidence-item';
+                
+                // Restore selected state by matching item ID
+                if (savedSelectedIds.indexOf(item.id) !== -1) {
+                    div.classList.add('selected');
+                }
+                
                 div.textContent = item.text;
                 div.onclick = function() { selectEvidence(item, div); };
                 container.appendChild(div);
@@ -1400,6 +1497,12 @@
             gameState.gameActive = false;
             alert('Time up! Score: ' + gameState.totalScore);
         }
+
+        window.addEventListener('beforeunload', function() {
+            if (gameState.gameActive) {
+                saveGameState();
+            }
+        });
 
         window.onload = initGame;
     </script>
