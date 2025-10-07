@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Downloads Analysis - SOC Analyst</title>
+    <style>
+        :root {
+            --bg: #0A0A1F;
+            --panel: #1A1A3A;
+            --cyan: #00FFFF;
+            --muted: #88BBDD;
+            --accent: #00FF00;
+            --danger: #FF6666;
+            --warning: #FFFF00;
+            --main-text: #DFFCFF;
+            --alert-banner-bg: #2C1B2A;
+            --alert-banner-border: #FF6666;
+            --alert-text: #FF9999;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Courier New', monospace;
+            color: var(--muted);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            overflow: auto;
+            background: #000;
+        }
+
+        .video-background {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            overflow: hidden; z-index: -2;
+        }
+
+        .video-background video {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            filter: brightness(1) contrast(1.3);
+        }
+
+        .container {
+            max-width: 1400px; width: 100%;
+            margin: 0 auto; padding: 20px;
+            margin-top: 80px;
+        }
+
+        .header {
+            position: fixed; top: 0; left: 0; width: 100%;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 14px 20px;
+            background: rgba(10, 10, 31, 0.15);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+            z-index: 1000;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .back-btn {
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid var(--cyan);
+            color: var(--cyan);
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: inherit;
+        }
+
+        .back-btn:hover {
+            background: rgba(0, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .game-stats {
+            display: flex; gap: 20px;
+            background: rgba(26, 26, 58, 0.25);
+            backdrop-filter: blur(15px);
+            padding: 15px;
+            border-radius: 15px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-item {
+            text-align: center;
+            min-width: 80px;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--accent);
+            margin-bottom: 5px;
+        }
+
+        .stat-value.danger { color: var(--danger); }
+
+        .stat-label {
+            color: var(--muted);
+            font-size: 0.8rem;
+        }
+
+        .timer { color: var(--danger); }
+
+        .analysis-panel {
+            background: rgba(26, 26, 58, 0.2);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 20px;
+            padding: 0;
+            margin-bottom: 30px;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+        }
+
+        .panel-header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(90deg, rgba(0, 255, 255, 0.1), transparent);
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+        }
+
+        .panel-header-left h1 {
+            font-size: 1.8rem;
+            color: var(--cyan);
+            margin: 0;
+        }
+
+        .metrics-grid-container {
+            display: flex;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+        }
+
+        .metric-card {
+            background: transparent;
+            padding: 20px;
+            border-right: 1px solid rgba(0, 255, 255, 0.1);
+            flex-grow: 1;
+            text-align: center;
+            position: relative;
+        }
+        .metric-card:last-child { border-right: none; }
+        .metric-card.alert { animation: pulse 2s ease-in-out infinite; }
+
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--accent);
+            margin-bottom: 5px;
+        }
+        .metric-value.danger { color: var(--danger); }
+
+        .metric-label {
+            font-size: 0.9rem;
+            color: var(--muted);
+        }
+        .metric-card.alert .metric-value { color: var(--danger); }
+
+        .timeline-info {
+            background: var(--alert-banner-bg);
+            border: 1px solid var(--alert-banner-border);
+            border-radius: 10px;
+            padding: 15px; margin: 20px;
+            text-align: center;
+            box-shadow: 0 0 15px rgba(255, 102, 102, 0.2);
+            color: var(--alert-text);
+        }
+
+        .timeline-info strong {
+            color: var(--alert-banner-border);
+            font-weight: bold;
+        }
+
+        .proceed-btn {
+            background: linear-gradient(135deg, var(--cyan), rgba(0, 255, 255, 0.6));
+            border: 2px solid var(--cyan);
+            color: #000;
+            padding: 15px 40px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin: 20px auto;
+            display: block;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 5px 20px rgba(0, 255, 255, 0.3);
+        }
+
+        .proceed-btn:hover {
+            background: linear-gradient(135deg, var(--accent), rgba(0, 255, 0, 0.6));
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 255, 255, 0.5);
+        }
+
+        .proceed-btn:active {
+            transform: translateY(0);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .downloads-list {
+            background: rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 15px; padding: 20px;
+            max-height: 600px; overflow-y: auto;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .list-header {
+            display: flex; justify-content: space-between;
+            align-items: center; margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+        }
+
+        .download-item {
+            background: rgba(0, 0, 0, 0.15);
+            margin: 15px 0; padding: 20px;
+            border-radius: 12px; cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+            position: relative;
+            backdrop-filter: blur(3px);
+            border: 1px solid rgba(0, 255, 255, 0.1);
+        }
+
+        .download-item:hover {
+            background: rgba(0, 255, 255, 0.1);
+            border-left-color: var(--cyan);
+            transform: translateX(5px);
+        }
+
+        .download-item.selected {
+            background: rgba(0, 255, 0, 0.15);
+            border-left: 3px solid var(--accent);
+        }
+
+        .download-item.wrong {
+            background: rgba(255, 102, 102, 0.15);
+            border-left: 3px solid var(--danger);
+        }
+
+        .download-header {
+            display: flex; align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .file-icon {
+            font-size: 2rem;
+            margin-right: 15px;
+            min-width: 40px;
+        }
+
+        .file-info { flex-grow: 1; }
+
+        .file-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--cyan);
+            margin-bottom: 5px;
+        }
+.file-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 30px;
+            margin-top: 10px; padding: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+
+     .detail-item {
+            display: flex;
+            justify-content: flex-start;
+            align-items: baseline;
+            gap: 0; 
+            min-width: 0; 
+        }
+.detail-label {
+            color: #888;
+            font-size: 0.9rem;
+            margin-right: 5px; 
+            white-space: nowrap; 
+        }
+.detail-value {
+            color: var(--cyan);
+            font-weight: bold;
+            font-size: 0.9rem;
+            flex-grow: 1;
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+            flex-shrink: 0;
+            min-width: 0;
+        }
+
+        .threat-level {
+            position: absolute;
+            top: 15px; right: 15px;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .threat-high {
+            background: var(--danger);
+            color: white;
+        }
+
+        .threat-low {
+            background: var(--accent);
+            color: black;
+        }
+
+        .hash-info {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 10px; border-radius: 5px;
+            margin-top: 10px; font-size: 0.8rem;
+        }
+
+        .hash-label {
+            color: #888; margin-right: 10px;
+        }
+
+        .hash-value {
+            color: var(--warning);
+            font-family: monospace;
+            word-break: break-all;
+        }
+
+        .feedback {
+            position: fixed; top: 20px; right: 20px;
+            padding: 15px 25px; border-radius: 15px;
+            color: white; font-weight: bold; z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            max-width: 400px;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .feedback.show { transform: translateX(0); }
+        .feedback.success {
+            background: var(--accent);
+            color: black;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+        }
+        .feedback.error {
+            background: var(--danger);
+            box-shadow: 0 0 20px rgba(255, 102, 102, 0.5);
+        }
+
+        .progress-bar {
+            width: 100%; height: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px; overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--danger), var(--accent));
+            transition: width 0.5s ease;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.02); }
+        }
+
+        .downloads-list::-webkit-scrollbar { width: 8px; }
+        .downloads-list::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.3); }
+        .downloads-list::-webkit-scrollbar-thumb { background: var(--cyan); border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="video-background">
+        <video autoplay muted loop preload="none">
+            <source src="downloads_bg.mp4" type="video/mp4">
+        </video>
+    </div>
+
+    <div class="header">
+        <a href="index.html" class="back-btn">
+            ← Back to Command Center
+        </a>
+        <div class="game-stats">
+            <div class="stat-item">
+                <div class="stat-value">ACTIVE</div>
+                <div class="stat-label">Status</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">HIGH</div>
+                <div class="stat-label">Priority</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="globalIocs">0/12</div>
+                <div class="stat-label">Total IoCs</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="roomIocs">0/1</div>
+                <div class="stat-label">Room IoCs</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value timer" id="timer">60:00</div>
+                <div class="stat-label">Time</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="totalScore">0</div>
+                <div class="stat-label">Score</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="analysis-panel">
+            <div class="metrics-grid-container">
+                <div class="panel-header-top">
+                    <div class="panel-header-left">
+                        <h1>⬇️ DOWNLOADS ANALYSIS</h1>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">5</div>
+                    <div class="metric-label">Recent Downloads</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">0</div>
+                    <div class="metric-label">Quarantined Files</div>
+                </div>
+                <div class="metric-card alert">
+                    <div class="metric-value danger">2</div>
+                    <div class="metric-label">Executable Files</div>
+                </div>
+                <div class="metric-card alert">
+                    <div class="metric-value danger">1</div>
+                    <div class="metric-label">Suspicious Timing</div>
+                </div>
+            </div>
+
+            <div class="timeline-info" id="timelineInfo">
+            You return to your SOC workstation, pulling up the forensic image
+            of Jennifer's computer.<br>
+            <br>
+            "Start with the entry point," you remind yourself. "Everything begins with the download."<br>
+             <br>
+            You navigate to the Downloads folder and filter by yesterday's date.<br>
+            Several files appear. Most look legitimate - some PDFs, a project ZIP file. But one stands out...<br>
+            <br>
+            The timestamp. Just minutes before the first file was encrypted.
+            </div>
+
+            <button class="proceed-btn" id="proceedBtn">🔍 Begin Analysis</button>
+
+            <div class="progress-bar hidden" id="progressBar">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+
+            <div class="downloads-list hidden" id="downloadsList">
+            </div>
+        </div>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <script src="js/roomFlow.js"></script>
+    <script>
+        const ROOM_NAME = 'downloads';
+        let gameState = { iocsFound: 0, totalIocs: 1, gameActive: true };
+
+        const downloadData = [
+            {
+                id: 'down1',
+                fileName: 'security_update.exe',
+                downloadTime: '15:41:30',
+                size: '2.4 MB',
+                source: 'https://updates.system-security.org/patches/security_update.exe',
+                browser: 'Chrome',
+                userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                md5: 'a1b2c3d4e5f6789012345678901234ab',
+                sha256: '6f2c8ab4d912345678901234567890abcdef1234567890abcdef1234567890ab',
+                isIoc: true,
+                explanation: 'LockBit ransomware payload downloaded just before the attack - timing correlates with subsequent compromise',
+                category: 'suspicious',
+                threat: 'high',
+                icon: '⚠️',
+                digitalSignature: 'Unsigned', 
+                signer: 'N/A' 
+            },
+            {
+                id: 'down2',
+                fileName: 'report_template.docx',
+                downloadTime: '12:15:45',
+                size: '156 KB',
+                source: 'https://sharepoint.company.local/templates/report_template.docx',
+                browser: 'Edge',
+                userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36 Edg/91.0.864.59',
+                md5: '9f8e7d6c5b4a392817263544938271ab',
+                sha256: '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
+                isIoc: false,
+                category: 'normal',
+                threat: 'low',
+                icon: '📄',
+                digitalSignature: 'N/A', 
+                signer: 'N/A'
+            },
+            {
+                id: 'down3',
+                fileName: 'system_patch.exe',
+                downloadTime: '08:20:15',
+                size: '1.8 MB',
+                source: 'https://download.microsoft.com/patches/KB5012345/system_patch.exe',
+                browser: 'Chrome',
+                userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                md5: 'f1e2d3c4b5a6988776554433221100ab',
+                sha256: 'abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
+                isIoc: false,
+                category: 'normal',
+                threat: 'low',
+                icon: '🔧',
+                digitalSignature: 'Signed', 
+                signer: 'Microsoft Corporation'
+            },
+            {
+                id: 'down4',
+                fileName: 'project_update.zip',
+                downloadTime: '14:25:30',
+                size: '8.5 MB',
+                source: 'https://gitlab.company.com/projects/quarterly/project_update.zip',
+                browser: 'Firefox',
+                userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0',
+                md5: 'b3c4d5e6f7a8910234567890123456cd',
+                sha256: '7890abcdef1234567890abcdef1234567890abcdef1234567890abcdef123456',
+                isIoc: false,
+                category: 'normal',
+                threat: 'low',
+                icon: '📦',
+                digitalSignature: 'N/A', 
+                signer: 'N/A'
+            },
+            {
+                id: 'down5',
+                fileName: 'chrome_installer.exe',
+                downloadTime: '09:45:12',
+                size: '1.1 MB',
+                source: 'https://dl.google.com/chrome/install/chrome_installer.exe',
+                browser: 'Edge',
+                userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                md5: 'e7f8a9b0c1d23456789012345678e9fa',
+                sha256: 'def1234567890abcdef1234567890abcdef1234567890abcdef1234567890abc',
+                isIoc: false,
+                category: 'normal',
+                threat: 'low',
+                icon: '🌐',
+                digitalSignature: 'Signed', 
+                signer: 'Google LLC'
+            }
+        ];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!RoomIntegration.initializeRoom(ROOM_NAME)) return;
+            
+            // Proceed button functionality
+            const proceedBtn = document.getElementById('proceedBtn');
+            const timelineInfo = document.getElementById('timelineInfo');
+            const progressBar = document.getElementById('progressBar');
+            const downloadsList = document.getElementById('downloadsList');
+            
+            proceedBtn.addEventListener('click', function() {
+                // Hide timeline info and button
+                timelineInfo.classList.add('hidden');
+                proceedBtn.classList.add('hidden');
+                
+                // Show progress bar and downloads list
+                progressBar.classList.remove('hidden');
+                downloadsList.classList.remove('hidden');
+                
+                // Load the downloads
+                loadDownloadEntries();
+            });
+            
+            updateProgressBar();
+            
+            document.addEventListener('click', function(event) {
+                const downloadItem = event.target.closest('.download-item');
+                if (!downloadItem || !gameState.gameActive) return;
+                
+                const isIoc = downloadItem.dataset.isIoc === 'true';
+                const isAlreadySelected = downloadItem.classList.contains('selected') || downloadItem.classList.contains('wrong');
+                if (isAlreadySelected) return;
+                
+                const itemData = downloadData.find(dl => dl.id === downloadItem.dataset.id);
+                
+                if (isIoc) {
+                    downloadItem.classList.add('selected');
+                    gameState.iocsFound++;
+                    RoomIntegration.updateProgress(ROOM_NAME, 100, 1);
+                    RoomIntegration.showFeedback(`Correct! ${itemData.explanation}`, 'success');
+                } else {
+                    downloadItem.classList.add('wrong');
+                    RoomIntegration.updateProgress(ROOM_NAME, -50, 0);
+                    RoomIntegration.showFeedback('Wrong! This appears to be a legitimate download from a trusted source.', 'error');
+                }
+                updateProgressBar();
+            });
+        });
+
+        function loadDownloadEntries() {
+            const downloadsList = document.getElementById('downloadsList');
+            downloadsList.innerHTML = `<div class="list-header">
+                                            <h3>Recent File Downloads</h3>
+                                            <span>Analyzing download patterns...</span>
+                                        </div>`;
+            
+            const sortedDownloads = [...downloadData].sort((a, b) => b.downloadTime.localeCompare(a.downloadTime));
+            
+            sortedDownloads.forEach(download => {
+                const downloadItem = document.createElement('div');
+                downloadItem.className = `download-item ${download.category}`;
+                downloadItem.dataset.id = download.id;
+                downloadItem.dataset.isIoc = download.isIoc;
+                
+                downloadItem.innerHTML = `
+                    <div class="threat-level threat-${download.threat}">${download.threat.toUpperCase()}</div>
+                    
+                    <div class="download-header">
+                        <div class="file-icon">${download.icon}</div>
+                        <div class="file-info">
+                            <div class="file-name">${download.fileName}</div>
+                            <div style="color: #888; font-size: 0.9rem;">Downloaded: ${download.downloadTime}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="file-details">
+                        <div class="detail-item">
+                            <span class="detail-label">File Size:</span>
+                            <span class="detail-value">${download.size}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Browser:</span>
+                            <span class="detail-value">${download.browser}</span>
+                        </div>
+
+                        <div class="detail-item">
+                            <span class="detail-label">File Type:</span>
+                            <span class="detail-value">${download.fileName.split('.').pop().toUpperCase()}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Signature:</span>
+                            <span class="detail-value" 
+                                style="color: ${download.digitalSignature === 'Unsigned' ? 'var(--danger)' : 'var(--cyan)'};">
+                                ${download.digitalSignature}
+                            </span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Signer:</span>
+                            <span class="detail-value">${download.signer}</span>
+                        </div>
+                        
+                        </div>
+                    
+                    <div class="hash-info">
+                        <div class="detail-item">
+                            <span class="detail-label">Source Domain:</span>
+                            <span class="detail-value">${new URL(download.source).hostname}</span>
+                        </div>
+                        <div style="margin-bottom: 5px;">
+                            <span class="hash-label">MD5:</span>
+                            <span class="hash-value">${download.md5}</span>
+                        </div>
+                        <div style="margin-bottom: 5px;">
+                            <span class="hash-label">SHA256:</span>
+                            <span class="hash-value">${download.sha256}</span>
+                        </div>
+                        <div style="font-size: 0.7rem; color: #666; margin-top: 5px;">
+                            User-Agent: ${download.userAgent.substring(0, 60)}...
+                        </div>
+                    </div>
+                `;
+                
+                downloadsList.appendChild(downloadItem);
+            });
+        }
+
+        function updateProgressBar() {
+            const progress = (gameState.iocsFound / gameState.totalIocs) * 100;
+            const progressFill = document.getElementById('progressFill');
+            if (progressFill) progressFill.style.width = `${progress}%`;
+        }
+    </script>
+</body>
+</html>

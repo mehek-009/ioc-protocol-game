@@ -1,0 +1,229 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+body {
+    margin: 0;
+    font-family: 'Press Start 2P', cursive;
+    overflow: hidden;
+    background-color: #000;
+}
+
+.video-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    z-index: -1;
+}
+
+#dashboardVideo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: rgb(0, 255, 255); /* Changed to rgb(0,255,255) */
+}
+
+/* Glitch Effect for Title */
+.glitch {
+    font-size: 4em;
+    font-weight: bold;
+    color: rgb(0, 255, 255); /* Changed to rgb(0,255,255) */
+    position: relative;
+    margin-bottom: 50px;
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.7);
+    animation: text-shadow-pulse 2s infinite alternate;
+}
+
+.glitch::before,
+.glitch::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0);
+    color: rgb(0, 255, 255); /* Changed to rgb(0,255,255) */
+    overflow: hidden;
+}
+
+.glitch::before {
+    left: 2px;
+    text-shadow: -2px 0 red;
+    animation: glitch-animation-1 2s infinite linear alternate-reverse;
+}
+
+.glitch::after {
+    left: -2px;
+    text-shadow: -2px 0 blue;
+    animation: glitch-animation-2 2s infinite linear alternate-reverse;
+}
+
+@keyframes glitch-animation-1 {
+    0% {
+        clip: rect(34px, 9999px, 44px, 0);
+        transform: skew(0.5deg);
+    }
+    10% {
+        clip: rect(101px, 9999px, 16px, 0);
+        transform: skew(-1deg);
+    }
+    20% {
+        clip: rect(25px, 9999px, 35px, 0);
+        transform: skew(0.5deg);
+    }
+    30% {
+        clip: rect(61px, 9999px, 71px, 0);
+        transform: skew(-0.5deg);
+    }
+    40% {
+        clip: rect(16px, 9999px, 26px, 0);
+        transform: skew(1deg);
+    }
+    50% {
+        clip: rect(87px, 9999px, 97px, 0);
+        transform: skew(-0.5deg);
+    }
+    60% {
+        clip: rect(41px, 9999px, 51px, 0);
+        transform: skew(0.5deg);
+    }
+    70% {
+        clip: rect(113px, 9999px, 123px, 0);
+        transform: skew(-1deg);
+    }
+    80% {
+        clip: rect(2px, 9999px, 12px, 0);
+        transform: skew(0.5deg);
+    }
+    90% {
+        clip: rect(76px, 9999px, 86px, 0);
+        transform: skew(-0.5deg);
+    }
+    100% {
+        clip: rect(52px, 9999px, 62px, 0);
+        transform: skew(1deg);
+    }
+}
+
+@keyframes glitch-animation-2 {
+    0% {
+        clip: rect(82px, 9999px, 92px, 0);
+        transform: skew(-0.5deg);
+    }
+    10% {
+        clip: rect(12px, 9999px, 22px, 0);
+        transform: skew(1deg);
+    }
+    20% {
+        clip: rect(67px, 9999px, 77px, 0);
+        transform: skew(-0.5deg);
+    }
+    30% {
+        clip: rect(3px, 9999px, 13px, 0);
+        transform: skew(0.5deg);
+    }
+    40% {
+        clip: rect(98px, 9999px, 108px, 0);
+        transform: skew(-1deg);
+    }
+    50% {
+        clip: rect(29px, 9999px, 39px, 0);
+        transform: skew(0.5deg);
+    }
+    60% {
+        clip: rect(70px, 9999px, 80px, 0);
+        transform: skew(-0.5deg);
+    }
+    70% {
+        clip: rect(10px, 9999px, 20px, 0);
+        transform: skew(1deg);
+    }
+    80% {
+        clip: rect(55px, 9999px, 65px, 0);
+        transform: skew(-0.5deg);
+    }
+    90% {
+        clip: rect(120px, 9999px, 130px, 0);
+        transform: skew(0.5deg);
+    }
+    100% {
+        clip: rect(40px, 9999px, 50px, 0);
+        transform: skew(-1deg);
+    }
+}
+
+@keyframes text-shadow-pulse {
+    0% {
+        text-shadow: 0 0 5px rgba(0, 255, 255, 0.5), 0 0 15px rgba(0, 255, 255, 0.3);
+    }
+    100% {
+        text-shadow: 0 0 10px rgba(0, 255, 255, 0.7), 0 0 20px rgba(0, 255, 255, 0.5);
+    }
+}
+
+
+.button-container {
+    display: flex;
+    gap: 30px;
+    margin-top: 50px;
+}
+
+.dashboard-button {
+    /* Set a fixed size for uniformity */
+    width: 300px; /* Adjust as needed */
+    height: 400px; /* Increased height */
+    
+    background-color: rgba(0, 255, 255, 0.1);
+    border: 2px solid rgb(0, 255, 255);
+    color: rgb(0, 255, 255);
+    padding: 20px 40px; /* Padding can be adjusted, but fixed width/height overrides it for size */
+    font-size: 1.2em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+    text-transform: uppercase;
+    font-family: 'Press Start 2P', cursive;
+    letter-spacing: 1px;
+    display: flex; /* Centers text vertically and horizontally */
+    justify-content: center;
+    align-items: center;
+}
+
+.dashboard-button:hover {
+    background-color: rgba(0, 255, 255, 0.3);
+    transform: translateY(-10px) scale(1.05);
+    box-shadow: 0 0 25px rgba(0, 255, 255, 0.8), 0 10px 20px rgba(0, 0, 0, 0.5);
+    border-color: #33ffff; /* Slightly brighter cyan on hover */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .glitch {
+        font-size: 2.5em;
+    }
+    .button-container {
+        flex-direction: column;
+        gap: 20px;
+    }
+    .dashboard-button {
+        width: 80%; /* Adjusted for better mobile fit */
+        height: 60px;
+        padding: 15px 30px;
+        font-size: 1em;
+    }
+}

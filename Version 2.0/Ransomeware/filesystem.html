@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File System Analysis - SOC Analyst</title>
+    <style>
+        :root {
+            --bg: #0A0A1F;
+            --panel: #1A1A3A;
+            --cyan: #00FFFF;
+            --muted: #88BBDD;
+            --accent: #00FF00;
+            --danger: #FF6666;
+            --warning: #FFFF00;
+            --main-text: #DFFCFF;
+            --alert-banner-bg: #2C1B2A;
+            --alert-banner-border: #FF6666;
+            --alert-text: #FF9999;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Courier New', monospace;
+            color: var(--muted);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            overflow: auto;
+            background: #000;
+        }
+
+        .video-background {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            overflow: hidden; z-index: -2;
+        }
+
+        .video-background video {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            filter: brightness(1) contrast(1.1);
+        }
+
+        .container {
+            max-width: 1400px; width: 100%;
+            margin: 0 auto; padding: 20px;
+            margin-top: 80px;
+        }
+
+        .header {
+            position: fixed; top: 0; left: 0; width: 100%;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 14px 20px;
+            background: rgba(10, 10, 31, 0.15);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+            z-index: 1000;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .back-btn {
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid var(--cyan);
+            color: var(--cyan);
+            padding: 8px 14px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-family: inherit;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(0, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .game-stats {
+            display: flex; gap: 20px;
+            background: rgba(26, 26, 58, 0.25);
+            backdrop-filter: blur(15px);
+            padding: 15px; border-radius: 15px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+        }
+
+        .stat-item {
+            text-align: center;
+            min-width: 80px;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--accent);
+            margin-bottom: 5px;
+        }
+        .stat-value.danger { color: var(--danger); }
+
+        .stat-label {
+            color: var(--muted);
+            font-size: 0.8rem;
+        }
+
+        .analysis-panel {
+            background: rgba(26, 26, 58, 0.2);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .panel-header-top {
+            background: linear-gradient(90deg, rgba(0, 255, 255, 0.1), transparent);
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+        }
+
+        .panel-header-left h1 {
+            font-size: 1.8rem;
+            color: var(--cyan);
+            margin: 0;
+        }
+
+        .metrics-grid-container {
+            display: flex;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+        }
+
+        .metric-card {
+            background: transparent;
+            padding: 20px;
+            border-right: 1px solid rgba(0, 255, 255, 0.1);
+            flex-grow: 1;
+            text-align: center;
+        }
+        .metric-card:last-child { border-right: none; }
+        .metric-card.alert { animation: pulse 2s ease-in-out infinite; }
+
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--accent);
+            margin-bottom: 5px;
+        }
+        .metric-value.danger { color: var(--danger); }
+
+        .encryption-progress {
+            background: rgba(44, 27, 42, 0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--alert-banner-border);
+            border-radius: 15px;
+            padding: 15px; margin: 20px;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(255, 102, 102, 0.2);
+        }
+
+        .encryption-counter {
+            font-size: 1.5rem;
+            color: var(--alert-banner-border);
+            font-weight: bold;
+            margin-bottom: 5px;
+            animation: text-pulse 2s ease-in-out infinite;
+        }
+
+        .encryption-progress div {
+            color: var(--alert-text);
+        }
+
+        @keyframes text-pulse {
+            0%, 100% { color: var(--alert-banner-border); }
+            50% { color: var(--alert-text); }
+        }
+
+        .file-explorer {
+            background: rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 15px; padding: 20px;
+            max-height: 600px; overflow-y: auto;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+        }
+
+        .explorer-header {
+            display: flex; justify-content: space-between;
+            align-items: center; margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+        }
+
+        .file-item {
+            background: rgba(0, 0, 0, 0.3);
+            margin: 8px 0; padding: 15px;
+            border-radius: 8px; cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+            display: flex; align-items: center;
+            border: 1px solid rgba(0, 255, 255, 0.1);
+        }
+
+        .file-item:hover {
+            background: rgba(0, 255, 255, 0.1);
+            border-left-color: var(--cyan);
+            transform: translateX(5px);
+        }
+
+        .file-item.selected {
+            background: rgba(0, 255, 0, 0.15);
+            border-left: 3px solid var(--accent);
+        }
+
+        .file-item.wrong {
+            background: rgba(255, 102, 102, 0.15);
+            border-left: 3px solid var(--danger);
+        }
+
+        .file-icon {
+            font-size: 1.5rem;
+            margin-right: 15px;
+            min-width: 30px;
+        }
+
+        .file-info { flex-grow: 1; }
+
+        .file-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .file-details {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .file-status {
+            margin-left: auto;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            background: rgba(0, 102, 204, 0.2);
+            color: #0066cc;
+        }
+
+        .progress-bar {
+            width: 100%; height: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px; overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--danger), var(--accent));
+            transition: width 0.5s ease;
+        }
+
+        .feedback {
+            position: fixed; top: 20px; right: 20px;
+            padding: 15px 25px; border-radius: 15px;
+            color: white; font-weight: bold; z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            max-width: 400px;
+            backdrop-filter: blur(15px);
+        }
+
+        .feedback.show { transform: translateX(0); }
+        .feedback.success { background: var(--accent); color: black; }
+        .feedback.error { background: var(--danger); }
+
+        @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.7; transform: scale(1.02); } }
+    </style>
+</head>
+<body>
+    <div class="video-background">
+        <video autoplay muted loop>
+            <source src="file_systems.mp4" type="video/mp4">
+        </video>
+    </div>
+
+    <div class="header">
+        <a href="index.html" class="back-btn">← Back to Command Center</a>
+        <div class="game-stats">
+            <div class="stat-item">
+                <div class="stat-value">ACTIVE</div>
+                <div class="stat-label">Status</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="globalIocs">0/12</div>
+                <div class="stat-label">Total IoCs</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="roomIocs">0/3</div>
+                <div class="stat-label">Room IoCs</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="timer">60:00</div>
+                <div class="stat-label">Time</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="totalScore">0</div>
+                <div class="stat-label">Score</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="analysis-panel">
+            <div class="metrics-grid-container">
+                <div class="panel-header-top">
+                    <div class="panel-header-left">
+                        <h1>📁 FILE SYSTEM ANALYSIS</h1>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">12,847</div>
+                    <div class="metric-label">Total Files</div>
+                </div>
+                <div class="metric-card alert">
+                    <div class="metric-value danger" id="encryptedFiles">3</div>
+                    <div class="metric-label">Encrypted Files</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">1.2 GB</div>
+                    <div class="metric-label">Data at Risk</div>
+                </div>
+                <div class="metric-card alert">
+                    <div class="metric-value danger">85%</div>
+                    <div class="metric-label">Encryption Speed</div>
+                </div>
+            </div>
+
+            <div class="encryption-progress">
+                <div class="encryption-counter" id="encryptionCounter">⚠️ Live Encryption in Progress ⚠️</div>
+                <div>Files are being encrypted in real-time. Identify IoCs quickly!</div>
+            </div>
+
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+
+            <div class="file-explorer" id="fileExplorer">
+                <div class="explorer-header">
+                    <h3>Recent File Activity</h3>
+                    <span>Monitoring: <span id="monitorStatus">Active</span></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <script src="js/roomFlow.js"></script>
+    <script>
+        const ROOM_NAME = 'filesystem';
+        let gameState = { iocsFound: 0, totalIocs: 3, gameActive: true, encryptedCount: 3 };
+
+        const fileData = [
+            { 
+                id: 'file1', 
+                name: 'README_TO_RESTORE_FILES.txt',
+                path: 'C:\\Users\\jdoe\\Desktop\\',
+                size: '2.1 KB',
+                modified: '15:42:45',
+                icon: '📄',
+                isIoc: true,
+                explanation: 'LockBit ransom note - contains instructions for payment',
+                type: 'ransom-note',
+                status: 'suspicious'
+            },
+            { 
+                id: 'file2', 
+                name: 'update.exe',
+                path: 'C:\\Users\\jdoe\\Downloads\\',
+                size: '2.4 MB',
+                modified: '15:41:30',
+                icon: '⚠️',
+                isIoc: true,
+                explanation: 'LockBit ransomware payload disguised as system update',
+                type: 'suspicious',
+                status: 'suspicious'
+            },
+            { 
+                id: 'file3', 
+                name: 'Financial_Report_2024.xlsx.lockbit',
+                path: 'C:\\Documents\\Finance\\',
+                size: '1.2 MB',
+                modified: '15:42:52',
+                icon: '🔒',
+                isIoc: true,
+                explanation: 'File encrypted by LockBit ransomware (.lockbit extension)',
+                type: 'encrypted',
+                status: 'encrypted'
+            },
+            { 
+                id: 'file4', 
+                name: 'vacation_photos.zip.bak',
+                path: 'C:\\Users\\jdoe\\Pictures\\',
+                size: '45.8 MB',
+                modified: '12:15:22',
+                icon: '📦',
+                isIoc: false,
+                type: 'normal',
+                status: 'normal'
+            },
+            { 
+                id: 'file5', 
+                name: 'system_backup.lock',
+                path: 'C:\\System\\Backup\\',
+                size: '156 KB',
+                modified: '08:30:15',
+                icon: '🔧',
+                isIoc: false,
+                type: 'normal',
+                status: 'normal'
+            },
+            { 
+                id: 'file6', 
+                name: 'project_draft.docx',
+                path: 'C:\\Users\\jdoe\\Documents\\',
+                size: '890 KB',
+                modified: '14:25:33',
+                icon: '📝',
+                isIoc: false,
+                type: 'normal',
+                status: 'normal'
+            }
+        ];
+
+        let encryptableFiles = [
+            'presentation.pptx',
+            'budget_2024.xlsx',
+            'client_list.csv'
+        ];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!RoomIntegration.initializeRoom(ROOM_NAME)) return;
+            
+            loadFileEntries();
+            startEncryptionSimulation();
+            updateProgressBar();
+            
+            document.addEventListener('click', function(event) {
+                const fileItem = event.target.closest('.file-item');
+                if (!fileItem || !gameState.gameActive) return;
+                
+                const isIoc = fileItem.dataset.isIoc === 'true';
+                const isAlreadySelected = fileItem.classList.contains('selected') || fileItem.classList.contains('wrong');
+                if (isAlreadySelected) return;
+                
+                const itemData = fileData.find(file => file.id === fileItem.dataset.id);
+                
+                if (isIoc) {
+                    fileItem.classList.add('selected');
+                    gameState.iocsFound++;
+                    RoomIntegration.updateProgress(ROOM_NAME, 100, 1);
+                    RoomIntegration.showFeedback(`Correct! ${itemData.explanation}`, 'success');
+                } else {
+                    fileItem.classList.add('wrong');
+                    RoomIntegration.updateProgress(ROOM_NAME, -50, 0);
+                    RoomIntegration.showFeedback('Wrong! This appears to be a legitimate file or normal system backup.', 'error');
+                }
+                updateProgressBar();
+            });
+        });
+
+        function loadFileEntries() {
+            const explorer = document.getElementById('fileExplorer');
+            explorer.innerHTML = `<div class="explorer-header">
+                                    <h3>Recent File Activity</h3>
+                                    <span>Monitoring: <span id="monitorStatus">Active</span></span>
+                                </div>`;
+            
+            const sortedFiles = [...fileData].sort((a, b) => b.modified.localeCompare(a.modified));
+            
+            sortedFiles.forEach(file => {
+                const fileItem = document.createElement('div');
+                fileItem.className = `file-item ${file.type}`;
+                fileItem.dataset.id = file.id;
+                fileItem.dataset.isIoc = file.isIoc;
+                
+                fileItem.innerHTML = `
+                    <div class="file-icon">${file.icon}</div>
+                    <div class="file-info">
+                        <div class="file-name">${file.name}</div>
+                        <div class="file-details">
+                            ${file.path} | ${file.size} | Modified: ${file.modified}
+                        </div>
+                    </div>
+                    <div class="file-status">
+                        ${file.status.toUpperCase()}
+                    </div>
+                `;
+                
+                explorer.appendChild(fileItem);
+            });
+        }
+
+        function startEncryptionSimulation() {
+            let encryptionIndex = 0;
+            
+            setInterval(() => {
+                if (!gameState.gameActive || encryptionIndex >= encryptableFiles.length) return;
+                
+                const fileName = encryptableFiles[encryptionIndex];
+                const newEncryptedFile = {
+                    id: `encrypted_${encryptionIndex}`,
+                    name: `${fileName}.lockbit`,
+                    path: 'C:\\Users\\jdoe\\Documents\\',
+                    size: `${Math.floor(Math.random() * 500) + 100} KB`,
+                    modified: getCurrentTime(),
+                    icon: '🔒',
+                    isIoc: false,
+                    type: 'encrypted',
+                    status: 'encrypted'
+                };
+                
+                addEncryptedFileToDisplay(newEncryptedFile);
+                gameState.encryptedCount++;
+                updateEncryptedCounter();
+                encryptionIndex++;
+            }, 3000);
+        }
+
+        function addEncryptedFileToDisplay(file) {
+            const explorer = document.getElementById('fileExplorer');
+            const header = explorer.querySelector('.explorer-header');
+            
+            const fileItem = document.createElement('div');
+            fileItem.className = `file-item ${file.type}`;
+            fileItem.innerHTML = `
+                <div class="file-icon">${file.icon}</div>
+                <div class="file-info">
+                    <div class="file-name">${file.name}</div>
+                    <div class="file-details">
+                        ${file.path} | ${file.size} | Modified: ${file.modified}
+                    </div>
+                </div>
+                <div class="file-status">
+                    ${file.status.toUpperCase()}
+                </div>
+            `;
+            
+            explorer.insertBefore(fileItem, header.nextSibling);
+        }
+
+        function getCurrentTime() {
+            const now = new Date();
+            return now.toTimeString().slice(0, 8);
+        }
+
+        function updateEncryptedCounter() {
+            document.getElementById('encryptedFiles').textContent = gameState.encryptedCount;
+        }
+
+        function updateProgressBar() {
+            const progress = (gameState.iocsFound / gameState.totalIocs) * 100;
+            const progressFill = document.getElementById('progressFill');
+            if (progressFill) progressFill.style.width = `${progress}%`;
+        }
+
+        setInterval(() => {
+            if (gameState.gameActive) {
+                document.getElementById('monitorStatus').textContent = 'Scanning...';
+                setTimeout(() => {
+                    document.getElementById('monitorStatus').textContent = 'Active';
+                }, 1000);
+            }
+        }, 5000);
+    </script>
+</body>
+</html>

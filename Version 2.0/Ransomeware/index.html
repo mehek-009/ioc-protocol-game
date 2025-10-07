@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOC Analyst - LockBit Investigation</title>
+    <style>
+        @font-face {
+            font-family: 'custom_font';
+            src: url('ttf/JetBrainsMono-Medium.ttf') format('truetype');
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'custom_font', 'Courier New', monospace;
+            background: #000;
+            color: #00ffff;
+            height: 100vh;
+            overflow: auto;
+            position: relative;
+        }
+
+        .video-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            object-fit: cover;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: -1;
+        }
+        
+        .main-container {
+            width: 100vw;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2vmin;
+            position: relative;
+            z-index: 1;
+        }
+
+        .breadcrumb {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1vmin 2vmin;
+            border-radius: 10px;
+            margin-bottom: 2vmin;
+            color: #88BBDD;
+            font-size: 0.9vmax;
+        }
+
+        .breadcrumb .arrow {
+            color: #00ffff;
+            margin: 0 0.5vmin;
+        }
+
+        .game-status {
+            background: rgba(0, 255, 255, 0.1);
+            border: 2px solid #00ffff;
+            border-radius: 15px;
+            padding: 1.0vmax;
+            text-align: center;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 4px 15px rgba(0, 255, 255, 0.3);
+            width: 80%;
+            margin-top: 3vmin;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 2vmin;
+            margin-top: 2vmin;
+        }
+
+        .status-item {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1.5vmin;
+            border-radius: 10px;
+            border-left: 4px solid #ff6b6b;
+        }
+
+        .status-value {
+            font-size: 2vmax;
+            font-weight: bold;
+            color: #ff6b6b;
+            margin-bottom: 0.5vmin;
+        }
+
+        .status-value.success {
+            color: #00ff41;
+        }
+
+        .status-value.warning {
+            color: #ffff00;
+        }
+
+        .status-label {
+            color: #00ffff;
+            font-size: 0.8vmax;
+        }
+
+        .rooms-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(200px, 1fr));
+            grid-auto-rows: 1fr;
+            gap: 2vmax;
+            width: 90%;
+            max-width: 1000px;
+            margin-top: 5vmin;
+            flex-grow: 1;
+            min-height: 0;
+        }
+
+        .room-card {
+            background: rgba(0, 255, 255, 0.1);
+            border: 2px solid #00ffff;
+            border-radius: 20px;
+            padding: 0;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+            color: inherit;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 15px rgba(0, 255, 255, 0.3);
+            display: flex;
+            min-height: 200px;
+            flex-direction: column;
+            user-select: none;
+        }
+
+        .room-card:not(.locked) {
+            pointer-events: auto;
+        }
+
+        .room-card:hover:not(.locked) {
+            border-color: #ffffff;
+            box-shadow: 0 15px 30px rgba(0, 255, 255, 0.5);
+            transform: translateY(-10px) scale(1.05);
+            background: rgba(0, 255, 255, 0.2);
+        }
+
+        .room-card.locked {
+            opacity: 0.4;
+            filter: grayscale(100%);
+            border-color: #666;
+            cursor: not-allowed;
+        }
+
+        .room-card.locked:hover {
+            border-color: #666;
+            box-shadow: 0 4px 15px rgba(0, 255, 255, 0.3);
+            transform: none;
+            background: rgba(0, 255, 255, 0.5);
+        }
+
+        .room-card.completed {
+            background: rgba(0, 255, 65, 0.15);
+            border-color: #00ff41;
+        }
+
+        .room-card.completed:hover {
+            border-color: #00ff41;
+            box-shadow: 0 15px 30px rgba(0, 255, 65, 0.5);
+        }
+
+        .lock-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3rem;
+            color: rgba(0, 0, 0, 0.949);
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .terminal-header {
+            background: rgba(0, 255, 255, 0.4);
+            height: 2vmin;
+            display: flex;
+            align-items: center;
+            padding: 0 1vmin;
+            transition: background-color 0.3s ease;
+        }
+
+        .room-card:hover .terminal-header {
+            background: rgba(255, 255, 255, 0.6);
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 0.5vmin;
+        }
+
+        .control-circle {
+            width: 1vmin;
+            height: 1vmin;
+            border-radius: 50%;
+            border: 1px solid rgba(0, 0, 0, 0.3);
+            background: transparent;
+        }
+
+        .room-content {
+            flex: 1;
+            padding: 2vmin;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding-top: 1vmin;
+        }
+
+        .room-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1vmin;
+        }
+        
+        .threat-level {
+            position: absolute;
+            top: 2vmin;
+            right: 1.5vmin;
+            padding: 0.5vmin;
+            border-radius: 20px;
+            font-size: 0.8vmax;
+            font-weight: bold;
+        }
+
+        .room-icon {
+            font-size: 2vmax;
+            margin-right: 1.5vmin;
+        }
+
+        .room-title {
+            font-size: 1.2vmax;
+            font-weight: bold;
+            color: #00ff41;
+        }
+
+        .room-description {
+            color: #00ffff;
+            margin-bottom: 1vmin;
+            line-height: 1.2;
+            font-size: 1.2vmin;
+        }
+
+        .room-progress {
+            position: absolute;
+            bottom: 1vmin;
+            right: 1vmin;
+            font-size: 0.9vmax;
+            font-weight: bold;
+            padding: 0.5vmin;
+            border-radius: 5px;
+            background: rgba(0, 0, 0, 0.5);
+            color: #00ffff;
+        }
+
+        .room-progress.completed {
+            color: #00ff41;
+        }
+
+        .threat-start {
+            background: #00ff41;
+            color: black;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .threat-high {
+            background: #ff6b6b;
+            color: white;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .threat-medium {
+            background: #ffa500;
+            color: white;
+        }
+
+        .threat-low {
+            background: #00ff41;
+            color: black;
+        }
+
+        .threat-locked {
+            background: #666;
+            color: #ccc;
+        }
+
+        .threat-completed {
+            background: #00ff41;
+            color: black;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.05); }
+        }
+
+        .reset-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 102, 102, 0.8);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .reset-btn:hover {
+            background: rgba(255, 102, 102, 1);
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <video class="video-background" autoplay loop muted preload="none">
+        <source src="index_bg.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+    <div class="overlay"></div> 
+    
+    <button class="reset-btn" onclick="resetGame()">Reset Game</button>
+    
+    <div class="main-container">
+        <div class="breadcrumb">
+            <span>SOC Investigation</span>
+            <span class="arrow">→</span>
+            <span>Command Center</span>
+            <span class="arrow">→</span>
+            <span style="color: #00ff41;">Room Selection</span>
+        </div>
+
+        <div class="game-status">
+            <h3>🔍 CURRENT THREAT STATUS</h3>
+            <div class="status-grid">
+                <div class="status-item">
+                    <div class="status-value">ACTIVE</div>
+                    <div class="status-label">Incident Status</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-value">HIGH</div>
+                    <div class="status-label">Threat Level</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-value" id="globalIocsFound">0/12</div>
+                    <div class="status-label">IoCs Found</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-value" id="globalTimer">60:00</div>
+                    <div class="status-label">Time Remaining</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-value" id="globalScore">0</div>
+                    <div class="status-label">Total Score</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-value" id="roomsCompleted">0/6</div>
+                    <div class="status-label">Rooms Completed</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="rooms-grid">
+            <!-- Room 1: Downloads -->
+            <div class="room-card" data-room="downloads" data-order="1">
+                <div class="terminal-header">
+                    <div class="window-controls">
+                        <div class="control-circle"></div>
+                        <div class="control-circle"></div>
+                        <div class="control-circle"></div>
+                    </div>
+                </div>
+                <div class="room-content">
+                    <div class="threat-level threat-start">START HERE</div>
+                    <div class="room-header">
+                        <div class="room-icon">⬇️</div>
+                        <div class="room-title">Download Analysis</div>
+                    </div>
+                    <div class="room-description">
+                        Investigate the initial attack vector. Analyze recent file downloads to identify the ransomware payload.
+                    </div>
+                    <div class="room-progress" id="downloads-progress">0/1 IoCs</div>
+                </div>
+            </div>
+
+            <!-- Room 2: Processes -->
+            <div class="room-card locked" data-room="processes" data-order="2">
+                <div class="lock-overlay">🔒</div>
+                <div class="terminal-header">
+                    <div class="window-controls">
+                        <div class="control-circle"></div>
+                        <div class="control-circle"></div>
+                        <div class="control-circle"></div>
+                    </div>
+                </div>
+                <div class="room-content">
+                    <div class="threat-level threat-locked">LOCKED</div>
+                    <div class="room-header">
+                        <div class="room-icon">⚙️</div>
+                        <div class="room-title">Process Monitor</div>
+                    </div>
+                    <div class="room-description">
+                        Examine running processes for malicious activity. Identify ransomware processes consuming system resources.
+                    </div>
+                    <div class="room-progress" id="processes-progress">0/2 IoCs</div>
+                </div>
+            </div>
+
+            <!-- Room 3: Authentication -->
+            <div class="room-card locked" data-room="authentication" data-order="3">
+                <div class="lock-overlay">🔒</div>
+                <div class="terminal-header">
+                    <div class="window-controls">
+                        <div class="control-circle"></div>
+                        <div class="control-circle"></div>
+                        <div class="control-circle"></div>
+                    </div>
+                </div>
+                <div class="room-content">
+                    <div class="threat-level threat-locked">LOCKED</div>
+                    <div class="room-header">
+                        <div class="room-icon">🔐</div>
+                        <div class="room-title">Authentication Logs</div>
+                    </div>
+                    <div class="room-description">
+                        Analyze login events and credential usage. Track how the attacker gained system access.
+                    </div>
+                    <div class="room-progress" id="authentication-progress">0/2 IoCs</div>
+                </div>
+            </div>
+
+            <!-- Room 4: Network -->
+            <div class="room-card locked" data-room="network" data-order="4">
+                <div class="lock-overlay">🔒</div>
+                <div class="terminal-header">
+                    <div class="window-controls">
+                        <div class="control-circle"></div>
+                        <div class="control-circle"></div>
+                        <div class="control-circle"></div>
+                    </div>
+                </div>
+                <div class="room-content">
+                    <div class="threat-level threat-locked">LOCKED</div>
+                    <div class="room-header">
+                        <div class="room-icon">🌐</div>
+                        <div class="room-title">Network Traffic</div>
+                    </div>
+                    <div class="room-description">
+                        Investigate network communications. Identify C&C servers and data exfiltration.
+                    </div>
+                    <div class="room-progress" id="network-progress">0/3 IoCs</div>
+                </div>
+            </div>
+
+            <!-- Room 5: Registry -->
+            <div class="room-card locked" data-room="registry" data-order="5">
+                <div class="lock-overlay">🔒</div>
+                <div class="terminal-header">
+                    <div class="window-controls">
+                        <div class="control-circle"></div>
+                        <div class="control-circle"></div>
+                        <div class="control-circle"></div>
+                    </div>
+                </div>
+                <div class="room-content">
+                    <div class="threat-level threat-locked">LOCKED</div>
+                    <div class="room-header">
+                        <div class="room-icon">📋</div>
+                        <div class="room-title">Registry Analysis</div>
+                    </div>
+                    <div class="room-description">
+                        Examine system registry modifications. Discover persistence mechanisms.
+                    </div>
+                    <div class="room-progress" id="registry-progress">0/2 IoCs</div>
+                </div>
+            </div>
+            
+            <!-- Room 6: Filesystem -->
+            <div class="room-card locked" data-room="filesystem" data-order="6">
+                <div class="lock-overlay">🔒</div>
+                <div class="terminal-header">
+                    <div class="window-controls">
+                        <div class="control-circle"></div>
+                        <div class="control-circle"></div>
+                        <div class="control-circle"></div>
+                    </div>
+                </div>
+                <div class="room-content">
+                    <div class="threat-level threat-locked">LOCKED</div>
+                    <div class="room-header">
+                        <div class="room-icon">📁</div>
+                        <div class="room-title">File System Analysis</div>
+                    </div>
+                    <div class="room-description">
+                        Investigate file system changes. Locate encrypted files and assess attack impact.
+                    </div>
+                    <div class="room-progress" id="filesystem-progress">0/3 IoCs</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/roomFlow.js"></script>
+    <script>
+        let globalGameState;
+        let timerInterval;
+        let lastTimerUpdate = 0;
+
+        function initializeDashboard() {
+            console.log('Initializing dashboard...');
+            globalGameState = RoomFlow.loadGameState();
+            console.log('Game state loaded:', globalGameState);
+            
+            updateAllDisplays();
+            updateRoomStates();
+            startTimerUpdates();
+            setupEventHandlers();
+            
+            RoomFlow.setupStateListener(handleStateUpdate);
+            console.log('Dashboard initialization complete');
+        }
+
+        function handleStateUpdate(newState) {
+            globalGameState = newState;
+            updateAllDisplays();
+            updateRoomStates();
+        }
+
+        function updateAllDisplays() {
+            document.getElementById('globalScore').textContent = globalGameState.totalScore;
+            document.getElementById('globalIocsFound').textContent = 
+                `${globalGameState.totalIocsFound}/${globalGameState.totalIocsAvailable}`;
+            document.getElementById('roomsCompleted').textContent = 
+                `${globalGameState.roomsCompleted.length}/${RoomFlow.ROOM_ORDER.length}`;
+            
+            updateTimerDisplay();
+            
+            const iocsElement = document.getElementById('globalIocsFound');
+            const scoreElement = document.getElementById('globalScore');
+            const roomsElement = document.getElementById('roomsCompleted');
+            
+            if (globalGameState.totalIocsFound > 0) {
+                iocsElement.classList.add('success');
+            }
+            if (globalGameState.totalScore > 0) {
+                scoreElement.classList.add('success');
+            }
+            if (globalGameState.roomsCompleted.length > 0) {
+                roomsElement.classList.add('success');
+            }
+        }
+
+        function updateTimerDisplay() {
+            const now = Date.now();
+            const shouldSave = (now - lastTimerUpdate) > 5000;
+            
+            const timeLeft = RoomFlow.getGlobalTimeRemaining(shouldSave);
+            const timerElement = document.getElementById('globalTimer');
+            
+            timerElement.textContent = RoomFlow.formatTime(timeLeft);
+            
+            if (shouldSave) {
+                lastTimerUpdate = now;
+            }
+            
+            if (timeLeft <= 300) {
+                timerElement.style.color = '#ff6b6b';
+                timerElement.classList.add('danger');
+            } else if (timeLeft <= 900) {
+                timerElement.style.color = '#ffa500';
+                timerElement.classList.add('warning');
+            } else {
+                timerElement.style.color = '#00ff41';
+                timerElement.classList.add('success');
+            }
+            
+            if (timeLeft <= 0 || globalGameState.gameCompleted) {
+                endGame();
+            }
+        }
+
+        function updateRoomStates() {
+            RoomFlow.ROOM_ORDER.forEach((roomName) => {
+                const roomCard = document.querySelector(`[data-room="${roomName}"]`);
+                if (!roomCard) return;
+                
+                const progressElement = document.getElementById(`${roomName}-progress`);
+                const threatElement = roomCard.querySelector('.threat-level');
+                
+                const roomData = globalGameState.roomIocs[roomName];
+                if (progressElement && roomData) {
+                    progressElement.textContent = `${roomData.found}/${roomData.total} IoCs`;
+                    
+                    if (roomData.found >= roomData.total) {
+                        progressElement.classList.add('completed');
+                    }
+                }
+                
+                const isUnlocked = globalGameState.roomUnlocked.includes(roomName);
+                const isCompleted = globalGameState.roomsCompleted.includes(roomName);
+                
+                if (isCompleted) {
+                    roomCard.classList.remove('locked');
+                    roomCard.classList.add('completed');
+                    
+                    const lockOverlay = roomCard.querySelector('.lock-overlay');
+                    if (lockOverlay) lockOverlay.remove();
+                    
+                    threatElement.textContent = 'COMPLETE';
+                    threatElement.className = 'threat-level threat-completed';
+                    
+                } else if (isUnlocked) {
+                    roomCard.classList.remove('locked');
+                    
+                    const lockOverlay = roomCard.querySelector('.lock-overlay');
+                    if (lockOverlay) lockOverlay.remove();
+                    
+                    if (roomName === 'downloads') {
+                        threatElement.textContent = 'START HERE';
+                        threatElement.className = 'threat-level threat-start';
+                    } else {
+                        const threatLevels = {
+                            processes: { text: 'MEDIUM', class: 'threat-medium' },
+                            authentication: { text: 'MEDIUM', class: 'threat-medium' },
+                            network: { text: 'HIGH', class: 'threat-high' },
+                            registry: { text: 'LOW', class: 'threat-low' },
+                            filesystem: { text: 'HIGH', class: 'threat-high' }
+                        };
+                        
+                        const threatInfo = threatLevels[roomName];
+                        if (threatInfo) {
+                            threatElement.textContent = threatInfo.text;
+                            threatElement.className = `threat-level ${threatInfo.class}`;
+                        }
+                    }
+                } else {
+                    roomCard.classList.add('locked');
+                    
+                    if (!roomCard.querySelector('.lock-overlay')) {
+                        const lockOverlay = document.createElement('div');
+                        lockOverlay.className = 'lock-overlay';
+                        lockOverlay.innerHTML = '🔒';
+                        roomCard.appendChild(lockOverlay);
+                    }
+                    
+                    threatElement.textContent = 'LOCKED';
+                    threatElement.className = 'threat-level threat-locked';
+                }
+            });
+        }
+
+        function startTimerUpdates() {
+            if (timerInterval) clearInterval(timerInterval);
+            
+            timerInterval = setInterval(() => {
+                updateTimerDisplay();
+            }, 1000);
+        }
+
+        function setupEventHandlers() {
+            const roomCards = document.querySelectorAll('.room-card');
+            console.log('Setting up event handlers for', roomCards.length, 'room cards');
+            
+            roomCards.forEach((card, index) => {
+                const roomName = card.getAttribute('data-room');
+                console.log(`Attaching handler to room ${index + 1}:`, roomName);
+                
+                card.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    console.log('Room card clicked:', roomName);
+                    console.log('Is locked:', card.classList.contains('locked'));
+                    
+                    if (card.classList.contains('locked')) {
+                        showLockedRoomMessage(roomName);
+                        return false;
+                    }
+                    
+                    RoomFlow.enterRoom(roomName);
+                    console.log('Navigating to:', `${roomName}.html`);
+                    window.location.href = `${roomName}.html`;
+                }, true);
+            });
+        }
+
+        function showLockedRoomMessage(roomName) {
+            const roomIndex = RoomFlow.ROOM_ORDER.indexOf(roomName);
+            const requiredRooms = RoomFlow.ROOM_ORDER.slice(0, roomIndex);
+            
+            alert(`Room Locked!\n\nComplete these rooms first:\n${requiredRooms.join(' → ')}`);
+        }
+
+        function endGame() {
+            clearInterval(timerInterval);
+            
+            const stats = RoomFlow.getGameStatistics();
+            let message = '';
+            
+            if (stats.gameCompleted) {
+                message = `Investigation Complete!\n\nAll IoCs Found: ${stats.totalIocsFound}/${stats.totalIocsAvailable}\nFinal Score: ${stats.totalScore}\nTime Used: ${stats.timeUsed}`;
+            } else {
+                message = `Time Expired!\n\nIoCs Found: ${stats.totalIocsFound}/${stats.totalIocsAvailable}\nFinal Score: ${stats.totalScore}\nThe ransomware attack could not be fully contained.`;
+            }
+            
+            setTimeout(() => {
+                alert(message);
+                if (confirm('Would you like to start a new investigation?')) {
+                    resetGame();
+                }
+            }, 1000);
+        }
+
+        function resetGame() {
+            if (confirm('Are you sure? All progress will be lost.')) {
+                RoomFlow.resetGame();
+                window.location.href = 'instruction.html';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM Content Loaded - Initializing dashboard');
+            
+            initializeDashboard();
+            
+            setTimeout(() => {
+                console.log('Setting up event handlers after delay');
+                setupEventHandlers();
+            }, 100);
+            
+            const cards = document.querySelectorAll('.room-card');
+            console.log('Found', cards.length, 'room cards for animation');
+            
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(50px)';
+                
+                setTimeout(() => {
+                    card.style.transition = 'all 0.6s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 200);
+            });
+        });
+    </script>
+</body>
+</html>

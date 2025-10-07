@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Process Monitor - SOC Analyst</title>
+    <style>
+        :root {
+            --bg: #0A0A1F;
+            --panel: #1A1A3A;
+            --cyan: #00FFFF;
+            --muted: #88BBDD;
+            --accent: #00FF00;
+            --danger: #FF6666;
+            --warning: #FFFF00;
+            --main-text: #DFFCFF;
+            --alert-banner-bg: #2C1B2A;
+            --alert-banner-border: #FF6666;
+            --alert-text: #FF9999;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Courier New', monospace;
+            color: var(--muted);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            overflow: auto;
+            background: #000;
+        }
+
+        .video-background {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            overflow: hidden; z-index: -2;
+        }
+
+        .video-background video {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            filter: brightness(1) contrast(1.3);
+        }
+
+        .container {
+            max-width: 1600px; /* Increased max-width */
+            width: 100%;
+            margin: 0 auto; padding: 20px;
+            margin-top: 80px;
+        }
+
+        .header {
+            position: fixed; top: 0; left: 0; width: 100%;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 14px 20px;
+            background: rgba(10, 10, 31, 0.15);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+            z-index: 1000;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .back-btn {
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid var(--cyan);
+            color: var(--cyan);
+            padding: 8px 14px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-family: inherit;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(0, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .game-stats {
+            display: flex; gap: 20px;
+            background: rgba(26, 26, 58, 0.25);
+            backdrop-filter: blur(15px);
+            padding: 15px; border-radius: 15px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-item {
+            text-align: center;
+            min-width: 80px;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--accent);
+            margin-bottom: 5px;
+        }
+        .stat-value.danger { color: var(--danger); }
+
+        .stat-label {
+            color: var(--muted);
+            font-size: 0.8rem;
+        }
+
+        .analysis-panel {
+            background: rgba(26, 26, 58, 0.2);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .panel-header-top {
+            background: linear-gradient(90deg, rgba(0, 255, 255, 0.1), transparent);
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+        }
+
+        .panel-header-left h1 {
+            font-size: 1.8rem;
+            color: var(--cyan);
+            margin: 0;
+        }
+
+        .metrics-grid-container {
+            display: flex;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+        }
+
+        .metric-card {
+            background: transparent;
+            padding: 20px;
+            border-right: 1px solid rgba(0, 255, 255, 0.1);
+            flex-grow: 1;
+            text-align: center;
+        }
+        .metric-card:last-child { border-right: none; }
+        .metric-card.alert { animation: pulse 2s ease-in-out infinite; }
+
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--accent);
+            margin-bottom: 5px;
+        }
+        .metric-value.danger { color: var(--danger); }
+
+        .metric-label {
+            font-size: 0.9rem;
+            color: var(--muted);
+        }
+        .metric-card.alert .metric-value { color: var(--danger); }
+
+        .cpu-usage-bar {
+            width: 100%; height: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px; overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .cpu-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--warning), var(--danger));
+            transition: width 0.5s ease;
+        }
+
+        .alert-banner {
+            background: var(--alert-banner-bg);
+            border: 1px solid var(--alert-banner-border);
+            border-radius: 10px;
+            padding: 15px; margin: 20px;
+            text-align: center;
+            box-shadow: 0 0 15px rgba(255, 102, 102, 0.2);
+            color: var(--alert-text);
+            font-weight: bold;
+            animation: text-pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes text-pulse {
+            0%, 100% { color: var(--alert-banner-border); }
+            50% { color: var(--alert-text); }
+        }
+
+        .proceed-btn {
+            background: linear-gradient(135deg, var(--cyan), rgba(0, 255, 255, 0.6));
+            border: 2px solid var(--cyan);
+            color: #000;
+            padding: 15px 40px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin: 20px auto;
+            display: block;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 5px 20px rgba(0, 255, 255, 0.3);
+        }
+
+        .proceed-btn:hover {
+            background: linear-gradient(135deg, var(--accent), rgba(0, 255, 0, 0.6));
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 255, 255, 0.5);
+        }
+
+        .proceed-btn:active {
+            transform: translateY(0);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .process-monitor {
+            background: rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 15px; padding: 20px;
+            max-height: 800px; overflow-y: auto; /* Increased max height */
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .monitor-header {
+            display: flex; justify-content: space-between;
+            align-items: center; margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+        }
+
+        .process-table { width: 100%; }
+
+        /* UPDATED GRID TEMPLATE: Added 2 columns for Parent and Path */
+        .process-header {
+            display: grid;
+            grid-template-columns: 1.5fr 0.5fr 0.5fr 0.5fr 0.5fr 1fr 2fr; /* 7 columns now */
+            gap: 15px; padding: 10px;
+            border-bottom: 2px solid rgba(0, 255, 255, 0.1);
+            font-weight: bold; color: var(--cyan);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        /* UPDATED GRID TEMPLATE: Added 2 columns for Parent and Path */
+        .process-item {
+            display: grid;
+            grid-template-columns: 1.5fr 0.5fr 0.5fr 0.5fr 0.5fr 1fr 2fr; /* 7 columns now */
+            gap: 15px;
+            background: rgba(0, 0, 0, 0.15);
+            margin: 8px 0; padding: 15px;
+            border-radius: 8px; cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+            backdrop-filter: blur(3px);
+            border: 1px solid rgba(0, 255, 255, 0.1);
+            align-items: center;
+        }
+
+        .process-item:hover {
+            background: rgba(0, 255, 255, 0.1);
+            border-left-color: var(--cyan);
+            transform: translateX(5px);
+        }
+
+        .process-item.selected {
+            background: rgba(0, 255, 0, 0.15);
+            border-left: 3px solid var(--accent);
+        }
+
+        .process-item.wrong {
+            background: rgba(255, 102, 102, 0.15);
+            border-left: 3px solid var(--danger);
+        }
+
+        .process-item.terminated {
+            opacity: 0.5;
+            background: rgba(255, 255, 255, 0.05);
+            border-left: 3px solid var(--muted);
+        }
+
+        .process-name {
+            font-weight: bold;
+            color: var(--cyan);
+        }
+        
+        /* New Styles for Parent and Path */
+        .process-parent { 
+            color: var(--muted); 
+            font-size: 0.9em;
+        }
+        .process-parent.malicious-parent { 
+            color: var(--danger);
+            font-weight: bold;
+        }
+
+        .process-path {
+            font-size: 0.75em;
+            color: #ccc;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .process-path.malicious-path {
+            color: var(--danger);
+            font-weight: bold;
+        }
+
+        .process-pid { color: #888; }
+
+        .process-cpu { font-weight: bold; }
+        .cpu-high { color: var(--danger); }
+        .cpu-medium { color: var(--warning); }
+        .cpu-low { color: var(--accent); }
+
+        .process-memory { color: var(--cyan); }
+
+        .process-status {
+            font-size: 0.8rem;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-weight: bold;
+            background: rgba(0, 102, 204, 0.2);
+            color: #0066cc;
+            text-align: center;
+        }
+        .process-status.terminated {
+            background: rgba(136, 187, 221, 0.1);
+            color: var(--muted);
+        }
+
+        .progress-bar {
+            width: 100%; height: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px; overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--danger), var(--accent));
+            transition: width 0.5s ease;
+        }
+
+        .feedback {
+            position: fixed; top: 20px; right: 20px;
+            padding: 15px 25px; border-radius: 15px;
+            color: white; font-weight: bold; z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            max-width: 400px;
+            backdrop-filter: blur(15px);
+        }
+
+        .feedback.show { transform: translateX(0); }
+        .feedback.success { background: var(--accent); color: black; }
+        .feedback.error { background: var(--danger); }
+
+        @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.7; transform: scale(1.02); } }
+    </style>
+</head>
+<body>
+    <div class="video-background">
+        <video autoplay muted loop>
+            <source src="processes.mp4" type="video/mp4">
+        </video>
+    </div>
+
+    <div class="header">
+        <a href="index.html" class="back-btn">← Back to Command Center</a>
+        <div class="game-stats">
+            <div class="stat-item">
+                <div class="stat-value">ACTIVE</div>
+                <div class="stat-label">Status</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="globalIocs">0/12</div>
+                <div class="stat-label">Total IoCs</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="roomIocs">0/3</div>
+                <div class="stat-label">Room IoCs</div> </div>
+            <div class="stat-item">
+                <div class="stat-value" id="timer">60:00</div>
+                <div class="stat-label">Time</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="totalScore">0</div>
+                <div class="stat-label">Score</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="analysis-panel">
+            <div class="metrics-grid-container">
+                <div class="panel-header-top">
+                    <div class="panel-header-left">
+                        <h1>⚙️ PROCESS MONITOR</h1>
+                    </div>
+                </div>
+                <div class="metric-card alert">
+                    <div class="metric-value danger" id="cpuUsage">78%</div>
+                    <div class="metric-label">CPU Usage</div>
+                    <div class="cpu-usage-bar">
+                        <div class="cpu-fill" id="cpuBar" style="width: 78%"></div>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">6.2 GB</div>
+                    <div class="metric-label">Memory Usage</div>
+                </div>
+                <div class="metric-card alert">
+                    <div class="metric-value danger">48</div> <div class="metric-label">Processes Logged</div>
+                </div>
+                <div class="metric-card alert">
+                    <div class="metric-value danger">4</div> <div class="metric-label">High CPU Processes</div>
+                </div>
+            </div>
+
+            <div class="alert-banner" id="alertBanner">
+                You pull up the Windows Event Logs, filtering for process creation events around 15:41-15:43.<br>
+                Dozens of processes. Normal system activity. But buried in the logs, you find anomalies...<br>
+                The ransomware didn't just run as "security_update.exe" - it would be too obvious. <br>You're looking for what it SPAWNED, what it became.
+            </div>
+
+            <button class="proceed-btn" id="proceedBtn">⚙️ Begin Process Analysis</button>
+
+            <div class="progress-bar hidden" id="progressBar">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+
+            <div class="process-monitor hidden" id="processMonitor">
+                <div class="monitor-header">
+                    <h3>Running Processes</h3>
+                    <span>Refresh Rate: 1s</span>
+                </div>
+                <div class="process-table">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <script src="js/roomFlow.js"></script>
+    <script>
+        const ROOM_NAME = 'processes';
+        // UPDATED: Total IoCs is now 3 (proc0, proc1, proc2)
+        let gameState = { iocsFound: 0, totalIocs: 3, gameActive: true, cpuUsage: 78 };
+
+        // --- UPDATED PROCESS DATA LOGS ---
+        const processData = [
+    // 🚨 ATTACK EXECUTION CHAIN (CRITICAL IoCs - Latest Events First) 🚨
+    {
+        id: 'proc2',
+        name: 'conhost.exe',
+        pid: '3401',
+        cpu: 67,
+        memory: '120 MB',
+        started: '15:42:30',
+        path: 'C:\\Windows\\System32\\conhost.exe',
+        parent: 'svchost.exe',
+        parentPath: 'C:\\Temp\\svchost.exe', // Confirms malicious parent
+        isIoc: true,
+        explanation: '**Legitimate process (conhost.exe) being used by the malicious svchost** (proc1) likely for high-intensity tasks like file encryption. Extremely high CPU usage.',
+        type: 'malicious',
+        status: 'running'
+    },
+    {
+        id: 'proc1',
+        name: 'svchost.exe',
+        pid: '1847',
+        cpu: 85,
+        memory: '245 MB',
+        started: '15:42:28',
+        path: 'C:\\Temp\\svchost.exe', // Suspicious path
+        parent: 'security_update.exe',
+        parentStatus: 'terminated',
+        isIoc: true,
+        explanation: 'Malicious process **masquerading as legitimate svchost** - running from C:\\Temp\\ (wrong path) with abnormally high CPU. Parent (security_update.exe) is terminated.',
+        type: 'malicious',
+        status: 'running'
+    },
+
+    // User Applications (Reverse Chronological)
+    {
+        id: 'proc7',
+        name: 'notepad.exe',
+        pid: '4521',
+        cpu: 1,
+        memory: '25 MB',
+        started: '14:22:15',
+        path: 'C:\\Windows\\System32\\notepad.exe',
+        parent: 'explorer.exe',
+        isIoc: false,
+        type: 'normal',
+        status: 'running'
+    },
+    {
+        id: 'proc8',
+        name: 'winword.exe',
+        pid: '5632',
+        cpu: 15,
+        memory: '145 MB',
+        started: '13:45:30',
+        path: 'C:\\Program Files\\Microsoft Office\\WINWORD.exe',
+        parent: 'explorer.exe',
+        isIoc: false,
+        type: 'normal',
+        status: 'running'
+    },
+    {
+        id: 'proc3',
+        name: 'chrome.exe',
+        pid: '2156',
+        cpu: 12,
+        memory: '180 MB',
+        started: '09:15:22',
+        path: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+        parent: 'explorer.exe',
+        isIoc: false,
+        type: 'normal',
+        status: 'running'
+    },
+
+    // Core System Processes (Earliest Events Last)
+    {
+        id: 'proc4',
+        name: 'explorer.exe',
+        pid: '1234',
+        cpu: 5,
+        memory: '95 MB',
+        started: '08:30:45',
+        path: 'C:\\Windows\\explorer.exe',
+        parent: 'userinit.exe',
+        isIoc: false,
+        type: 'normal',
+        status: 'running'
+    },
+    {
+        id: 'proc9',
+        name: 'MsMpEng.exe',
+        pid: '3245',
+        cpu: 45,
+        memory: '234 MB',
+        started: '08:30:25',
+        path: 'C:\\Program Files\\Windows Defender\\MsMpEng.exe',
+        parent: 'services.exe',
+        isIoc: false,
+        type: 'high-cpu',
+        status: 'running'
+    },
+    {
+        id: 'proc6',
+        name: 'dwm.exe',
+        pid: '1456',
+        cpu: 8,
+        memory: '78 MB',
+        started: '08:30:20',
+        path: 'C:\\Windows\\System32\\dwm.exe',
+        parent: 'csrss.exe',
+        isIoc: false,
+        type: 'normal',
+        status: 'running'
+    },
+    {
+        id: 'proc5',
+        name: 'winlogon.exe',
+        pid: '892',
+        cpu: 2,
+        memory: '45 MB',
+        started: '08:30:15',
+        path: 'C:\\Windows\\System32\\winlogon.exe',
+        parent: 'smss.exe',
+        isIoc: false,
+        type: 'normal',
+        status: 'running'
+    },
+    {
+        id: 'proc10',
+        name: 'services.exe',
+        pid: '720',
+        cpu: 1,
+        memory: '28 MB',
+        started: '08:30:10',
+        path: 'C:\\Windows\\System32\\services.exe',
+        parent: 'wininit.exe',
+        isIoc: false,
+        type: 'normal',
+        status: 'running'
+    }
+];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Note: Updated iocsFound logic in the click handler to handle proc0 being "terminated" but still an IoC
+            if (!RoomIntegration.initializeRoom(ROOM_NAME)) return;
+            
+            // Proceed button functionality
+            const proceedBtn = document.getElementById('proceedBtn');
+            const alertBanner = document.getElementById('alertBanner');
+            const progressBar = document.getElementById('progressBar');
+            const processMonitor = document.getElementById('processMonitor');
+            
+            proceedBtn.addEventListener('click', function() {
+                // Hide alert banner and button
+                alertBanner.classList.add('hidden');
+                proceedBtn.classList.add('hidden');
+                
+                // Show progress bar and process monitor
+                progressBar.classList.remove('hidden');
+                processMonitor.classList.remove('hidden');
+                
+                // Load the processes
+                loadProcessEntries();
+                startCpuMonitoring();
+            });
+            
+            updateProgressBar();
+            
+            document.addEventListener('click', function(event) {
+                const processItem = event.target.closest('.process-item');
+                if (!processItem || !gameState.gameActive) return;
+                
+                const isIoc = processItem.dataset.isIoc === 'true';
+                const isAlreadySelected = processItem.classList.contains('selected') || processItem.classList.contains('wrong');
+                if (isAlreadySelected) return;
+                
+                const itemData = processData.find(proc => proc.id === processItem.dataset.id);
+                
+                if (isIoc) {
+                    processItem.classList.add('selected');
+                    gameState.iocsFound++;
+                    RoomIntegration.updateProgress(ROOM_NAME, 100, 1);
+                    RoomIntegration.showFeedback(`Correct! ${itemData.explanation}`, 'success');
+                } else {
+                    processItem.classList.add('wrong');
+                    RoomIntegration.updateProgress(ROOM_NAME, -50, 0);
+                    RoomIntegration.showFeedback('Wrong! This appears to be a legitimate system process.', 'error');
+                }
+                updateProgressBar();
+            });
+        });
+
+        function loadProcessEntries() {
+            const monitor = document.getElementById('processMonitor');
+            const table = monitor.querySelector('.process-table');
+            
+            table.innerHTML = `
+                <div class="process-header">
+                    <div>Process Name</div>
+                    <div>PID</div>
+                    <div>CPU %</div>
+                    <div>Memory</div>
+                    <div>Started</div>
+                    <div>Parent</div>
+                    <div>Path</div> </div>
+            `;
+            
+            // Sort by CPU (descending) but keep terminated process at the bottom (or just in time order)
+            const sortedProcesses = [...processData].sort((a, b) => {
+                if (a.status === 'terminated' && b.status !== 'terminated') return 1;
+                if (a.status !== 'terminated' && b.status === 'terminated') return -1;
+                return b.cpu - a.cpu;
+            });
+            
+            sortedProcesses.forEach(process => {
+                const processItem = document.createElement('div');
+                processItem.className = `process-item ${process.type} ${process.status === 'terminated' ? 'terminated' : ''}`;
+                processItem.dataset.id = process.id;
+                processItem.dataset.isIoc = process.isIoc;
+                
+                const cpuClass = process.cpu >= 50 ? 'cpu-high' : process.cpu >= 20 ? 'cpu-medium' : 'cpu-low';
+                
+                // Determine the parent display (handle the malicious parent case)
+                let parentDisplay = process.parent || 'N/A';
+                let parentClass = 'process-parent';
+                if (process.id === 'proc2' && process.parentPath === 'C:\\Temp\\svchost.exe') {
+                    parentClass += ' malicious-parent';
+                    parentDisplay = `${process.parent} (MALICIOUS)`;
+                } else if (process.id === 'proc1') {
+                    parentClass += ' malicious-parent';
+                    parentDisplay = `${process.parent} (${process.parentStatus.toUpperCase()})`;
+                }
+
+                // Determine the path display (handle the malicious path case)
+                let pathClass = 'process-path';
+                if (process.path.toLowerCase().includes('c:\\temp\\')) {
+                    pathClass += ' malicious-path';
+                }
+
+                processItem.innerHTML = `
+                    <div class="process-name">${process.name}</div>
+                    <div class="process-pid">${process.pid}</div>
+                    <div class="process-cpu ${cpuClass}">${process.cpu}%</div>
+                    <div class="process-memory">${process.memory}</div>
+                    <div>${process.started}</div>
+                    <div class="${parentClass}">${parentDisplay}</div> <div class="${pathClass}" title="${process.path}">${process.path}</div> `;
+                
+                table.appendChild(processItem);
+            });
+        }
+
+        function startCpuMonitoring() {
+            setInterval(() => {
+                if (!gameState.gameActive) return;
+                
+                gameState.cpuUsage += Math.random() * 10 - 5;
+                gameState.cpuUsage = Math.max(60, Math.min(95, gameState.cpuUsage));
+                
+                document.getElementById('cpuUsage').textContent = `${Math.round(gameState.cpuUsage)}%`;
+                document.getElementById('cpuBar').style.width = `${gameState.cpuUsage}%`;
+            }, 2000);
+        }
+
+        function updateProgressBar() {
+            const progress = (gameState.iocsFound / gameState.totalIocs) * 100;
+            const progressFill = document.getElementById('progressFill');
+            if (progressFill) progressFill.style.width = `${progress}%`;
+        }
+    </script>
+</body>
+</html>
