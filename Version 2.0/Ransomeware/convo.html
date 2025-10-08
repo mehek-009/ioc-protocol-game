@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LockBit Incident - Interactive Call Log</title>
+    <style>
+        /* Cyberpunk Theme Variables */
+        :root {
+            --bg: #031D29;
+            --panel: #0A3D50;
+            --cyan: #00FFFF;
+            --sea-green: #00AA99;
+            --muted: #88BBDD;
+            --accent: #FFCC00; /* Analyst's color */
+            --danger: #FF6666; /* Jennifer's color/Threat color */
+            --main-text: #DFFCFF;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: var(--bg);
+            color: var(--main-text);
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* --- Video Background and Overlay --- */
+        .video-background {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: -2;
+            object-fit: cover;
+            filter: brightness(0.7); 
+        }
+        .overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.1); 
+            z-index: -1;
+        }
+        
+        /* --- Core Container for UI Elements --- */
+        .ui-container {
+            width: 90%;
+            max-width: 1200px;
+            height: 100vh;
+            position: relative;
+            z-index: 1;
+            padding: 30px;
+        }
+
+        /* --- Call Screen and Button --- */
+        #call-screen {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.50); 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            transition: opacity 0.5s ease-out;
+        }
+        .call-icon { font-size: 80px; color: var(--accent); animation: ring 1.5s infinite; }
+        @keyframes ring {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 204, 0, 0.4); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(255, 204, 0, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 204, 0, 0); }
+        }
+        #call-screen p { font-size: 1.5em; color: var(--sea-green); margin-top: 15px; }
+        #pick-call-btn {
+            padding: 15px 30px; margin-top: 30px; background-color: var(--accent);
+            color: var(--bg); border: none; cursor: pointer; font-family: 'Courier New', monospace;
+            font-weight: bold; font-size: 1.1em; box-shadow: 0 0 10px var(--accent);
+            transition: background-color 0.3s;
+        }
+        #pick-call-btn:hover { background-color: #FFF; }
+
+        /* --- Dialogue Positioning --- */
+        .dialogue-box {
+            position: absolute;
+            max-width: 450px;
+            padding: 15px 20px;
+            border-radius: 5px;
+            background-color: rgba(10, 61, 80, 0.85); 
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+            display: none; 
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+            top: 10%; 
+        }
+        
+        /* Jennifer's Desk - Top Left */
+        .dialogue-jennifer {
+            left: 5%;
+            border-left: 3px solid var(--danger);
+            color: var(--danger);
+        }
+
+        /* SOC Analyst Desk - Top Right */
+        .dialogue-analyst {
+            right: 5%;
+            border-left: 3px solid var(--accent);
+            color: var(--accent);
+        }
+
+        /* Ransom Note Image */
+        #ransom-note-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 40;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+            border: 2px solid var(--danger);
+            box-shadow: 0 0 20px rgba(255, 102, 102, 0.7);
+            background-color: rgba(0, 0, 0, 0.9);
+            padding: 10px;
+        }
+        #ransom-note-display img {
+            max-width: 600px; /* Adjust as needed */
+            height: auto;
+            display: block;
+        }
+        
+        .dialogue-box p {
+            font-size: 1.1em;
+            line-height: 1.4;
+        }
+        .speaker-label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+            text-decoration: underline;
+        }
+        .highlight-threat {
+            color: var(--danger);
+            font-weight: bold;
+        }
+
+        /* --- Navigation/Forward Button --- */
+        #nav-controls {
+            position: absolute;
+            bottom: 30px;
+            right: 5%;
+            z-index: 50;
+            display: none; 
+        }
+        #forward-btn {
+            background-color: var(--sea-green);
+            color: var(--bg);
+            border: none;
+            padding: 15px 25px;
+            font-size: 1.5em;
+            cursor: pointer;
+            border-radius: 5px;
+            box-shadow: 0 0 15px var(--sea-green);
+            transition: background-color 0.3s, transform 0.1s;
+        }
+        #forward-btn:hover { background-color: #00FFCC; }
+        #forward-btn:active { transform: translateY(2px); }
+
+        /* --- Final Transition Button --- */
+        #investigation-start {
+            position: absolute;
+            bottom: 30px;
+            right: 5%;
+            text-align: right;
+            display: none;
+            animation: fadeIn 1s forwards;
+            padding: 10px;
+        }
+        @keyframes fadeIn { to { opacity: 1; } }
+        .start-btn {
+            display: inline-block;
+            padding: 15px 30px;
+            background-color: var(--accent);
+            color: var(--bg);
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+        }
+    </style>
+</head>
+<body>
+    
+    <video autoplay loop muted class="video-background">
+        <source src="conversation.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+    <div class="overlay"></div>
+
+    <div class="ui-container">
+        <div id="call-screen">
+            <span class="call-icon">&#9742;</span>
+            <p>INCOMING TRANSMISSION: Connecting Jennifer to SOC Analyst</p>
+            <button id="pick-call-btn">Pick the Call</button>
+        </div>
+
+        <div id="dialogue-frames">
+            
+            <div class="dialogue-box dialogue-analyst" data-frame-type="dialogue">
+                <span class="speaker-label">YOU:</span>
+                <p>"Hey, this is [Your Name] from IT."</p>
+            </div>
+            
+            <div class="dialogue-box dialogue-jennifer" data-frame-type="dialogue">
+                <span class="speaker-label">JENNIFER (voice shaky):</span>
+                <p>"Hi... this is Jennifer from Accounting. Um—something’s wrong with my computer."</p>
+            </div>
+
+            <div class="dialogue-box dialogue-analyst" data-frame-type="dialogue">
+                <span class="speaker-label">YOU:</span>
+                <p>"Alright, what’s going on?"</p>
+            </div>
+
+            <div class="dialogue-box dialogue-jennifer" data-frame-type="dialogue">
+                <span class="speaker-label">JENNIFER:</span>
+                <p>"I can’t open any of my files. They all have weird extensions now… like <span class='highlight-threat'>.lockbit</span>. I don’t even know what that means."</p>
+            </div>
+            
+            <div class="dialogue-box dialogue-analyst" data-frame-type="dialogue">
+                <span class="speaker-label">YOU (instantly alert):</span>
+                <p>“<span class='highlight-threat'>.lockbit</span>”? Can you repeat that?</p>
+            </div>
+            
+            <div class="dialogue-box dialogue-jennifer" data-frame-type="dialogue">
+                <span class="speaker-label">JENNIFER:</span>
+                <p>"Yeah… all my Excel files, reports, everything. And there’s this text file on my desktop that says ‘Restore My Files’. It says something about paying in Bitcoin or my files will be deleted..."</p>
+            </div>
+
+            <div id="ransom-note-display" data-frame-type="image">
+                <img src="ransomewareNote.png" alt="Ransom Note">
+            </div>
+            <div class="dialogue-box dialogue-note" data-frame-type="note">
+                <p>(There’s a moment of silence. Your stomach drops.)</p>
+            </div>
+            
+            <div class="dialogue-box dialogue-analyst" data-frame-type="dialogue">
+                <span class="speaker-label">YOU:</span>
+                <p>"Jennifer,don’t click anything else, okay? Don’t open that file again, don’t try to rename or move anything."</p>
+            </div>
+            
+            <div class="dialogue-box dialogue-jennifer" data-frame-type="dialogue">
+                <span class="speaker-label">JENNIFER (panicked):</span>
+                <p>"Oh my God… are we hacked?Is it a virus?"</p>
+            </div>
+
+            <div class="dialogue-box dialogue-analyst" data-frame-type="dialogue">
+                <span class="speaker-label">YOU:</span>
+                <p>"It looks like <b>ransomware</b>. I need you to step away from your computer right now."</p>
+            </div>
+
+            <div class="dialogue-box dialogue-jennifer" data-frame-type="dialogue">
+                <span class="speaker-label">JENNIFER:</span>
+                <p>"What? Is it that serious?"</p>
+            </div>
+
+            <div class="dialogue-box dialogue-analyst" data-frame-type="dialogue">
+                <span class="speaker-label">YOU:</span>
+                <p>"Yes. Disconnect from Wi-Fi if you can — just pull the cable or turn off the connection icon on your screen. **I’m on my way.**"</p>
+            </div>
+
+            <div class="dialogue-box dialogue-jennifer" data-frame-type="dialogue">
+                <span class="speaker-label">JENNIFER (over the phone):</span>
+                <p>"I—I didn’t do anything! I just opened my computer like normal this morning and everything was already like this!"</p>
+            </div>
+
+            <div class="dialogue-box dialogue-analyst" data-frame-type="dialogue">
+                <span class="speaker-label">YOU:</span>
+                <p>"That’s okay. You did the right thing by calling immediately. Just leave the computer as it is — it’s part of our investigation now. I’ll handle it from here."</p>
+            </div>
+
+        </div>
+        
+        <div id="nav-controls">
+            <button id="forward-btn" title="Next Dialogue">&#9658;</button>
+        </div>
+
+        <div id="investigation-start">
+            <h2 style="color: var(--accent);"> INITIATE FORENSIC RETRO-ANALYSIS</h2>
+            <a href="mission.html" class="start-btn">Start Investigation</a>
+        </div>
+    </div>
+
+    <script>
+        const callScreen = document.getElementById('call-screen');
+        const pickCallBtn = document.getElementById('pick-call-btn');
+        const dialogueFrames = document.getElementById('dialogue-frames');
+        // Now selecting all elements that act as a "frame" in the sequence
+        const frames = document.querySelectorAll('.dialogue-box, #ransom-note-display'); 
+        const forwardBtn = document.getElementById('forward-btn');
+        const navControls = document.getElementById('nav-controls');
+        const investigationStart = document.getElementById('investigation-start');
+
+        let currentFrameIndex = -1;
+
+        /**
+         * Advances the conversation/scene one step, hiding the previous frame.
+         */
+        function showNextFrame() {
+            // Hide the previous frame
+            if (currentFrameIndex >= 0) {
+                const prevFrame = frames[currentFrameIndex];
+                prevFrame.style.opacity = '0';
+                setTimeout(() => {
+                    prevFrame.style.display = 'none';
+                }, 300); // Wait for fade-out
+            }
+
+            currentFrameIndex++;
+
+            if (currentFrameIndex < frames.length) {
+                // Show the current frame
+                const currentFrame = frames[currentFrameIndex];
+                currentFrame.style.display = 'block';
+                // Use a short timeout to ensure the display change takes effect before fade-in starts
+                setTimeout(() => {
+                    currentFrame.style.opacity = '1';
+                }, 50);
+
+                // If this is the last frame, hide the forward button and show the start button
+                if (currentFrameIndex === frames.length - 1) {
+                    navControls.style.display = 'none';
+                    setTimeout(() => {
+                        investigationStart.style.display = 'block';
+                    }, 500); // Small delay to let final frame sink in
+                }
+            }
+        }
+
+        /**
+         * Starts the scene by hiding the call screen and showing the first frame.
+         */
+        function startScene() {
+            // Hide call screen
+            callScreen.style.opacity = '0';
+            setTimeout(() => {
+                callScreen.style.display = 'none';
+                navControls.style.display = 'block';
+                showNextFrame();
+            }, 500); // Match CSS transition duration
+        }
+
+        // Event Listeners
+        pickCallBtn.addEventListener('click', startScene);
+        forwardBtn.addEventListener('click', showNextFrame);
+
+    </script>
+</body>
+</html>

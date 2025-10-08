@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IOC Protocol</title>
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+    <div class="video-background">
+        <video autoplay muted loop id="dashboardVideo">
+            <source src="dashboard.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+    </div>
+
+    <div class="overlay">
+        <h1 class="glitch" data-text="IOC Protocol">IOC Protocol</h1>
+
+        <div class="button-container">
+            <button class="dashboard-button" data-target="mitm.html">Man in the Middle</button>
+            <button class="dashboard-button" data-target="ransomware.html">Ransomware</button>
+            <button class="dashboard-button" data-target="dos.html">Denial of Service</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const buttons = document.querySelectorAll('.dashboard-button');
+            buttons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const targetPage = button.getAttribute('data-target');
+                    if (targetPage) {
+                        window.location.href = targetPage;
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

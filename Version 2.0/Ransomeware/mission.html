@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOC Analyst - Mission Briefing</title>
+    <style>
+        /* Cyberpunk Theme Variables */
+        :root {
+            --bg: #031D29;
+            --cyan: #00FFFF;
+            --sea-green: #00AA99; /* Primary accent */
+            --muted: #88BBDD;
+            --danger: #FF6666; /* Threat/Warning */
+            --main-text: #DFFCFF;
+            --dark-panel: rgba(0, 0, 0, 0.95);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Courier New', monospace;
+            color: var(--main-text);
+            min-height: 100vh;
+            display: grid; 
+            grid-template-columns: 1fr;
+            place-items: center;
+            background-color: var(--bg);
+            position: relative;
+            overflow: hidden;
+            /* Initial state for slow page fade-in/fade-out transition */
+            opacity: 0; 
+            transition: opacity 1s ease-in-out; 
+        }
+        /* Class to trigger the slow page fade-in on load */
+        body.loaded {
+            opacity: 1;
+        }
+        /* New: Class to trigger the page fade-out before navigation */
+        body.page-transition-out {
+            opacity: 0 !important;
+        }
+
+        /* --- Video Background and Overlay --- */
+        .video-background {
+            position: fixed;
+            top: 0; right: 0;
+            width: 100%; height: 100%;
+            z-index: -2;
+            object-fit: cover;
+            /* Start Bright */
+            filter: brightness(1.5); 
+            /* Add transition for the dimming effect */
+            transition: filter 5s ease-out; 
+        }
+        /* Final state (dimmed) */
+        .video-background.dimmed-effect {
+            filter: brightness(0.7); 
+        }
+        .overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.4); 
+            z-index: -1;
+        }
+
+        /* --- Content Panel positioned on the right half --- */
+        .content-panel {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 50%;
+            height: 100vh;
+            padding: 50px 40px;
+            background-color: var(--dark-panel); 
+            border-left: 3px solid var(--cyan);
+            box-shadow: -10px 0 30px rgba(0, 255, 255, 0.3);
+            display: flex;
+            flex-direction: column;
+            z-index: 1;
+        }
+        
+        h1 { 
+            color: var(--cyan);
+            border-bottom: 2px solid var(--sea-green);
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+            font-size: 2em;
+            text-transform: uppercase;
+            text-align: center;
+        }
+
+        /* Sequential Section Management */
+        .briefing-section {
+            display: none;
+            flex-grow: 1;
+            overflow-y: auto;
+            padding-right: 15px;
+        }
+        .briefing-section.active {
+            display: block;
+        }
+
+        /* Hide all revealable lines initially */
+        .reveal-line, .reveal-item > * {
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out; 
+            margin-bottom: 15px; 
+        }
+        .triage-list li, .mandate-list li {
+            opacity: 0; 
+            transition: opacity 0.3s ease-in-out; 
+            margin-bottom: 10px;
+        }
+
+        .section-title {
+            color: var(--sea-green);
+            font-size: 1.4em;
+            margin-top: 20px;
+            margin-bottom: 15px;
+            border-left: 3px solid var(--sea-green);
+            padding-left: 10px;
+        }
+        
+        .triage-list {
+            list-style: none;
+            padding-left: 0;
+            margin-top: 20px;
+        }
+        .triage-list li::before {
+            content: '✓ ';
+            color: var(--cyan);
+            font-weight: bold;
+        }
+        
+        .mandate-list {
+            list-style: decimal;
+            margin-left: 20px;
+            margin-bottom: 25px;
+            font-size: 1.1em;
+            color: var(--main-text);
+        }
+        .mandate-list li {
+            margin-bottom: 10px;
+        }
+        .timeline-flow {
+            font-weight: bold;
+            color: var(--cyan);
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            margin: 15px 0 25px 0;
+            border: 1px dashed var(--sea-green);
+            text-align: center;
+            font-size: 1.2em;
+        }
+        
+        /* Navigation Button Styling */
+        .nav-controls {
+            padding-top: 20px;
+            text-align: right;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: auto;
+        }
+        #next-btn {
+            padding: 15px 30px;
+            background-color: var(--sea-green);
+            color: var(--bg);
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1.2em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 0 10px var(--sea-green);
+            transition: background-color 0.3s, transform 0.1s;
+        }
+        #next-btn:hover { background-color: var(--cyan); transform: translateY(-2px); }
+
+        .start-btn {
+            display: block;
+            width: 100%;
+            text-align: center;
+            padding: 15px 30px;
+            margin-top: 40px;
+            background-color: var(--cyan);
+            color: var(--bg);
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 1.2em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 0 15px var(--cyan);
+            transition: background-color 0.3s, transform 0.1s;
+        }
+        .start-btn:hover { background-color: #FFF; transform: translateY(-2px); }
+
+    </style>
+</head>
+<body>
+    
+    <video autoplay loop muted class="video-background">
+        <source src="Analyst.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+    <div class="overlay"></div>
+
+    <div class="content-panel">
+        
+        <h1>LOCKBIT INCIDENT BRIEFING</h1>
+
+        <div class="briefing-section" data-index="0">
+            <div class="section-title reveal-line">MISSION BACKDROP: THE CRIME SCENE</div>
+            <p class="reveal-line">
+                This isn't a race to stop an active breach; it's the meticulous work of a detective at a crime scene.
+            </p>
+            <p class="reveal-line">
+                Looking at the timestamps on the encrypted files, we see a chilling time stamp: <strong style="color: var(--danger);">Yesterday, 3:42 PM</strong>.
+            </p>
+            <p class="reveal-line">
+                The attack happened after hours, right as Jennifer was clocking out for the day. The LockBit ransomware had the entire night—uninterrupted—to propagate and encrypt files across the system. Your task now is to **investigate a crime scene**, tracing the ghost of the attacker's presence backward through time to find their point of entry.
+            </p>
+        </div>
+
+        <div class="briefing-section" data-index="1">
+            <div class="section-title reveal-line">INITIAL TRIAGE: SECURING THE SCENE</div>
+            <p class="reveal-line">
+                The call is over, the initial panic contained. Before you even begin the deep dive, the immediate, critical protocol steps have been executed. You've already done what was necessary to isolate the threat and capture the state of the machine:
+            </p>
+
+            <ul class="triage-list reveal-item">
+                <li>Photograph the ransom note for evidence.</li>
+                <li>Isolate the affected machine from the network to stop the spread.</li>
+                <li>Alert your manager, initiating the formal incident response procedure.</li>
+                <li>Take the forensic image—the exact copy of the drive we're working from now.</li>
+                <li style="color: var(--cyan);">Start the investigation... which is where we are now.</li>
+            </ul>
+        </div>
+        
+        <div class="briefing-section" data-index="2">
+            <div class="section-title reveal-line">YOUR MANDATE: THE 60-MINUTE EXECUTIVE REPORT</div>
+            <p class="reveal-line">
+                You have **60 minutes** before the executive meeting where you must present your findings. The leadership team needs clear answers to five critical questions:
+            </p>
+
+            <ol class="mandate-list reveal-item">
+                <li>**HOW** did the attackers get in? (The Initial Access Vector)</li>
+                <li>**WHAT** did they do? (The actions taken post-breach)</li>
+                <li>**WHEN** did it happen? (The precise attack timeline)</li>
+                <li>**WHERE** did they go? (Any attempted lateral movement or Command-and-Control communication)</li>
+                <li>**WHY** weren't we protected? (Security gaps exploited)</li>
+            </ol>
+
+            <p class="reveal-line">You must identify all **12 IoCs** (Indicators of Compromise) hidden across **6 investigation areas** by following the established attack timeline:</p>
+            
+            <div class="timeline-flow reveal-line">
+                Downloads → Processes → Authentication → Network → Registry → Filesystem
+            </div>
+            
+            <p class="reveal-line" style="color: var(--cyan);">
+                Every correct identification brings you closer to exposing the complete attack chain. But remember, the clock is ticking: **Time is critical**—the longer this investigation takes, the longer the business impact lasts.
+            </p>
+            
+            <a href="index.html" class="start-btn reveal-line" id="start-btn">TIME TO INVESTIGATE</a>
+        </div>
+
+        <div class="nav-controls">
+            <button id="next-btn">Next &nbsp; &#9658;</button>
+        </div>
+
+    </div>
+
+    <script>
+        const sections = document.querySelectorAll('.briefing-section');
+        const nextBtn = document.getElementById('next-btn');
+        const startButton = document.getElementById('start-btn');
+        const videoBg = document.querySelector('.video-background');
+        let currentSectionIndex = 0;
+        let revealTimeout = null;
+
+        /**
+         * Triggers the line-by-line reveal effect for the currently active section.
+         */
+        function revealContent(section) {
+            if (revealTimeout) clearTimeout(revealTimeout);
+
+            const revealableElements = [];
+            
+            section.querySelectorAll('.reveal-line').forEach(el => {
+                revealableElements.push(el);
+            });
+
+            section.querySelectorAll('.reveal-item').forEach(list => {
+                list.querySelectorAll('li').forEach(li => {
+                    revealableElements.push(li);
+                });
+            });
+
+            let delay = 300; // Initial delay
+            const blockDelay = 800; // Increased DELAY for major blocks
+            const listItemDelay = 400; // Increased delay for individual list items
+
+            // Reset opacity before starting the new sequence
+            revealableElements.forEach(el => { el.style.opacity = '0'; });
+
+            revealableElements.forEach(el => {
+                if (el) {
+                    revealTimeout = setTimeout(() => {
+                        el.style.opacity = '1';
+                    }, delay);
+                    
+                    if (el.tagName === 'LI') {
+                        delay += listItemDelay;
+                    } else {
+                        delay += blockDelay;
+                    }
+                }
+            });
+        }
+
+        /**
+         * Manages the visibility of the briefing sections.
+         * @param {number} index - The index of the section to make active.
+         */
+        function showSection(index) {
+            sections.forEach((section, i) => {
+                section.classList.remove('active');
+                if (i === index) {
+                    section.classList.add('active');
+                    section.scrollTop = 0; 
+                    revealContent(section); 
+                }
+            });
+
+            if (index === sections.length - 1) {
+                nextBtn.style.display = 'none';
+            } else {
+                nextBtn.style.display = 'inline-block';
+            }
+        }
+
+        // Event listener for the Next button (internal section navigation)
+        nextBtn.addEventListener('click', () => {
+            if (currentSectionIndex < sections.length - 1) {
+                currentSectionIndex++;
+                showSection(currentSectionIndex);
+            }
+        });
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            // Step 1: Trigger the body slow fade-in
+            document.body.classList.add('loaded');
+            
+            // Step 2: Start the background brightness dimming effect
+            setTimeout(() => {
+                videoBg.classList.add('dimmed-effect');
+            }, 100); 
+
+            // Step 3: Wait for the body fade-in to complete before showing text
+            setTimeout(() => {
+                showSection(currentSectionIndex);
+            }, 1000); // 1 second, matching the new body transition
+            
+            // Step 4: Add event listener for page transition (Start Button)
+            if (startButton) {
+                startButton.addEventListener('click', (e) => {
+                    e.preventDefault(); // Stop default navigation
+                    
+                    const targetUrl = startButton.href;
+
+                    // Start fade-out effect on current page
+                    document.body.classList.add('page-transition-out');
+
+                    // Navigate to the next page after the transition duration (1000ms)
+                    setTimeout(() => {
+                        window.location.href = targetUrl;
+                    }, 1000); 
+                });
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registry Analysis - SOC Analyst</title>
+    <style>
+        :root {
+            --bg: #0A0A1F;
+            --panel: #1A1A3A;
+            --cyan: #00FFFF;
+            --muted: #88BBDD;
+            --accent: #00FF00;
+            --danger: #FF6666;
+            --warning: #FFFF00;
+            --main-text: #DFFCFF;
+            --alert-banner-bg: #2C1B2A;
+            --alert-banner-border: #FF6666;
+            --alert-text: #FF9999;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Courier New', monospace;
+            color: var(--muted);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            overflow: auto;
+            background: #000;
+        }
+
+        .video-background {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            overflow: hidden; z-index: -2;
+        }
+
+        .video-background video {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            filter: brightness(1) contrast(1.3);
+        }
+
+        .container {
+            max-width: 1400px; width: 100%;
+            margin: 0 auto; padding: 20px;
+            margin-top: 80px;
+        }
+
+        .header {
+            position: fixed; top: 0; left: 0; width: 100%;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 14px 20px;
+            background: rgba(10, 10, 31, 0.15);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+            z-index: 1000;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .back-btn {
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid var(--cyan);
+            color: var(--cyan);
+            padding: 8px 14px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-family: inherit;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(0, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .game-stats {
+            display: flex; gap: 20px;
+            background: rgba(26, 26, 58, 0.25);
+            backdrop-filter: blur(15px);
+            padding: 15px; border-radius: 15px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+        }
+
+        .stat-item {
+            text-align: center;
+            min-width: 80px;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--accent);
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: var(--muted);
+            font-size: 0.8rem;
+        }
+
+        .analysis-panel {
+            background: rgba(26, 26, 58, 0.2);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .panel-header-top {
+            background: linear-gradient(90deg, rgba(0, 255, 255, 0.1), transparent);
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+        }
+
+        .panel-header-left h1 {
+            font-size: 1.8rem;
+            color: var(--cyan);
+            margin: 0;
+        }
+
+        .metrics-grid-container {
+            display: flex;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+        }
+
+        .metric-card {
+            background: transparent;
+            padding: 20px;
+            border-right: 1px solid rgba(0, 255, 255, 0.1);
+            flex-grow: 1;
+            text-align: center;
+        }
+        .metric-card:last-child { border-right: none; }
+        .metric-card.alert { animation: pulse 2s ease-in-out infinite; }
+
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--accent);
+            margin-bottom: 5px;
+        }
+        .metric-value.danger { color: var(--danger); }
+
+        .warning-banner {
+            background: var(--alert-banner-bg);
+            border: 1px solid var(--alert-banner-border);
+            border-radius: 10px; padding: 15px; margin: 20px;
+            text-align: center;
+            color: var(--alert-text);
+            font-weight: bold;
+            line-height: 1.5; /* Added for readability of the new text */
+        }
+        
+        /* New CSS class to hide elements */
+        .hidden {
+            display: none !important;
+        }
+
+        .registry-browser {
+            background: rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 15px; padding: 20px;
+            max-height: 600px; overflow-y: auto;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+        }
+
+        .browser-header {
+            display: flex; justify-content: space-between;
+            align-items: center; margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+        }
+
+        .registry-section {
+            margin-bottom: 25px;
+            background: rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(5px);
+            border-radius: 8px; padding: 15px;
+            border: 1px solid rgba(0, 255, 255, 0.1);
+        }
+
+        .section-header {
+            color: var(--accent);
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+        }
+
+        .registry-item {
+            background: rgba(0, 0, 0, 0.15);
+            margin: 8px 0; padding: 15px;
+            border-radius: 8px; cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+            border: 1px solid rgba(0, 255, 255, 0.1);
+        }
+
+        .registry-item:hover {
+            background: rgba(0, 255, 255, 0.1);
+            border-left-color: var(--cyan);
+            transform: translateX(5px);
+        }
+
+        .registry-item.selected {
+            background: rgba(0, 255, 0, 0.15);
+            border-left: 3px solid var(--accent);
+        }
+
+        .registry-item.wrong {
+            background: rgba(255, 102, 102, 0.15);
+            border-left: 3px solid var(--danger);
+        }
+
+        .registry-path {
+            color: var(--cyan);
+            font-weight: bold;
+            margin-bottom: 8px;
+            word-break: break-all;
+        }
+
+        .registry-key { color: var(--warning); font-weight: bold; }
+        .registry-value { color: #888; font-size: 0.9rem; margin-top: 5px; }
+        .registry-type {
+            color: var(--accent);
+            font-size: 0.8rem;
+            background: rgba(0, 255, 65, 0.1);
+            padding: 2px 6px;
+            border-radius: 3px;
+            margin-left: 10px;
+        }
+        .registry-modified { color: #888; font-size: 0.8rem; margin-top: 8px; }
+
+        .hive-icon {
+            display: inline-block;
+            width: 20px; height: 20px;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        .hklm { color: var(--danger); }
+        .hkcu { color: var(--accent); }
+
+        .progress-bar {
+            width: 100%; height: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px; overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--danger), var(--accent));
+            transition: width 0.5s ease;
+        }
+
+        .feedback {
+            position: fixed; top: 20px; right: 20px;
+            padding: 15px 25px; border-radius: 15px;
+            color: white; font-weight: bold; z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            max-width: 400px;
+            backdrop-filter: blur(15px);
+        }
+
+        .feedback.show { transform: translateX(0); }
+        .feedback.success { background: var(--accent); color: black; }
+        .feedback.error { background: var(--danger); }
+
+        @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.7; transform: scale(1.02); } }
+    </style>
+</head>
+<body>
+    <div class="video-background">
+        <video autoplay muted loop>
+            <source src="registery.mp4" type="video/mp4">
+        </video>
+    </div>
+
+    <div class="header">
+        <a href="index.html" class="back-btn">← Back to Command Center</a>
+        <div class="game-stats">
+            <div class="stat-item">
+                <div class="stat-value">ACTIVE</div>
+                <div class="stat-label">Status</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="globalIocs">0/12</div>
+                <div class="stat-label">Total IoCs</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="roomIocs">0/2</div>
+                <div class="stat-label">Room IoCs</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="timer">60:00</div>
+                <div class="stat-label">Time</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="totalScore">0</div>
+                <div class="stat-label">Score</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="analysis-panel">
+            <div class="metrics-grid-container">
+                <div class="panel-header-top">
+                    <div class="panel-header-left">
+                        <h1>📋 REGISTRY ANALYSIS</h1>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">15</div>
+                    <div class="metric-label">Recent Changes</div>
+                </div>
+                <div class="metric-card alert">
+                    <div class="metric-value danger">8</div>
+                    <div class="metric-label">Startup Entries</div>
+                </div>
+                <div class="metric-card alert">
+                    <div class="metric-value danger">2</div>
+                    <div class="metric-label">Suspicious Keys</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">3</div>
+                    <div class="metric-label">File Associations</div>
+                </div>
+            </div>
+
+            <div class="warning-banner" id="warningBanner">
+                You export the registry hives from Jennifer's computer and load
+                them in your forensic workstation.
+                <br><br>
+                The Windows Registry - the blueprint of how Windows behaves.
+                Attackers love it because changes here survive reboots and are
+                often overlooked by basic antivirus.
+                <br><br>
+                You focus on common persistence locations and filter by timestamp.
+            </div>
+
+            <div style="text-align: center; margin-bottom: 20px;" id="startButtonContainer">
+                <button id="startButton" class="back-btn" style="background: var(--accent); color: var(--bg); border-color: var(--accent); font-size: 1.1rem; padding: 10px 20px;">
+                    Start Registry Analysis
+                </button>
+            </div>
+
+            <div id="analysisContent" class="hidden">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+    
+                <div class="registry-browser" id="registryBrowser">
+                    <div class="browser-header">
+                        <h3>Registry Editor - Recent Modifications</h3>
+                        <span>Scanning for persistence mechanisms...</span>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <script src="js/roomFlow.js"></script>
+    <script>
+        const ROOM_NAME = 'registry';
+        // Note: Global gameState object is assumed to be defined/loaded by roomFlow.js or a global script
+        let gameState = { iocsFound: 0, totalIocs: 2, gameActive: true };
+
+        const registryData = {
+            'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run': [
+                {
+                    id: 'reg1',
+                    key: 'SecurityUpdate',
+                    value: 'C:\\Temp\\svchost.exe',
+                    type: 'REG_SZ',
+                    modified: '15:42:28',
+                    isIoc: true,
+                    explanation: 'LockBit persistence mechanism - malicious executable set to run at startup',
+                    category: 'suspicious'
+                },
+                {
+                    id: 'reg2',
+                    key: 'WindowsDefender',
+                    value: 'C:\\Program Files\\Windows Defender\\MSASCuiL.exe',
+                    type: 'REG_SZ',
+                    modified: '08:30:15',
+                    isIoc: false,
+                    category: 'normal'
+                },
+                {
+                    id: 'reg3',
+                    key: 'VMware User Process',
+                    value: 'C:\\Program Files\\VMware\\VMware Tools\\vmtoolsd.exe -n vmusr',
+                    type: 'REG_SZ',
+                    modified: '08:30:20',
+                    isIoc: false,
+                    category: 'normal'
+                }
+            ],
+            'HKEY_LOCAL_MACHINE\\SOFTWARE\\Classes': [
+                {
+                    id: 'reg4',
+                    key: '.lockbit\\DefaultIcon',
+                    value: 'C:\\Temp\\svchost.exe,0',
+                    type: 'REG_SZ',
+                    modified: '15:42:35',
+                    isIoc: true,
+                    explanation: 'File association for encrypted .lockbit files - used to display ransom message icon',
+                    category: 'suspicious'
+                },
+                {
+                    id: 'reg5',
+                    key: '.txt\\DefaultIcon',
+                    value: '%SystemRoot%\\system32\\imageres.dll,-102',
+                    type: 'REG_EXPAND_SZ',
+                    modified: '08:30:25',
+                    isIoc: false,
+                    category: 'normal'
+                }
+            ],
+            'HKEY_CURRENT_USER\\Software\\Microsoft\\Office\\16.0': [
+                {
+                    id: 'reg6',
+                    key: 'Outlook\\Profiles\\Default',
+                    value: 'Outlook Profile Configuration',
+                    type: 'REG_BINARY',
+                    modified: '14:22:15',
+                    isIoc: false,
+                    category: 'normal'
+                }
+            ]
+        };
+
+        function startGameFlow() {
+            // 1. Hide the warning banner and start button
+            document.getElementById('warningBanner').classList.add('hidden');
+            document.getElementById('startButtonContainer').classList.add('hidden');
+            
+            // 2. Show the analysis content
+            document.getElementById('analysisContent').classList.remove('hidden');
+            
+            // 3. Load and update data now that it's visible
+            // Note: loadRegistryEntries is called in DOMContentLoaded before this, so this
+            // mostly just updates the progress bar based on loaded state.
+            updateProgressBar(); 
+            
+            // In a full game implementation, you might start the timer here.
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Attach the click handler to the button
+            const startButton = document.getElementById('startButton');
+            if (startButton) {
+                startButton.addEventListener('click', startGameFlow);
+            }
+            
+            // Initialize the room logic (score, timer, etc. assumed to be handled by RoomIntegration)
+            if (!RoomIntegration.initializeRoom(ROOM_NAME)) return; 
+            
+            // Load the registry entries into the hidden container initially
+            loadRegistryEntries();
+            
+            // The rest of the click logic remains the same for selecting evidence
+            document.addEventListener('click', (e) => {
+                const registryItem = e.target.closest('.registry-item');
+                if (!registryItem || !gameState.gameActive) return;
+
+                const isIoc = registryItem.dataset.isIoc === 'true';
+                const isAlreadySelected = registryItem.classList.contains('selected') || registryItem.classList.contains('wrong');
+                if (isAlreadySelected) return;
+
+                let registryInfo = null;
+                Object.values(registryData).forEach(hiveData => {
+                    const found = hiveData.find(entry => entry.id === registryItem.dataset.id);
+                    if (found) registryInfo = found;
+                });
+
+                if (isIoc) {
+                    registryItem.classList.add('selected');
+                    gameState.iocsFound++;
+                    RoomIntegration.updateProgress(ROOM_NAME, 100, 1);
+                    RoomIntegration.showFeedback(`Correct! ${registryInfo.explanation}`, 'success');
+                } else {
+                    registryItem.classList.add('wrong');
+                    RoomIntegration.updateProgress(ROOM_NAME, -50, 0);
+                    RoomIntegration.showFeedback('Wrong! This appears to be a legitimate system registry entry.', 'error');
+                }
+                updateProgressBar();
+            });
+        });
+
+        function loadRegistryEntries() {
+            const browser = document.getElementById('registryBrowser');
+            // If the element is null (e.g., initial load issue), return
+            if (!browser) return; 
+
+            browser.innerHTML = `<div class="browser-header">
+                                    <h3>Registry Editor - Recent Modifications</h3>
+                                    <span>Scanning for persistence mechanisms...</span>
+                                </div>`;
+            
+            Object.keys(registryData).forEach(hive => {
+                const section = document.createElement('div');
+                section.className = 'registry-section';
+                
+                const sectionHeader = document.createElement('div');
+                sectionHeader.className = 'section-header';
+                
+                let hiveClass = '';
+                let hiveIcon = '📁';
+                if (hive.startsWith('HKEY_LOCAL_MACHINE')) {
+                    hiveClass = 'hklm';
+                    hiveIcon = '🖥️';
+                } else if (hive.startsWith('HKEY_CURRENT_USER')) {
+                    hiveClass = 'hkcu';
+                    hiveIcon = '👤';
+                }
+                
+                sectionHeader.innerHTML = `<span class="hive-icon">${hiveIcon}</span><span class="${hiveClass}">${hive}</span>`;
+                section.appendChild(sectionHeader);
+                
+                registryData[hive].forEach(entry => {
+                    const registryItem = document.createElement('div');
+                    registryItem.className = `registry-item ${entry.category}`;
+                    registryItem.dataset.id = entry.id;
+                    registryItem.dataset.isIoc = entry.isIoc;
+                    
+                    registryItem.innerHTML = `
+                        <div class="registry-path">
+                            <span class="registry-key">${entry.key}</span>
+                            <span class="registry-type">${entry.type}</span>
+                        </div>
+                        <div class="registry-value">Value: ${entry.value}</div>
+                        <div class="registry-modified">Last Modified: ${entry.modified}</div>
+                    `;
+                    
+                    section.appendChild(registryItem);
+                });
+                
+                browser.appendChild(section);
+            });
+        }
+
+        function updateProgressBar() {
+            const progress = (gameState.iocsFound / gameState.totalIocs) * 100;
+            const progressFill = document.getElementById('progressFill');
+            if (progressFill) progressFill.style.width = `${progress}%`;
+        }
+    </script>
+</body>
+</html>

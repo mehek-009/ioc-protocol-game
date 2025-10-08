@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SOC Analyst - Mission Brief</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Courier New', monospace;
+      color: #00ffff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+      background: #000;
+    }
+
+    /* Video background */
+    .video-background {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      overflow: hidden;
+      z-index: -2;
+    }
+
+    .video-background video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: brightness(0.4) contrast(1.1);
+    }
+
+    /* Overlay for readability */
+    .overlay {
+      background: rgba(0, 0, 0, 0.6);
+      border-radius: 15px;
+      padding: 40px 25px;
+      max-width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      text-align: center;
+      box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+    }
+
+    .header h1 {
+      font-size: 3rem;
+      color: #00ffff;
+      text-shadow: 0 0 30px #00ffff;
+      margin-bottom: 20px;
+      animation: glow 2s ease-in-out infinite alternate;
+    }
+
+    .header h2 {
+      font-size: 1.6rem;
+      color: #00ffff;
+      margin-bottom: 15px;
+    }
+
+    .header p {
+      font-size: 1.1rem;
+      color: #00ffff;
+      max-width: 800px;
+      margin: 0 auto 30px auto;
+      line-height: 1.6;
+      text-align: justify;
+    }
+
+    @keyframes glow {
+      from { text-shadow: 0 0 20px #00ffff; }
+      to { text-shadow: 0 0 40px #00ffff, 0 0 60px #00ffff; }
+    }
+
+    .instructions {
+      background: rgba(255, 107, 107, 0.1);
+      border: 2px solid #00ffff;
+      border-radius: 15px;
+      padding: 25px;
+      margin-bottom: 30px;
+      text-align: left;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .instructions h3 {
+      color: #00ffff;
+      margin-bottom: 15px;
+      font-size: 1.4rem;
+      text-align: center;
+    }
+
+    .instructions ul {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .instructions li {
+      margin: 10px 0;
+      padding-left: 20px;
+      position: relative;
+    }
+
+    .instructions li::before {
+      content: "▶";
+      position: absolute;
+      left: 0;
+      color: #00ffff;
+    }
+
+    .objectives {
+      background: rgba(0, 255, 255, 0.1);
+      border: 2px solid #00ffff;
+      border-radius: 15px;
+      padding: 25px;
+      margin-bottom: 30px;
+      text-align: left;
+      max-height: 250px;
+      overflow-y: auto;
+    }
+
+    .objectives h3 {
+      color: #00ffff;
+      margin-bottom: 15px;
+      font-size: 1.4rem;
+      text-align: center;
+    }
+
+    .objectives p {
+      text-align: justify;
+      line-height: 1.4;
+    }
+
+    .start-btn {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 12px 25px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: black;
+      background: #00ffff;
+      border: none;
+      border-radius: 30px;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 15px #00ffff;
+    }
+
+    .start-btn:hover {
+      background: #00ffff;
+      box-shadow: 0 0 25px #00ffff;
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="video-background">
+    <video autoplay muted loop playsinline>
+      <source src="instruction_bg.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+  </div>
+
+  <div class="overlay">
+    <div class="header">
+      <h1>SOC ANALYST COMMAND CENTER</h1>
+      <h2>LockBit Ransomware Investigation</h2>
+      <p>
+        A seemingly normal download (security_update.exe) just appeared on the system. Unknown processes are spawning, and connections reach out to suspicious IPs. Registry entries and file behaviors indicate malicious intent. LockBit ransomware has begun its attack – investigate immediately!
+      </p>
+    </div>
+
+    <div class="instructions">
+      <h3>MISSION BRIEFING</h3>
+      <ul>
+        <li>Navigate through investigation rooms sequentially to track the attack timeline.</li>
+        <li>Identify Indicators of Compromise (IoCs) carefully in each room.</li>
+        <li>Correct findings earn points; false positives reduce your score.</li>
+        <li>Complete all 12 IoCs within 60 minutes to contain the attack.</li>
+        <li>Each room unlocks only after completing the previous one.</li>
+      </ul>
+    </div>
+    
+    <div class="objectives">
+        <h3>INVESTIGATION OBJECTIVES</h3>
+        <p>Your mission is to identify all 12 IoCs across 6 investigation areas following the attack timeline:</p>
+        <p><strong>Downloads → Processes → Authentication → Network → Registry → Filesystem</strong></p>
+        <p style="color: #00ffff; margin-top: 10px;">Each correct identification brings you closer to understanding the complete attack chain. Time is critical - the longer you take, the more damage the ransomware causes!</p>
+        <p style="color: #ff6b6b; margin-top: 10px;">Remember: In a real incident, speed and accuracy save organizations millions of dollars and protect sensitive data.</p>
+    </div>
+
+    <a href="index.html" class="start-btn" onclick="initializeGame()">Start Investigating</a>
+  </div>
+
+  <script src="js/roomFlow.js"></script>
+  <script>
+    function initializeGame() {
+      // Initialize the game state when starting
+      RoomFlow.initializeGame();
+      console.log('Game initialized from instruction page');
+    }
+  </script>
+
+</body>
+</html>
