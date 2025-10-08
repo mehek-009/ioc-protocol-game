@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Level 3: Advanced Persistent Threat Investigation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%);
+            color: #00ffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .page {
+            display: none;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .game-score {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #00a8cc;
+            border-radius: 8px;
+            padding: 15px;
+            font-size: 12px;
+            z-index: 1000;
+            min-width: 180px;
+        }
+
+        .dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .main-header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px 0;
+        }
+
+        .main-header h1 {
+            font-size: 3rem;
+            color: #00ff41;
+            text-shadow: 0 0 30px #00ff41;
+            margin-bottom: 15px;
+        }
+
+        .main-header h2 {
+            font-size: 1.8rem;
+            color: #ff6b6b;
+            margin-bottom: 15px;
+        }
+
+        .main-header p {
+            font-size: 1.2rem;
+            color: #00ffff;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .game-status {
+            background: rgba(0, 255, 255, 0.1);
+            border: 2px solid #00ffff;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-top: 15px;
+        }
+
+        .status-item {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #00ff41;
+        }
+
+        .status-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #00ff41;
+            margin-bottom: 5px;
+        }
+
+        .status-label {
+            color: #00ffff;
+            font-size: 0.9rem;
+        }
+
+        .rooms-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .room-card {
+            background: linear-gradient(135deg, rgba(0, 100, 150, 0.3), rgba(0, 150, 200, 0.2));
+            border: 2px solid #0066cc;
+            border-radius: 15px;
+            padding: 25px;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            position: relative;
+        }
+
+        .room-card.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+            border-color: #666;
+        }
+
+        .room-card.completed {
+            border-color: #00ff41;
+        }
+
+        .room-card:not(.locked):hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0, 255, 255, 0.3);
+        }
+
+        .room-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .room-icon {
+            font-size: 2.5rem;
+            margin-right: 15px;
+        }
+
+        .room-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #00ff41;
+        }
+
+        .room-description {
+            color: #00ffff;
+            margin-bottom: 15px;
+            line-height: 1.4;
+            font-size: 0.95rem;
+        }
+
+        .room-progress {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .room-progress div {
+            margin: 3px 0;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: rgba(0, 255, 255, 0.1);
+            border: 2px solid #00ffff;
+            border-radius: 15px;
+        }
+
+        .game-header h2 {
+            color: #00ff41;
+            font-size: 2rem;
+        }
+
+        .back-btn {
+            background: rgba(0, 255, 255, 0.2);
+            border: 2px solid #00ffff;
+            color: #00ffff;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .analysis-panel {
+            background: rgba(0, 100, 150, 0.2);
+            border: 2px solid #0066cc;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #0066cc;
+        }
+
+        .panel-icon {
+            font-size: 2rem;
+            margin-right: 15px;
+            color: #00ff41;
+        }
+
+        .panel-title {
+            font-size: 1.5rem;
+            color: #00ffff;
+        }
+
+        .evidence-container {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            padding: 15px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .evidence-item {
+            background: rgba(0, 0, 0, 0.3);
+            margin: 8px 0;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            border-left: 4px solid #0066cc;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .evidence-item:hover {
+            background: rgba(0, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+
+        .evidence-item.selected {
+            background: rgba(0, 255, 65, 0.2);
+            border-left-color: #00ff41;
+        }
+
+        .evidence-item.wrong {
+            background: rgba(255, 107, 107, 0.2);
+            border-left-color: #ff6b6b;
+        }
+
+        .instructions {
+            background: rgba(255, 170, 0, 0.1);
+            border: 1px solid #ffaa00;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #ffaa00;
+        }
+
+        .instructions h3 {
+            margin-bottom: 10px;
+            color: #00ff41;
+        }
+
+        .feedback {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            z-index: 1500;
+            max-width: 400px;
+            display: none;
+        }
+
+        .feedback.success {
+            background: #00ff41;
+            color: black;
+        }
+
+        .feedback.error {
+            background: #ff6b6b;
+        }
+
+        .completion-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            padding: 40px;
+            border-radius: 15px;
+            border: 2px solid #00ff41;
+            text-align: center;
+            z-index: 2000;
+            display: none;
+            max-width: 700px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .alert-banner {
+            background: rgba(255, 107, 107, 0.1);
+            border: 1px solid #ff6b6b;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+
+        .evidence-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .evidence-container::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .evidence-container::-webkit-scrollbar-thumb {
+            background: #00a8cc;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-score">
+        <div>Score: <span id="globalScore">0</span></div>
+        <div>IoCs: <span id="globalIocs">0/18</span></div>
+        <div>Time: <span id="globalTimer">25:00</span></div>
+        <div>Rooms: <span id="roomsCompleted">0/9</span></div>
+    </div>
+<div id="dashboard" class="page active">
+        <div class="dashboard">
+            <div class="main-header">
+                <h1>LEVEL 3: MITM INVESTIGATION</h1>
+                <h2>Man-in-the-Middle Campaign Investigation</h2>
+                <p>A sophisticated adversary has deployed a multi-stage MITM attack. Analyze the attack chain across detection systems to understand the full scope of compromise.</p>
+            </div>
+
+            <div class="game-status">
+                <h3>APT CAMPAIGN STATUS</h3>
+                <div class="status-grid">
+                    <div class="status-item">
+                        <div class="status-value" id="dashScore">0</div>
+                        <div class="status-label">Total Score</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-value" id="dashIocs">0/18</div>
+                        <div class="status-label">IoCs Found</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-value" id="dashTimer">25:00</div>
+                        <div class="status-label">Time Left</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-value" id="dashRooms">0/9</div>
+                        <div class="status-label">Rooms Complete</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="instructions">
+                <h3>MISSION BRIEFING</h3>
+                <p><strong>Objective:</strong> Identify all 18 IoCs demonstrating a sophisticated MITM campaign.</p>
+                <p><strong>Instructions:</strong> Click on suspicious entries. Progress sequentially through investigation rooms.</p>
+                <p><strong>Sequence:</strong> Alert Console → Packet Inspector → TLS Certificates → Endpoint Forensics → Proxy Settings → DNS Analysis → ARP/Switch → Browser Snapshot → Firewall Summary</p>
+                <div id="progressInfo" style="margin-top: 15px; padding: 10px; background: rgba(0, 100, 150, 0.2); border-radius: 8px; font-size: 0.9rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="color: #00ff41; font-weight: bold; margin-bottom: 5px;">Investigation Progress</div>
+                            <div id="progressDetails">Starting new investigation...</div>
+                        </div>
+                        <button onclick="if(confirm('Start a new investigation? This will clear all current progress.')) { clearGameState(); location.reload(); }" style="background: rgba(255, 107, 107, 0.2); border: 2px solid #ff6b6b; color: #ff6b6b; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-family: inherit; font-size: 0.9rem; font-weight: bold;">
+                            🔄 New Investigation
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rooms-grid" id="roomsGrid"></div>
+        </div>
+    </div>
+
+    <div id="alert" class="page">
+        <div class="dashboard">
+            <div class="game-header">
+                <h2>🚨 ALERT CONSOLE</h2>
+                <button class="back-btn" onclick="showPage('dashboard')">Back</button>
+            </div>
+            <div class="instructions">
+                <h3>Find 2 Alert Console IoCs</h3>
+                <p>Analyze security alerts to identify the initial compromise vector.</p>
+            </div>
+            <div class="alert-banner">⚠️ ALERT: Low-priority ticket reveals potential security incident</div>
+            <div class="analysis-panel">
+                <div class="panel-header">
+                    <div class="panel-icon">📋</div>
+                    <div class="panel-title">Security Operations Center - Alert Dashboard</div>
+                </div>
+                <div class="evidence-container" id="alert-evidence"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="packet" class="page">
+        <div class="dashboard">
+            <div class="game-header">
+                <h2>📡 PACKET INSPECTOR</h2>
+                <button class="back-btn" onclick="showPage('dashboard')">Back</button>
+            </div>
+            <div class="instructions">
+                <h3>Find 3 Packet Inspector IoCs</h3>
+                <p>Analyze captured network traffic for TLS manipulation and connection anomalies.</p>
+            </div>
+            <div class="alert-banner">⚠️ TRAFFIC ANALYSIS: TLS anomalies and suspicious external connections detected</div>
+            <div class="analysis-panel">
+                <div class="panel-header">
+                    <div class="panel-icon">🌐</div>
+                    <div class="panel-title">Network Traffic Capture</div>
+                </div>
+                <div class="evidence-container" id="packet-evidence"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="tls" class="page">
+        <div class="dashboard">
+            <div class="game-header">
+                <h2>🔐 TLS CERTIFICATE VIEWER</h2>
+                <button class="back-btn" onclick="showPage('dashboard')">Back</button>
+            </div>
+            <div class="instructions">
+                <h3>Find 2 TLS Certificate IoCs</h3>
+                <p>Examine certificate chains to identify rogue Certificate Authorities.</p>
+            </div>
+            <div class="alert-banner">⚠️ CERTIFICATE ANOMALY: Unknown CA detected in trust store</div>
+            <div class="analysis-panel">
+                <div class="panel-header">
+                    <div class="panel-icon">🔒</div>
+                    <div class="panel-title">Certificate Chain Analysis</div>
+                </div>
+                <div class="evidence-container" id="tls-evidence"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="endpoint" class="page">
+        <div class="dashboard">
+            <div class="game-header">
+                <h2>💻 ENDPOINT FORENSICS</h2>
+                <button class="back-btn" onclick="showPage('dashboard')">Back</button>
+            </div>
+            <div class="instructions">
+                <h3>Find 5 Endpoint Forensics IoCs</h3>
+                <p>Analyze endpoint activities for malware deployment and persistence mechanisms.</p>
+            </div>
+            <div class="alert-banner">⚠️ MALWARE DETECTED: Suspicious executables and persistence mechanisms identified</div>
+            <div class="analysis-panel">
+                <div class="panel-header">
+                    <div class="panel-icon">🔍</div>
+                    <div class="panel-title">Endpoint Activity Monitor</div>
+                </div>
+                <div class="evidence-container" id="endpoint-evidence"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="proxy" class="page">
+        <div class="dashboard">
+            <div class="game-header">
+                <h2>🔄 PROXY & SYSTEM SETTINGS</h2>
+                <button class="back-btn" onclick="showPage('dashboard')">Back</button>
+            </div>
+            <div class="instructions">
+                <h3>Find 3 Proxy Settings IoCs</h3>
+                <p>Investigate local proxy configurations enabling traffic redirection.</p>
+            </div>
+            <div class="alert-banner">⚠️ PROXY CONFIGURATION: Local proxy interception mechanism active</div>
+            <div class="analysis-panel">
+                <div class="panel-header">
+                    <div class="panel-icon">⚙️</div>
+                    <div class="panel-title">System Configuration Monitor</div>
+                </div>
+                <div class="evidence-container" id="proxy-evidence"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="dns" class="page">
+        <div class="dashboard">
+            <div class="game-header">
+                <h2>🌐 DNS QUERY LOG</h2>
+                <button class="back-btn" onclick="showPage('dashboard')">Back</button>
+            </div>
+            <div class="instructions">
+                <h3>Find 2 DNS Analysis IoCs</h3>
+                <p>Analyze DNS resolution patterns to identify domain hijacking.</p>
+            </div>
+            <div class="alert-banner">⚠️ DNS POISONING: Internal domains redirected to external infrastructure</div>
+            <div class="analysis-panel">
+                <div class="panel-header">
+                    <div class="panel-icon">📊</div>
+                    <div class="panel-title">DNS Resolution Monitor</div>
+                </div>
+                <div class="evidence-container" id="dns-evidence"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="arp" class="page">
+        <div class="dashboard">
+            <div class="game-header">
+                <h2>⚡ ARP / SWITCH VIEW</h2>
+                <button class="back-btn" onclick="showPage('dashboard')">Back</button>
+            </div>
+            <div class="instructions">
+                <h3>Find 1 ARP/Switch IoC</h3>
+                <p>Examine network infrastructure manipulation including ARP spoofing.</p>
+            </div>
+            <div class="alert-banner">⚠️ ARP SPOOFING: Gateway MAC address manipulation detected</div>
+            <div class="analysis-panel">
+                <div class="panel-header">
+                    <div class="panel-icon">🔌</div>
+                    <div class="panel-title">Network Infrastructure Monitor</div>
+                </div>
+                <div class="evidence-container" id="arp-evidence"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="browser" class="page">
+        <div class="dashboard">
+            <div class="game-header">
+                <h2>🌐 BROWSER SNAPSHOT</h2>
+                <button class="back-btn" onclick="showPage('dashboard')">Back</button>
+            </div>
+            <div class="instructions">
+                <h3>Find 1 Browser Snapshot IoC</h3>
+                <p>Analyze browser behavior to understand how MITM appears seamless to users.</p>
+            </div>
+            <div class="alert-banner">⚠️ DECEPTIVE SESSION: Traffic redirected without browser warnings</div>
+            <div class="analysis-panel">
+                <div class="panel-header">
+                    <div class="panel-icon">📱</div>
+                    <div class="panel-title">Browser Session Monitor</div>
+                </div>
+                <div class="evidence-container" id="browser-evidence"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="firewall" class="page">
+        <div class="dashboard">
+            <div class="game-header">
+                <h2>🛡️ FIREWALL SUMMARY</h2>
+                <button class="back-btn" onclick="showPage('dashboard')">Back</button>
+            </div>
+            <div class="instructions">
+                <h3>Find 2 Firewall Summary IoCs</h3>
+                <p>Review firewall logs to identify systemic nature of the attack.</p>
+            </div>
+            <div class="alert-banner">⚠️ TRAFFIC SPIKE: Coordinated outbound traffic to external server detected</div>
+            <div class="analysis-panel">
+                <div class="panel-header">
+                    <div class="panel-icon">🔥</div>
+                    <div class="panel-title">Perimeter Firewall Monitor</div>
+                </div>
+                <div class="evidence-container" id="firewall-evidence"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+    <div class="completion-modal" id="completionModal">
+        <h2 id="completionTitle">Room Complete!</h2>
+        <div id="completionMessage">You found all IoCs!</div>
+    </div>
+<script>
+var gameState = {
+            totalScore: 0,
+            totalIocsFound: 0,
+            totalIocs: 18,
+            timeLeft: 1500,
+            gameActive: false,
+            currentRoom: null,
+            roomsCompleted: 0,
+            roomSequence: ['alert', 'packet', 'tls', 'endpoint', 'proxy', 'dns', 'arp', 'browser', 'firewall'],
+            completedRooms: [],
+            sessionId: null
+        };
+
+        function generateSessionId() {
+            return 'apt_session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        function saveGameState() {
+    // Collect selected evidence from all rooms by ID (not index)
+    var selectedEvidence = {};
+    var containerMap = {'alert': 'alert-evidence','packet': 'packet-evidence','tls': 'tls-evidence','endpoint': 'endpoint-evidence','proxy': 'proxy-evidence','dns': 'dns-evidence','arp': 'arp-evidence','browser': 'browser-evidence','firewall': 'firewall-evidence'};
+    
+    for (var roomId in containerMap) {
+        var container = document.getElementById(containerMap[roomId]);
+        if (container) {
+            var selected = [];
+            var items = container.querySelectorAll('.evidence-item.selected');
+            items.forEach(function(item) {
+                // Find the matching evidence item by text content
+                var evidence = evidenceData[roomId] || [];
+                for (var i = 0; i < evidence.length; i++) {
+                    if (evidence[i].text === item.textContent) {
+                        selected.push(evidence[i].id);
+                        break;
+                    }
+                }
+            });
+            if (selected.length > 0) {
+                selectedEvidence[roomId] = selected;
+            }
+        }
+    }
+    
+    var sessionData = {
+        totalScore: gameState.totalScore,
+        totalIocsFound: gameState.totalIocsFound,
+        roomsCompleted: gameState.roomsCompleted,
+        completedRooms: gameState.completedRooms,
+        timeLeft: gameState.timeLeft,
+        sessionId: gameState.sessionId,
+        selectedEvidence: selectedEvidence,
+        lastSaved: Date.now()
+    };
+    try {
+        localStorage.setItem('aptProgress', JSON.stringify(sessionData));
+    } catch (e) {
+        window.aptSession = sessionData;
+    }
+}
+
+        function loadGameState() {
+            try {
+                var savedData = localStorage.getItem('aptProgress');
+                if (savedData) {
+                    var sessionData = JSON.parse(savedData);
+                    if (Date.now() - (sessionData.lastSaved || 0) > 7 * 24 * 60 * 60 * 1000) {
+                        clearGameState();
+                        return false;
+                    }
+                    gameState.totalScore = sessionData.totalScore || 0;
+                    gameState.totalIocsFound = sessionData.totalIocsFound || 0;
+                    gameState.roomsCompleted = sessionData.roomsCompleted || 0;
+                    gameState.completedRooms = sessionData.completedRooms || [];
+                    gameState.timeLeft = sessionData.timeLeft || 1500;
+                    gameState.sessionId = sessionData.sessionId || generateSessionId();
+                    return true;
+                }
+            } catch (e) {}
+            if (window.aptSession) {
+                var sessionData = window.aptSession;
+                gameState.totalScore = sessionData.totalScore || 0;
+                gameState.totalIocsFound = sessionData.totalIocsFound || 0;
+                gameState.roomsCompleted = sessionData.roomsCompleted || 0;
+                gameState.completedRooms = sessionData.completedRooms || [];
+                gameState.timeLeft = sessionData.timeLeft || 1500;
+                gameState.sessionId = sessionData.sessionId || generateSessionId();
+                return true;
+            }
+            return false;
+        }
+
+        function clearGameState() {
+    try {
+        localStorage.removeItem('aptProgress');
+    } catch (e) {}
+    window.aptSession = null;
+    
+    // Also reset the gameState object immediately
+    gameState.totalScore = 0;
+    gameState.totalIocsFound = 0;
+    gameState.timeLeft = 1500;
+    gameState.roomsCompleted = 0;
+    gameState.completedRooms = [];
+    gameState.sessionId = null;
+    gameState.gameActive = false;
+}
+
+        var roomConfigs = {
+            alert: { title: 'Alert Console', icon: '🚨', iocsCount: 2 },
+            packet: { title: 'Packet Inspector', icon: '📡', iocsCount: 3 },
+            tls: { title: 'TLS Certificates', icon: '🔐', iocsCount: 2 },
+            endpoint: { title: 'Endpoint Forensics', icon: '💻', iocsCount: 5 },
+            proxy: { title: 'Proxy Settings', icon: '🔄', iocsCount: 3 },
+            dns: { title: 'DNS Analysis', icon: '🌐', iocsCount: 2 },
+            arp: { title: 'ARP/Switch View', icon: '⚡', iocsCount: 1 },
+            browser: { title: 'Browser Snapshot', icon: '🌐', iocsCount: 1 },
+            firewall: { title: 'Firewall Summary', icon: '🛡️', iocsCount: 2 }
+        };
+
+        var evidenceData = {
+            alert: [
+                {id: 'alert1', text: '09:05:03 | NOTICE | cert.update | host=ALICE-WKS | user=alice | action=certstore_update', isIoc: true, explanation: 'Certificate store manipulation detected on compromised host'},
+                {id: 'alert2', text: '09:05:05 | INFO | sys.update | host=ALICE-WKS | user=alice | file_added="C:\\Users\\alice\\Downloads\\ACME_Helper_Tools.exe"', isIoc: true, explanation: 'Suspicious file downloaded: ACME_Helper_Tools.exe'},
+                {id: 'alert3', text: '09:04:50 | LOW | ALRT-1001 | SEV: LOW | user=alice | host=ALICE-WKS | msg="User submitted ticket: intermittent portal 502/504 errors"', isIoc: false},
+                {id: 'alert4', text: '09:04:51 | INFO | system.audit | host=ALICE-WKS | event="gpo_check" | result=ok', isIoc: false},
+                {id: 'alert5', text: '09:04:55 | WARN | auth.event | host=MAIL-SRV | user=bob | result=failed_login', isIoc: false},
+                {id: 'alert6', text: '09:05:00 | INFO | ALRT-1002 | SEV: INFO | host=DB-01 | event=backup_success', isIoc: false},
+                {id: 'alert7', text: '09:05:08 | MEDIUM | ALRT-1003 | SEV: MEDIUM | host=HR-SRV | event=policy_change | user=secadmin', isIoc: false},
+                {id: 'alert8', text: '09:05:10 | INFO | netmon | host=ALICE-WKS | dst=10.10.5.1 | proto=icmp | result=ok', isIoc: false}
+            ],
+            packet: [
+                {id: 'packet1', text: '09:05:03 | TLS | 203.0.113.45 → 10.10.5.23 | ServerHello cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384', isIoc: true, explanation: 'External server responding to internal request - traffic redirected to 203.0.113.45'},
+                {id: 'packet2', text: '09:05:04 | TCP | 203.0.113.45 → 10.10.5.23 | RST after ServerHello', isIoc: true, explanation: 'Suspicious TLS connection reset after ServerHello indicates MITM interference'},
+                {id: 'packet3', text: '09:05:06 | TLS | 10.10.5.23 → Portal | Alert: handshake_failure', isIoc: true, explanation: 'TLS handshake failure - certificate validation issues'},
+                {id: 'packet4', text: '09:05:01 | TCP | 10.10.5.23:50542 → 10.10.5.1:443 | SYN, ACK ok', isIoc: false},
+                {id: 'packet5', text: '09:05:02 | TLS | 10.10.5.23 → webapp.internal.corp | ClientHello', isIoc: false},
+                {id: 'packet6', text: '09:05:07 | TCP | 10.10.5.30:51233 → 10.10.5.40:443 | ACK normal_flow', isIoc: false},
+                {id: 'packet7', text: '09:05:08 | TLS | 10.10.5.30 → fileserver.internal.corp | Session established', isIoc: false},
+                {id: 'packet8', text: '09:05:10 | UDP | 10.10.5.23 → 10.10.5.1:53 | DNS query: webapp.internal.corp', isIoc: false}
+            ],
+            tls: [
+                {id: 'tls1', text: 'webapp.internal.corp | Issuer: ACME Proxy CA | Serial: 0x33F4AB9921 | Status: VALID', isIoc: true, explanation: 'Rogue Certificate Authority detected - ACME Proxy CA is unknown/unauthorized'},
+                {id: 'tls2', text: 'Trust Store Entry | Root CA: ACME Proxy CA | Added By: alice | Date: 2025-09-19T09:05:03', isIoc: true, explanation: 'Unauthorized root CA added to trust store - enables seamless TLS interception'},
+                {id: 'tls3', text: 'fileserver.internal.corp | Issuer: Corporate Internal CA | Serial: 0x7A2B9C4D1E | Status: VALID', isIoc: false},
+                {id: 'tls4', text: 'mail.internal.corp | Issuer: Corporate Internal CA | Serial: 0x8B3C5F7A2E | Status: VALID', isIoc: false},
+                {id: 'tls5', text: 'intranet.corp | Issuer: Corporate Internal CA | Serial: 0x9D4E6F8C5A | Status: VALID', isIoc: false},
+                {id: 'tls6', text: 'vpn.corp.com | Issuer: DigiCert SHA2 Secure Server CA | Serial: 0x1A2B3C4D5E6F7A8B | Status: VALID', isIoc: false},
+                {id: 'tls7', text: 'api.internal.corp | Issuer: Corporate Internal CA | Serial: 0x4C5D6E7F8A9B | Status: VALID', isIoc: false}
+            ],
+            endpoint: [
+                {id: 'endpoint1', text: '09:04:59 | FILE_CREATE | C:\\Users\\alice\\Downloads\\ACME_Helper_Tools.exe | Size: 2,847,392 bytes', isIoc: true, explanation: 'Malicious file downloaded - ACME_Helper_Tools.exe (unsigned)'},
+                {id: 'endpoint2', text: '09:05:00 | PROC_CREATE | ACME_Helper_Tools.exe | pid=4500 | Signed: NO', isIoc: true, explanation: 'Malicious installer executed by user'},
+                {id: 'endpoint3', text: '09:05:04 | PROC_CREATE | rogueproxy.exe | pid=8012 | parent=4500', isIoc: true, explanation: 'Rogue proxy process spawned by malicious installer'},
+                {id: 'endpoint4', text: '09:05:02 | REG_ADD | HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run | value=rogueproxy.exe', isIoc: true, explanation: 'Persistence mechanism - Registry Run key for auto-start'},
+                {id: 'endpoint5', text: '09:05:03 | SVC_CREATE | ACMEHelperService | path=rogueproxy.exe | Start: Automatic', isIoc: true, explanation: 'Malicious service installed for persistence'},
+                {id: 'endpoint6', text: '09:04:58 | PROC_CREATE | explorer.exe | pid=2320 | Signed: YES', isIoc: false},
+                {id: 'endpoint7', text: '09:05:05 | FILE_WRITE | C:\\Users\\alice\\AppData\\Local\\Temp\\proxy.log | Size: 1,024 bytes', isIoc: false},
+                {id: 'endpoint8', text: '09:05:07 | INFO | DefenderScan | result=clean | Files: 127,849', isIoc: false},
+                {id: 'endpoint9', text: '09:04:51 | REG_QUERY | system.audit | event="gpo_check" | result=ok', isIoc: false},
+                {id: 'endpoint10', text: '09:04:52 | SVC_START | Spooler | status=running | result=ok', isIoc: false}
+            ],
+            proxy: [
+                {id: 'proxy1', text: '09:05:01 | NETSTAT | rogueproxy.exe (pid=8012) LISTENING on 127.0.0.1:3128', isIoc: true, explanation: 'Rogue proxy listening on localhost port 3128'},
+                {id: 'proxy2', text: '09:05:02 | NETSTAT | rogueproxy.exe connected → 203.0.113.45:443 | State: ESTABLISHED', isIoc: true, explanation: 'Suspicious outbound connection to external server'},
+                {id: 'proxy3', text: '09:05:03 | SYSTEM_SETTING | System Proxy = ENABLED 127.0.0.1:3128', isIoc: true, explanation: 'System proxy configuration modified to redirect traffic'},
+                {id: 'proxy4', text: '09:05:01 | NETSTAT | svchost.exe (pid=412) LISTENING on 0.0.0.0:135', isIoc: false},
+                {id: 'proxy5', text: '09:05:02 | NETSTAT | chrome.exe (pid=350) connected → 10.10.5.20:443', isIoc: false},
+                {id: 'proxy6', text: '09:05:03 | SYSTEM_SETTING | IE ProxyOverride = *.local;<local>', isIoc: false},
+                {id: 'proxy7', text: '09:05:04 | SYSTEM_SETTING | Default Gateway = 10.10.5.1', isIoc: false},
+                {id: 'proxy8', text: '09:05:05 | PROC_INFO | chrome.exe (pid=350) signed=YES (Google LLC)', isIoc: false},
+                {id: 'proxy9', text: '09:05:07 | NETSTAT | outlook.exe connected → 40.112.72.205:443', isIoc: false}
+            ],
+            dns: [
+                {id: 'dns1', text: '09:05:00 | RESPONSE | webapp.internal.corp → A 203.0.113.45 TTL=60', isIoc: true, explanation: 'DNS poisoning - internal domain resolving to external IP'},
+                {id: 'dns2', text: '09:05:05 | WARNING | webapp.internal.corp → External IP detected, possible DNS poisoning', isIoc: true, explanation: 'DNS warning event - potential MITM attack detected'},
+                {id: 'dns3', text: '09:05:01 | RESPONSE | update.windows.com → A 13.107.4.50 TTL=3600', isIoc: false},
+                {id: 'dns4', text: '09:05:01 | RESPONSE | outlook.office.com → A 40.97.24.10 TTL=3600', isIoc: false},
+                {id: 'dns5', text: '09:05:02 | RESPONSE | corp.ad.local → SRV 10.10.5.1:389 TTL=3600', isIoc: false},
+                {id: 'dns6', text: '09:05:03 | RESPONSE | docs.google.com → A 142.250.72.14 TTL=3600', isIoc: false},
+                {id: 'dns7', text: '09:05:06 | RESPONSE | intranet.corp.local → A 10.10.5.10 TTL=3600', isIoc: false}
+            ],
+            arp: [
+                {id: 'arp1', text: '09:10:51 | Gateway MAC Change | 10.10.5.1: 00:11:22:AA:BB:01 → 00:FF:EE:99:88:77', isIoc: true, explanation: 'ARP spoofing attack - gateway MAC address changed'},
+                {id: 'arp2', text: '09:04:45 | Baseline ARP | 10.10.5.1 → 00:11:22:AA:BB:01 (dynamic)', isIoc: false},
+                {id: 'arp3', text: '09:05:00 | Morning Activity | 10.10.5.10 → 00:22:33:44:55:10 (dynamic)', isIoc: false},
+                {id: 'arp4', text: '09:06:12 | Network Changes | 10.10.5.11 → 00:77:88:99:AA:11 (dynamic)', isIoc: false},
+                {id: 'arp5', text: '09:07:30 | Continued Monitoring | 10.10.5.15 → 00:33:44:55:66:15 (dynamic)', isIoc: false},
+                {id: 'arp6', text: '09:10:48 | Pre-Attack State | 10.10.5.25 → 00:22:33:44:55:66 (dynamic)', isIoc: false},
+                {id: 'arp7', text: '09:10:53 | Attack Established | 10.10.5.1 → 00:FF:EE:99:88:77 (dynamic)', isIoc: false}
+            ],
+            browser: [
+                {id: 'browser1', text: 'Chrome - Alice | 09:05:06 | https://webapp.internal.corp → 203.0.113.45 | TLS: Valid | Cert: ACME Proxy CA | Warnings: None', isIoc: true, explanation: 'Deceptive session - internal portal via external IP with no browser warnings'},
+                {id: 'browser2', text: 'Chrome - Bob | 09:05:08 | https://intranet.corp/ → 10.10.5.20 | TLS: Valid | Cert: Corporate Internal CA', isIoc: false},
+                {id: 'browser3', text: 'Chrome - Carol | 09:05:12 | https://outlook.office.com/ → 40.97.24.10 | TLS: Valid | Cert: Microsoft', isIoc: false},
+                {id: 'browser4', text: 'Edge - David | 09:05:15 | https://github.com/ → 140.82.121.4 | TLS: Valid | Cert: DigiCert', isIoc: false},
+                {id: 'browser5', text: 'Chrome - Emma | 09:05:18 | https://docs.google.com/ → 142.250.72.14 | TLS: Valid | Cert: Google Trust', isIoc: false}
+            ],
+            firewall: [
+                {id: 'firewall1', text: '09:05:01 | ALLOW | 10.10.5.23 → 203.0.113.45:443 | 10,240 bytes | Duration: 45s', isIoc: true, explanation: 'Coordinated outbound traffic to external server from multiple hosts'},
+                {id: 'firewall2', text: '09:05:06 | ALERT | Outbound traffic spike detected → 203.0.113.45 | Affected: Multiple hosts', isIoc: true, explanation: 'Firewall anomaly detection - traffic spike to suspicious destination'},
+                {id: 'firewall3', text: '09:05:02 | ALLOW | 10.10.5.25 → 203.0.113.45:443 | 2,048 bytes', isIoc: false},
+                {id: 'firewall4', text: '09:05:04 | ALLOW | 10.10.5.30 → 203.0.113.45:80 | 8,192 bytes', isIoc: false},
+                {id: 'firewall5', text: '09:05:05 | ALLOW | 10.10.5.40 → 10.10.5.11:445 | 512 bytes', isIoc: false},
+                {id: 'firewall6', text: '09:05:10 | ALLOW | 10.10.5.50 → 203.0.113.45:443 | 4,096 bytes', isIoc: false}
+            ]
+        };
+
+        function initGame() {
+            var hasProgress = loadGameState();
+            if (!gameState.sessionId) {
+                gameState.sessionId = generateSessionId();
+            }
+            gameState.gameActive = true;
+            
+            if (hasProgress && (gameState.roomsCompleted > 0 || gameState.totalScore > 0)) {
+                showSessionFeedback('Previous progress restored: ' + gameState.roomsCompleted + '/9 rooms completed', 'success');
+            }
+            
+            loadRooms();
+            startTimer();
+            updateStats();
+        }
+
+        function showSessionFeedback(message, type) {
+            var feedback = document.createElement('div');
+            feedback.style.cssText = 
+                'position: fixed; top: 60px; right: 20px; padding: 10px 15px; ' +
+                'border-radius: 5px; font-size: 11px; z-index: 1600; ' +
+                'background: ' + (type === 'success' ? '#00ff41' : '#ffa500') + '; ' +
+                'color: ' + (type === 'success' ? 'black' : 'white') + ';';
+            feedback.textContent = message;
+            document.body.appendChild(feedback);
+            
+            setTimeout(function() {
+                if (document.body.contains(feedback)) {
+                    document.body.removeChild(feedback);
+                }
+            }, 2500);
+        }
+
+        function loadRooms() {
+    var grid = document.getElementById('roomsGrid');
+    grid.innerHTML = '';
+    
+    // Get saved evidence counts
+    var savedEvidence = {};
+    try {
+        var savedData = localStorage.getItem('aptProgress');
+        if (savedData) {
+            var sessionData = JSON.parse(savedData);
+            if (sessionData.selectedEvidence) {
+                savedEvidence = sessionData.selectedEvidence;
+            }
+        }
+    } catch (e) {
+        if (window.aptSession && window.aptSession.selectedEvidence) {
+            savedEvidence = window.aptSession.selectedEvidence;
+        }
+    }
+    
+    gameState.roomSequence.forEach(function(roomId, index) {
+        var config = roomConfigs[roomId];
+        var isCompleted = gameState.completedRooms.indexOf(roomId) !== -1;
+        var isLocked = index > gameState.roomsCompleted;
+        
+        // Count from saved data instead of DOM
+        var iocsFound = savedEvidence[roomId] ? savedEvidence[roomId].length : 0;
+        
+        var card = document.createElement('div');
+        card.className = 'room-card' + (isCompleted ? ' completed' : '') + (isLocked ? ' locked' : '');
+        card.setAttribute('data-room-id', roomId);
+        if (!isLocked) {
+            card.onclick = function() { enterRoom(roomId); };
+        }
+        card.innerHTML = '<div class="room-header"><div class="room-icon">' + config.icon + '</div><div class="room-title">' + config.title + '</div></div><div class="room-description">Analyze system for IoCs</div><div class="room-progress"><div><span>Status:</span><span>' + (isCompleted ? 'Complete' : isLocked ? 'Locked' : 'Available') + '</span></div><div><span>IoCs:</span><span class="room-ioc-count">' + iocsFound + '/' + config.iocsCount + '</span></div></div>';
+        grid.appendChild(card);
+    });
+}
+
+        function countRoomIocs(roomId) {
+            var containerMap = {'alert': 'alert-evidence','packet': 'packet-evidence','tls': 'tls-evidence','endpoint': 'endpoint-evidence','proxy': 'proxy-evidence','dns': 'dns-evidence','arp': 'arp-evidence','browser': 'browser-evidence','firewall': 'firewall-evidence'};
+            var containerId = containerMap[roomId];
+            var container = document.getElementById(containerId);
+            if (!container) return 0;
+            return container.querySelectorAll('.evidence-item.selected').length;
+        }
+
+        function updateRoomProgress(roomId) {
+            var card = document.querySelector('[data-room-id="' + roomId + '"]');
+            if (!card) return;
+            var iocsFound = countRoomIocs(roomId);
+            var config = roomConfigs[roomId];
+            var iocCounter = card.querySelector('.room-ioc-count');
+            if (iocCounter) {
+                iocCounter.textContent = iocsFound + '/' + config.iocsCount;
+            }
+        }
+
+        function startTimer() {
+            setInterval(function() {
+                if (!gameState.gameActive) return;
+                gameState.timeLeft--;
+                var minutes = Math.floor(gameState.timeLeft / 60);
+                var seconds = gameState.timeLeft % 60;
+                var timeString = minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
+                document.getElementById('globalTimer').textContent = timeString;
+                document.getElementById('dashTimer').textContent = timeString;
+                if (gameState.timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function enterRoom(roomId) {
+            if (gameState.roomSequence.indexOf(roomId) > gameState.roomsCompleted) return;
+            gameState.currentRoom = roomId;
+            showPage(roomId);
+            loadEvidence(roomId);
+        }
+
+        function loadEvidence(roomId) {
+    var containerMap = {'alert': 'alert-evidence','packet': 'packet-evidence','tls': 'tls-evidence','endpoint': 'endpoint-evidence','proxy': 'proxy-evidence','dns': 'dns-evidence','arp': 'arp-evidence','browser': 'browser-evidence','firewall': 'firewall-evidence'};
+    var containerId = containerMap[roomId];
+    var container = document.getElementById(containerId);
+    if (!container) return;
+    container.innerHTML = '';
+    var evidence = evidenceData[roomId] || [];
+    
+    // Shuffle evidence array to randomize order
+    var shuffledEvidence = evidence.slice(); // Create a copy
+    for (var i = shuffledEvidence.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var temp = shuffledEvidence[i];
+        shuffledEvidence[i] = shuffledEvidence[j];
+        shuffledEvidence[j] = temp;
+    }
+    
+    // Get saved selected evidence by matching item IDs
+    var savedSelectedIds = [];
+    try {
+        var savedData = localStorage.getItem('aptProgress');
+        if (savedData) {
+            var sessionData = JSON.parse(savedData);
+            if (sessionData.selectedEvidence && sessionData.selectedEvidence[roomId]) {
+                savedSelectedIds = sessionData.selectedEvidence[roomId];
+            }
+        }
+    } catch (e) {
+        if (window.aptSession && window.aptSession.selectedEvidence && window.aptSession.selectedEvidence[roomId]) {
+            savedSelectedIds = window.aptSession.selectedEvidence[roomId];
+        }
+    }
+    
+    shuffledEvidence.forEach(function(item) {
+        var div = document.createElement('div');
+        div.className = 'evidence-item';
+        
+        // Restore selected state by matching item ID
+        if (savedSelectedIds.indexOf(item.id) !== -1) {
+            div.classList.add('selected');
+        }
+        
+        div.textContent = item.text;
+        div.onclick = function() { selectEvidence(item, div); };
+        container.appendChild(div);
+    });
+}
+function selectEvidence(item, element) {
+            if (element.classList.contains('selected') || element.classList.contains('wrong')) return;
+            if (item.isIoc) {
+                element.classList.add('selected');
+                gameState.totalScore += 100;
+                gameState.totalIocsFound++;
+                showFeedback('Correct! ' + item.explanation, 'success');
+                var config = roomConfigs[gameState.currentRoom];
+                var containerMap = {'alert': 'alert-evidence','packet': 'packet-evidence','tls': 'tls-evidence','endpoint': 'endpoint-evidence','proxy': 'proxy-evidence','dns': 'dns-evidence','arp': 'arp-evidence','browser': 'browser-evidence','firewall': 'firewall-evidence'};
+                var containerId = containerMap[gameState.currentRoom];
+                var foundInRoom = document.querySelectorAll('#' + containerId + ' .evidence-item.selected').length;
+                updateRoomProgress(gameState.currentRoom);
+                if (foundInRoom >= config.iocsCount) {
+                    setTimeout(function() { showRoomCompletion(); }, 1000);
+                }
+            } else {
+                element.classList.add('wrong');
+                gameState.totalScore = Math.max(0, gameState.totalScore - 50);
+                showFeedback('Wrong! This appears to be legitimate activity.', 'error');
+            }
+            updateStats();
+            saveGameState();
+        }
+
+        function showFeedback(message, type) {
+            var feedback = document.getElementById('feedback');
+            feedback.textContent = message;
+            feedback.className = 'feedback ' + type;
+            feedback.style.display = 'block';
+            setTimeout(function() {
+                feedback.style.display = 'none';
+            }, 3000);
+        }
+
+        function updateStats() {
+            document.getElementById('globalScore').textContent = gameState.totalScore;
+            document.getElementById('globalIocs').textContent = gameState.totalIocsFound + '/18';
+            document.getElementById('dashScore').textContent = gameState.totalScore;
+            document.getElementById('dashIocs').textContent = gameState.totalIocsFound + '/18';
+            document.getElementById('roomsCompleted').textContent = gameState.roomsCompleted + '/9';
+            document.getElementById('dashRooms').textContent = gameState.roomsCompleted + '/9';
+            updateProgressDetails();
+        }
+
+        function updateProgressDetails() {
+            var progressDetails = document.getElementById('progressDetails');
+            if (!progressDetails) return;
+            if (gameState.roomsCompleted === 0 && gameState.totalScore === 0) {
+                progressDetails.innerHTML = 'Starting investigation...';
+            } else {
+                var completedRoomNames = gameState.completedRooms.map(function(roomId) {
+                    return roomConfigs[roomId].title;
+                });
+                var statusText = '';
+                if (gameState.roomsCompleted > 0) {
+                    statusText += '<div style="color: #00ff41;">Completed: ' + completedRoomNames.join(', ') + '</div>';
+                }
+                if (gameState.roomsCompleted < 9) {
+                    var nextRoom = gameState.roomSequence[gameState.roomsCompleted];
+                    statusText += '<div style="color: #ffa500;">Next: ' + roomConfigs[nextRoom].title + '</div>';
+                }
+                statusText += '<div style="color: #00ffff; margin-top: 5px;">Progress saved automatically</div>';
+                progressDetails.innerHTML = statusText;
+            }
+        }
+
+        function showRoomCompletion() {
+            var config = roomConfigs[gameState.currentRoom];
+            document.getElementById('completionTitle').textContent = config.title + ' Complete!';
+            document.getElementById('completionMessage').innerHTML = '<p style="color: #00ffff; font-size: 1.2rem; margin-bottom: 20px;">You found all ' + config.iocsCount + ' IoCs!</p><button class="back-btn" onclick="completeRoom()" style="padding: 12px 30px; font-size: 1.1rem;">Continue</button>';
+            document.getElementById('completionModal').style.display = 'block';
+        }
+
+        function completeRoom() {
+            gameState.completedRooms.push(gameState.currentRoom);
+            gameState.roomsCompleted++;
+            saveGameState();
+            document.getElementById('completionModal').style.display = 'none';
+            if (gameState.roomsCompleted >= 9) {
+                showFinalResults();
+            } else {
+                showPage('dashboard');
+                loadRooms();
+                updateStats();
+            }
+        }
+function showFinalResults() {
+            gameState.gameActive = false;
+            var totalPossibleIocs = 18;
+            var correctIocs = gameState.totalIocsFound;
+            var accuracy = Math.round((correctIocs / totalPossibleIocs) * 100);
+            var wrongCount = 0;
+            var containerIds = ['alert-evidence', 'packet-evidence', 'tls-evidence', 'endpoint-evidence', 'proxy-evidence', 'dns-evidence', 'arp-evidence', 'browser-evidence', 'firewall-evidence'];
+            containerIds.forEach(function(id) {
+                var container = document.getElementById(id);
+                if (container) {
+                    wrongCount += container.querySelectorAll('.evidence-item.wrong').length;
+                }
+            });
+            var totalSelections = correctIocs + wrongCount;
+            var selectionAccuracy = totalSelections > 0 ? Math.round((correctIocs / totalSelections) * 100) : 0;
+            var rating = '';
+            var ratingColor = '';
+            var ratingMessage = '';
+            if (accuracy >= 90 && wrongCount <= 3) {
+                rating = 'EXCELLENT';
+                ratingColor = '#00ff41';
+                ratingMessage = 'Outstanding work! You successfully traced the complete MITM attack chain with minimal errors.';
+            } else if (accuracy >= 75 && wrongCount <= 6) {
+                rating = 'GOOD';
+                ratingColor = '#00a8cc';
+                ratingMessage = 'Great job! You identified most MITM indicators and maintained good accuracy.';
+            } else if (accuracy >= 50) {
+                rating = 'FAIR';
+                ratingColor = '#ffa500';
+                ratingMessage = 'Decent effort. Review the missed indicators to improve your MITM detection skills.';
+            } else {
+                rating = 'NEEDS IMPROVEMENT';
+                ratingColor = '#ff6b6b';
+                ratingMessage = 'More practice needed. Focus on recognizing TLS manipulation and traffic redirection patterns.';
+            }
+            var timeTaken = 1500 - gameState.timeLeft;
+            var minutes = Math.floor(timeTaken / 60);
+            var seconds = timeTaken % 60;
+            var timeString = minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
+var resultsHTML = '<div style="text-align: center; color: ' + ratingColor + '; font-size: 2.5rem; font-weight: bold; margin-bottom: 20px;">' + rating + '</div><div style="color: #00ffff; font-size: 1.2rem; margin-bottom: 30px; line-height: 1.6;">' + ratingMessage + '</div><div style="background: rgba(0, 0, 0, 0.4); border-radius: 10px; padding: 20px; margin-bottom: 20px;"><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; text-align: left;"><div><div style="color: #00a8cc; font-size: 0.9rem;">FINAL SCORE</div><div style="color: #00ff41; font-size: 2rem; font-weight: bold;">' + gameState.totalScore + '</div></div><div><div style="color: #00a8cc; font-size: 0.9rem;">IoCs FOUND</div><div style="color: #00ff41; font-size: 2rem; font-weight: bold;">' + correctIocs + '/' + totalPossibleIocs + '</div></div><div><div style="color: #00a8cc; font-size: 0.9rem;">DETECTION RATE</div><div style="color: ' + (accuracy >= 75 ? '#00ff41' : '#ffa500') + '; font-size: 2rem; font-weight: bold;">' + accuracy + '%</div></div><div><div style="color: #00a8cc; font-size: 0.9rem;">TIME TAKEN</div><div style="color: #00ffff; font-size: 2rem; font-weight: bold;">' + timeString + '</div></div></div></div><div style="background: rgba(0, 100, 150, 0.2); border-radius: 10px; padding: 15px; margin-bottom: 20px; text-align: left;"><div style="color: #00ff41; font-weight: bold; margin-bottom: 10px;">PERFORMANCE BREAKDOWN</div><div style="color: #00ffff; margin: 5px 0;">Correct IoCs: <span style="color: #00ff41;">' + correctIocs + '</span></div><div style="color: #00ffff; margin: 5px 0;">Wrong Selections: <span style="color: #ff6b6b;">' + wrongCount + '</span></div><div style="color: #00ffff; margin: 5px 0;">Missed IoCs: <span style="color: #ffa500;">' + (totalPossibleIocs - correctIocs) + '</span></div><div style="color: #00ffff; margin: 5px 0;">Selection Accuracy: <span style="color: ' + (selectionAccuracy >= 80 ? '#00ff41' : '#ffa500') + ';">' + selectionAccuracy + '%</span></div><div style="color: #00ffff; margin: 5px 0;">Rooms Completed: <span style="color: #00ff41;">' + gameState.roomsCompleted + '/9</span></div></div><div style="background: rgba(255, 170, 0, 0.1); border: 1px solid #ffa500; border-radius: 10px; padding: 15px; margin-bottom: 20px; text-align: left;"><div style="color: #ffa500; font-weight: bold; margin-bottom: 10px; font-size: 1.1rem;">MITM ATTACK MITIGATION</div><div style="color: #00ffff; font-size: 0.9rem; line-height: 1.6;"><div style="margin: 8px 0;"><span style="color: #00ff41;">1. Certificate Pinning:</span> Implement HPKP or certificate pinning for critical applications</div><div style="margin: 8px 0;"><span style="color: #00ff41;">2. HSTS Enforcement:</span> Enable HTTP Strict Transport Security with preload lists</div><div style="margin: 8px 0;"><span style="color: #00ff41;">3. Certificate Transparency:</span> Monitor CT logs for unauthorized certificate issuance</div><div style="margin: 8px 0;"><span style="color: #00ff41;">4. ARP Spoofing Prevention:</span> Enable Dynamic ARP Inspection (DAI) on switches</div><div style="margin: 8px 0;"><span style="color: #00ff41;">5. DNS Security:</span> Implement DNSSEC and DNS over HTTPS (DoH) or DNS over TLS (DoT)</div><div style="margin: 8px 0;"><span style="color: #00ff41;">6. Network Segmentation:</span> Isolate sensitive traffic with VLANs and micro-segmentation</div></div></div><div style="background: rgba(0, 255, 65, 0.1); border: 1px solid #00ff41; border-radius: 10px; padding: 15px; margin-bottom: 20px; text-align: left;"><div style="color: #00ff41; font-weight: bold; margin-bottom: 10px; font-size: 1.1rem;">BEST PRACTICES</div><div style="color: #00ffff; font-size: 0.9rem; line-height: 1.6;"><div style="margin: 8px 0;"><span style="color: #00a8cc;">Certificate Monitoring:</span> Alert on new CA certificates added to trust stores</div><div style="margin: 8px 0;"><span style="color: #00a8cc;">TLS Inspection:</span> Use legitimate enterprise proxies with proper certificate management</div><div style="margin: 8px 0;"><span style="color: #00a8cc;">Network Baseline:</span> Establish normal traffic patterns and alert on deviations</div><div style="margin: 8px 0;"><span style="color: #00a8cc;">Endpoint Protection:</span> Deploy EDR to detect proxy installations and cert modifications</div><div style="margin: 8px 0;"><span style="color: #00a8cc;">User Training:</span> Educate users on certificate warnings and suspicious browser behavior</div><div style="margin: 8px 0;"><span style="color: #00a8cc;">Port Security:</span> Enable 802.1X authentication and disable unused switch ports</div><div style="margin: 8px 0;"><span style="color: #00a8cc;">Encrypted DNS:</span> Use encrypted DNS queries to prevent DNS hijacking</div><div style="margin: 8px 0;"><span style="color: #00a8cc;">Zero Trust Architecture:</span> Implement mutual TLS (mTLS) for service-to-service communication</div></div></div><button class="back-btn" onclick="location.reload()" style="padding: 12px 30px; font-size: 1.1rem;">Start New Investigation</button>';
+            document.getElementById('completionTitle').innerHTML = 'INVESTIGATION COMPLETE!';
+            document.getElementById('completionMessage').innerHTML = resultsHTML;
+            document.getElementById('completionModal').style.display = 'block';
+            clearGameState();
+        }
+
+        function showPage(pageId) {
+            var pages = document.querySelectorAll('.page');
+            for (var i = 0; i < pages.length; i++) {
+                pages[i].classList.remove('active');
+            }
+            document.getElementById(pageId).classList.add('active');
+        }
+
+        function endGame() {
+            gameState.gameActive = false;
+            alert('Time up! You found ' + gameState.totalIocsFound + '/18 IoCs. Final Score: ' + gameState.totalScore);
+        }
+
+        window.addEventListener('beforeunload', function() {
+            if (gameState.gameActive) {
+                saveGameState();
+            }
+        });
+
+        window.onload = initGame;
+    </script>
+</body>
+</html>
