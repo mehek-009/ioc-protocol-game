@@ -282,6 +282,22 @@ class RoomIntegration {
         
         completionMessage.innerHTML = completionContent;
         document.body.appendChild(completionMessage);
+
+        // If the entire game is now complete, persist final state and redirect to dashboard
+        if (globalStats.gameCompleted) {
+            try {
+                const finalState = GameState.loadGameState ? GameState.loadGameState() : null;
+                if (finalState && GameState.saveGameState) {
+                    GameState.saveGameState(finalState);
+                }
+            } catch (e) {
+                console.error('Failed to save final game state before redirect:', e);
+            }
+
+            setTimeout(() => {
+                window.location.href = 'dashboard.html';
+            }, 2000);
+        }
     }
 
     /**
@@ -293,8 +309,16 @@ class RoomIntegration {
         this.showFeedback(`Time's up! You found ${this.localState.roomIocsFound}/${this.localState.totalIocs} IoCs in this room.`, 'error');
         
         setTimeout(() => {
+            // If game completed, save state and go to dashboard. Otherwise ask to restart or go dashboard.
+            const globalStats = GameState.getGameStatistics();
+            if (globalStats.gameCompleted) {
+                try { GameState.saveGameState(GameState.loadGameState()); } catch (e) {}
+                window.location.href = 'dashboard.html';
+                return;
+            }
+
             if (confirm('Time expired! Would you like to return to the main dashboard?')) {
-                window.location.href = 'index.html';
+                window.location.href = 'dashboard.html';
             } else {
                 location.reload();
             }

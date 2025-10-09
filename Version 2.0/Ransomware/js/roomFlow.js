@@ -51,6 +51,34 @@ class RoomFlow {
             gameCompleted: false
         };
     }
+
+    // Simple tab-counting helpers for pausing when last tab closes
+    static registerTab() {
+        try {
+            const key = 'socOpenTabs';
+            const current = parseInt(localStorage.getItem(key) || '0', 10) || 0;
+            localStorage.setItem(key, String(current + 1));
+            return current + 1;
+        } catch (e) {
+            return 1;
+        }
+    }
+
+    static unregisterTab() {
+        try {
+            const key = 'socOpenTabs';
+            const current = parseInt(localStorage.getItem(key) || '0', 10) || 0;
+            const next = Math.max(0, current - 1);
+            if (next === 0) {
+                localStorage.removeItem(key);
+            } else {
+                localStorage.setItem(key, String(next));
+            }
+            return next;
+        } catch (e) {
+            return 0;
+        }
+    }
     
     static loadGameState() {
         const now = Date.now();
@@ -301,6 +329,31 @@ class RoomFlow {
                 }
             }
         });
+    }
+
+    /**
+     * Restore paused remaining time saved when the last tab closed.
+     * If 'socPausedRemaining' exists in localStorage, compute a gameStartTime
+     * that results in that remaining time and persist it.
+     */
+    static restorePausedTimeIfNeeded() {
+        try {
+            const key = 'socPausedRemaining';
+            const raw = localStorage.getItem(key);
+            if (!raw) return;
+            const paused = parseInt(raw, 10);
+            if (isNaN(paused)) return;
+
+            const state = this.loadGameState();
+            // Compute elapsed such that remaining = paused
+            const elapsed = this.GLOBAL_TIME_LIMIT - paused;
+            state.gameStartTime = Date.now() - (elapsed * 1000);
+            state.globalTimeLeft = paused;
+            this.saveGameState(state, true);
+            localStorage.removeItem(key);
+        } catch (e) {
+            console.error('Failed to restore paused time:', e);
+        }
     }
     
     static showRoomUnlockedNotification(roomName) {
@@ -556,14 +609,35 @@ window.RoomIntegration = {
             message = `Investigation Complete!\n\nAll IoCs Found: ${state.totalIocsFound}/12\nFinal Score: ${state.totalScore}\nTime Used: ${stats.timeUsed}`;
         }
         
+        // Brief delay to let UI settle, then show message and take configured action
         setTimeout(() => {
             alert(message);
-            if (confirm('Would you like to start a new investigation?')) {
-                RoomFlow.resetGame();
-                window.location.href = 'instruction.html';
-            } else {
-                window.location.href = 'index.html';
+
+            if (reason === 'timeout') {
+                // On timeout, reset the game and return to the dashboard
+                try {
+                    RoomFlow.resetGame();
+                } catch (e) {
+                    console.error('Failed to reset game on timeout:', e);
+                }
+                window.location.href = '../dashboard.html';
+                return;
             }
+
+            if (reason === 'completed') {
+                // On completion, persist final state and go to dashboard
+                try {
+                    const finalState = RoomFlow.loadGameState();
+                    RoomFlow.saveGameState(finalState, true);
+                } catch (e) {
+                    console.error('Failed to save final game state:', e);
+                }
+                window.location.href = '../dashboard.html';
+                return;
+            }
+
+            // Fallback: go back to dashboard
+            window.location.href = '../dashboard.html';
         }, 1000);
     },
     
@@ -587,5 +661,27 @@ document.addEventListener('DOMContentLoaded', function() {
     const currentRoom = RoomFlow.getCurrentRoom();
     if (currentRoom && currentRoom !== 'index' && currentRoom !== 'instruction') {
         RoomIntegration.initializeRoom(currentRoom);
+    }
+});
+
+// Register tab and try to restore any paused time saved when all tabs were closed
+try {
+    RoomFlow.registerTab();
+    RoomFlow.restorePausedTimeIfNeeded();
+} catch (e) {
+    // ignore
+}
+
+window.addEventListener('beforeunload', () => {
+    try {
+        // Persist current remaining time
+        const remaining = RoomFlow.getGlobalTimeRemaining(true);
+        const next = RoomFlow.unregisterTab();
+        if (next === 0) {
+            // Save paused remaining time for next load
+            localStorage.setItem('socPausedRemaining', String(remaining));
+        }
+    } catch (e) {
+        // ignore
     }
 });

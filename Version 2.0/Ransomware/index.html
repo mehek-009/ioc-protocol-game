@@ -386,7 +386,6 @@
         </div>
 
         <div class="rooms-grid">
-            <!-- Room 1: Downloads -->
             <div class="room-card" data-room="downloads" data-order="1">
                 <div class="terminal-header">
                     <div class="window-controls">
@@ -408,7 +407,6 @@
                 </div>
             </div>
 
-            <!-- Room 2: Processes -->
             <div class="room-card locked" data-room="processes" data-order="2">
                 <div class="lock-overlay">🔒</div>
                 <div class="terminal-header">
@@ -431,7 +429,6 @@
                 </div>
             </div>
 
-            <!-- Room 3: Authentication -->
             <div class="room-card locked" data-room="authentication" data-order="3">
                 <div class="lock-overlay">🔒</div>
                 <div class="terminal-header">
@@ -454,7 +451,6 @@
                 </div>
             </div>
 
-            <!-- Room 4: Network -->
             <div class="room-card locked" data-room="network" data-order="4">
                 <div class="lock-overlay">🔒</div>
                 <div class="terminal-header">
@@ -477,7 +473,6 @@
                 </div>
             </div>
 
-            <!-- Room 5: Registry -->
             <div class="room-card locked" data-room="registry" data-order="5">
                 <div class="lock-overlay">🔒</div>
                 <div class="terminal-header">
@@ -500,7 +495,6 @@
                 </div>
             </div>
             
-            <!-- Room 6: Filesystem -->
             <div class="room-card locked" data-room="filesystem" data-order="6">
                 <div class="lock-overlay">🔒</div>
                 <div class="terminal-header">
@@ -730,8 +724,23 @@
             
             setTimeout(() => {
                 alert(message);
-                if (confirm('Would you like to start a new investigation?')) {
-                    resetGame();
+                if (stats.gameCompleted) {
+                    // Save final state and go to dashboard
+                    try {
+                        const finalState = RoomFlow.loadGameState();
+                        RoomFlow.saveGameState(finalState, true);
+                    } catch (e) {
+                        console.error('Failed to save final game state:', e);
+                    }
+                    window.location.href = 'dashboard.html';
+                } else {
+                    if (confirm('Would you like to start a new investigation?')) {
+                        RoomFlow.resetGame();
+                        window.location.href = 'convo.html';
+                    } else {
+                        // Return to dashboard if user doesn't want to start again
+                        window.location.href = 'dashboard.html';
+                    }
                 }
             }, 1000);
         }
@@ -739,7 +748,8 @@
         function resetGame() {
             if (confirm('Are you sure? All progress will be lost.')) {
                 RoomFlow.resetGame();
-                window.location.href = 'instruction.html';
+                // After reset, return to dashboard
+                window.location.href = 'dashboard.html';
             }
         }
 

@@ -18,9 +18,9 @@
         <h1 class="glitch" data-text="IOC Protocol">IOC Protocol</h1>
 
         <div class="button-container">
-            <button class="dashboard-button" data-target="mitm.html">Man in the Middle</button>
-            <button class="dashboard-button" data-target="ransomware.html">Ransomware</button>
-            <button class="dashboard-button" data-target="dos.html">Denial of Service</button>
+            <button class="dashboard-button" data-target="Insider/convo.html">Insider Attack</button>
+            <button class="dashboard-button" data-target="Ransomware/convo.html">Ransomware</button>
+            <button class="dashboard-button" data-target="dos.html">Man in the Middle</button>
         </div>
     </div>
 
@@ -31,7 +31,7 @@
                 button.addEventListener('click', () => {
                     const targetPage = button.getAttribute('data-target');
                     if (targetPage) {
-                        window.location.href = targetPage;
+                        window.location.href = targetPage;  
                     }
                 });
             });
