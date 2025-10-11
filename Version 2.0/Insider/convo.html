@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insider Threat - Discovery Scene</title>
+    <style>
+        :root {
+            --bg: #031D29;
+            --panel: #0A3D50;
+            --cyan: #00FFFF;
+            --sea-green: #00AA99;
+            --muted: #88BBDD;
+            --accent: #FFCC00;
+            --danger: #FF6666;
+            --main-text: #DFFCFF;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: var(--bg);
+            color: var(--main-text);
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
+
+        body.loaded { opacity: 1; }
+        body.page-transition-out { opacity: 0 !important; }
+
+        .video-background {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: -2;
+            object-fit: cover;
+            filter: brightness(1.5);
+            transition: filter 5s ease-out;
+        }
+
+        .video-background.dimmed-effect {
+            filter: brightness(0.7);
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: -1;
+        }
+
+        .ui-container {
+            width: 90%;
+            max-width: 1200px;
+            height: 100vh;
+            position: relative;
+            z-index: 1;
+            padding: 30px;
+        }
+
+        #alert-screen {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            transition: opacity 0.5s ease-out;
+        }
+
+        .alert-icon {
+            font-size: 80px;
+            color: var(--danger);
+            animation: alertPulse 1.5s infinite;
+        }
+
+        @keyframes alertPulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 102, 102, 0.4); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(255, 102, 102, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 102, 102, 0); }
+        }
+
+        #alert-screen p {
+            font-size: 1.5em;
+            color: var(--danger);
+            margin-top: 15px;
+            text-align: center;
+            max-width: 800px;
+        }
+
+        #acknowledge-btn {
+            padding: 15px 30px;
+            margin-top: 30px;
+            background-color: var(--danger);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            font-size: 1.1em;
+            box-shadow: 0 0 10px var(--danger);
+            transition: background-color 0.3s;
+        }
+
+        #acknowledge-btn:hover {
+            background-color: #FF8888;
+        }
+
+        .dialogue-box {
+            position: absolute;
+            max-width: 450px;
+            padding: 15px 20px;
+            border-radius: 5px;
+            background-color: rgba(10, 61, 80, 0.85);
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+            top: 10%;
+        }
+
+        .dialogue-analyst {
+            right: 5%;
+            border-left: 3px solid var(--accent);
+            color: var(--accent);
+        }
+
+        .dialogue-director {
+            left: 5%;
+            border-left: 3px solid var(--cyan);
+            color: var(--cyan);
+        }
+
+        .dialogue-box p {
+            font-size: 1.1em;
+            line-height: 1.4;
+        }
+
+        .speaker-label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+            text-decoration: underline;
+        }
+
+        .highlight-threat {
+            color: var(--danger);
+            font-weight: bold;
+        }
+
+        #alert-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 40;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+            background-color: rgba(0, 0, 0, 0.95);
+            padding: 30px;
+            border: 2px solid var(--danger);
+            box-shadow: 0 0 30px rgba(255, 102, 102, 0.7);
+            max-width: 700px;
+        }
+
+        #alert-display .alert-header {
+            color: var(--danger);
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        #alert-display .alert-content {
+            color: var(--main-text);
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        #nav-controls {
+            position: absolute;
+            bottom: 30px;
+            right: 5%;
+            z-index: 50;
+            display: none;
+        }
+
+        #forward-btn {
+            background-color: var(--sea-green);
+            color: var(--bg);
+            border: none;
+            padding: 15px 25px;
+            font-size: 1.5em;
+            cursor: pointer;
+            border-radius: 5px;
+            box-shadow: 0 0 15px var(--sea-green);
+            transition: background-color 0.3s, transform 0.1s;
+        }
+
+        #forward-btn:hover { background-color: #00FFCC; }
+        #forward-btn:active { transform: translateY(2px); }
+
+        #investigation-start {
+            position: absolute;
+            bottom: 30px;
+            right: 5%;
+            text-align: right;
+            display: none;
+            animation: fadeIn 1s forwards;
+            padding: 10px;
+        }
+
+        @keyframes fadeIn { to { opacity: 1; } }
+
+        .start-btn {
+            display: inline-block;
+            padding: 15px 30px;
+            background-color: var(--accent);
+            color: var(--bg);
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+        }
+
+        .reveal-line {
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <video autoplay loop muted class="video-background">
+        <source src="conversation.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+    <div class="overlay"></div>
+
+    <div class="ui-container">
+        <div id="alert-screen">
+            <span class="alert-icon">🚨</span>
+            <p>ALERT: CRITICAL ANOMALY DETECTED - HISTORICAL CORRELATION (CASE 2013-SNWDN)</p>
+            <p style="font-size: 1rem; color: var(--muted); margin-top: 20px;">
+                Your experimental threat-hunting query has detected massive coordinated data movement from Spring 2013...
+            </p>
+            <button id="acknowledge-btn">ACKNOWLEDGE ALERT</button>
+        </div>
+
+        <div id="dialogue-frames">
+            <div class="dialogue-box dialogue-analyst" data-frame-type="dialogue">
+                <span class="speaker-label">YOU (staring at screen):</span>
+                <p>"What in the... This can't be right."</p>
+            </div>
+
+            <div class="dialogue-box dialogue-analyst" data-frame-type="dialogue">
+                <span class="speaker-label">YOU (reading alert details):</span>
+                <p>"The system has correlated activity across six different log sources... all tied to a single NSA contractor: <span class='highlight-threat'>Edward Snowden</span>."</p>
+            </div>
+
+            <div id="alert-display" data-frame-type="image">
+                <div class="alert-header">⚠️ ALERT DETAILS ⚠️</div>
+                <div class="alert-content">
+                    <p><strong>User Account:</strong> esnowden</p>
+                    <p><strong>Time Period:</strong> March-May 2013</p>
+                    <p><strong>Anomaly Type:</strong> Systematic Data Exfiltration</p>
+                    <p><strong>Affected Systems:</strong> 6 major infrastructure components</p>
+                    <p><strong>Data Volume:</strong> 58,000+ classified documents</p>
+                    <p><strong>Severity:</strong> CRITICAL</p>
+                </div>
+            </div>
+
+            <div class="dialogue-box dialogue-director" data-frame-type="dialogue">
+                <span class="speaker-label">DIRECTOR THOMPSON (from behind):</span>
+                <p>"Find something, Analyst?"</p>
+            </div>
+
+            <div class="dialogue-box dialogue-analyst" data-frame-type="dialogue">
+                <span class="speaker-label">YOU (turning around):</span>
+                <p>"Director. The historical query just lit up the Snowden case file. It's correlating database queries, file share access, and host activity from 2013 into a single coherent attack chain."</p>
+            </div>
+
+            <div class="dialogue-box dialogue-director" data-frame-type="dialogue">
+                <span class="speaker-label">DIRECTOR THOMPSON:</span>
+                <p>"I know. That's the point. The original investigation knew <em>what</em> was taken. This review is about understanding <em>how</em>—with modern tools."</p>
+            </div>
+
+            <div class="dialogue-box dialogue-director" data-frame-type="dialogue">
+                <span class="speaker-label">DIRECTOR THOMPSON:</span>
+                <p>"We need a definitive forensic timeline of his digital movements, step-by-step. You have 60 minutes before the Threat Review Board convenes."</p>
+            </div>
+
+            <div class="dialogue-box dialogue-analyst" data-frame-type="dialogue">
+                <span class="speaker-label">YOU:</span>
+                <p>"Understood. I'll reconstruct the entire narrative from these correlated logs."</p>
+            </div>
+        </div>
+
+        <div id="nav-controls">
+            <button id="forward-btn" title="Next Dialogue">&#9658;</button>
+        </div>
+
+        <div id="investigation-start">
+            <h2 style="color: var(--accent);">🔍 BEGIN FORENSIC INVESTIGATION</h2>
+            <a href="mission.html" class="start-btn" id="start-btn">Start Investigation</a>
+        </div>
+    </div>
+
+    <script>
+        const alertScreen = document.getElementById('alert-screen');
+        const acknowledgeBtn = document.getElementById('acknowledge-btn');
+        const dialogueFrames = document.getElementById('dialogue-frames');
+        const frames = document.querySelectorAll('.dialogue-box, #alert-display');
+        const forwardBtn = document.getElementById('forward-btn');
+        const navControls = document.getElementById('nav-controls');
+        const investigationStart = document.getElementById('investigation-start');
+        const startButton = document.getElementById('start-btn');
+        const videoBg = document.querySelector('.video-background');
+
+        let currentFrameIndex = -1;
+
+        function showNextFrame() {
+            if (currentFrameIndex >= 0) {
+                const prevFrame = frames[currentFrameIndex];
+                prevFrame.style.opacity = '0';
+                setTimeout(() => {
+                    prevFrame.style.display = 'none';
+                }, 300);
+            }
+
+            currentFrameIndex++;
+
+            if (currentFrameIndex < frames.length) {
+                const currentFrame = frames[currentFrameIndex];
+                currentFrame.style.display = 'block';
+                setTimeout(() => {
+                    currentFrame.style.opacity = '1';
+                }, 50);
+
+                if (currentFrameIndex === frames.length - 1) {
+                    navControls.style.display = 'none';
+                    setTimeout(() => {
+                        investigationStart.style.display = 'block';
+                    }, 500);
+                }
+            }
+        }
+
+        function startScene() {
+            alertScreen.style.opacity = '0';
+            setTimeout(() => {
+                alertScreen.style.display = 'none';
+                navControls.style.display = 'block';
+                showNextFrame();
+            }, 500);
+        }
+
+        acknowledgeBtn.addEventListener('click', startScene);
+        forwardBtn.addEventListener('click', showNextFrame);
+
+        if (startButton) {
+            startButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetUrl = startButton.href;
+                document.body.classList.add('page-transition-out');
+                setTimeout(() => {
+                    window.location.href = targetUrl;
+                }, 1000);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.body.classList.add('loaded');
+            setTimeout(() => {
+                videoBg.classList.add('dimmed-effect');
+            }, 100);
+        });
+    </script>
+</body>
+</html>

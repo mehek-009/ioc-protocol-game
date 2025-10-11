@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insider Threat - Mission Briefing</title>
+    <style>
+        :root {
+            --bg: #031D29;
+            --cyan: #00FFFF;
+            --sea-green: #00AA99;
+            --muted: #88BBDD;
+            --danger: #FF6666;
+            --main-text: #DFFCFF;
+            --dark-panel: rgba(0, 0, 0, 0.95);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Courier New', monospace;
+            color: var(--main-text);
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: 1fr;
+            place-items: center;
+            background-color: var(--bg);
+            position: relative;
+            overflow: hidden;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
+
+        body.loaded { opacity: 1; }
+        body.page-transition-out { opacity: 0 !important; }
+
+        .video-background {
+            position: fixed;
+            top: 0; right: 0;
+            width: 100%; height: 100%;
+            z-index: -2;
+            object-fit: cover;
+            filter: brightness(1.5);
+            transition: filter 5s ease-out;
+        }
+
+        .video-background.dimmed-effect {
+            filter: brightness(0.7);
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: -1;
+        }
+
+        .content-panel {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 50%;
+            height: 100vh;
+            padding: 50px 40px;
+            background-color: var(--dark-panel);
+            border-left: 3px solid var(--cyan);
+            box-shadow: -10px 0 30px rgba(0, 255, 255, 0.3);
+            display: flex;
+            flex-direction: column;
+            z-index: 1;
+        }
+
+        h1 {
+            color: var(--cyan);
+            border-bottom: 2px solid var(--sea-green);
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+            font-size: 2em;
+            text-transform: uppercase;
+            text-align: center;
+        }
+
+        .briefing-section {
+            display: none;
+            flex-grow: 1;
+            overflow-y: auto;
+            padding-right: 15px;
+        }
+
+        .briefing-section.active {
+            display: block;
+        }
+
+        .reveal-line {
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+            margin-bottom: 15px;
+        }
+
+        .section-title {
+            color: var(--sea-green);
+            font-size: 1.4em;
+            margin-top: 20px;
+            margin-bottom: 15px;
+            border-left: 3px solid var(--sea-green);
+            padding-left: 10px;
+        }
+
+        .objective-list {
+            list-style: decimal;
+            margin-left: 20px;
+            margin-bottom: 25px;
+            font-size: 1.1em;
+            color: var(--main-text);
+        }
+
+        .objective-list li {
+            margin-bottom: 15px;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        .timeline-flow {
+            font-weight: bold;
+            color: var(--cyan);
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            margin: 15px 0 25px 0;
+            border: 1px dashed var(--sea-green);
+            text-align: center;
+            font-size: 1.2em;
+        }
+
+        .suspect-profile {
+            background: rgba(255, 102, 102, 0.1);
+            border: 2px solid var(--danger);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .suspect-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .suspect-avatar {
+            font-size: 3rem;
+            margin-right: 20px;
+        }
+
+        .suspect-details h3 {
+            color: var(--danger);
+            font-size: 1.4rem;
+            margin-bottom: 5px;
+        }
+
+        .suspect-details p {
+            color: var(--main-text);
+            margin: 3px 0;
+            font-size: 0.95rem;
+        }
+
+        .nav-controls {
+            padding-top: 20px;
+            text-align: right;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: auto;
+        }
+
+        #next-btn {
+            padding: 15px 30px;
+            background-color: var(--sea-green);
+            color: var(--bg);
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1.2em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 0 10px var(--sea-green);
+            transition: background-color 0.3s, transform 0.1s;
+        }
+
+        #next-btn:hover { background-color: var(--cyan); transform: translateY(-2px); }
+
+        .start-btn {
+            display: block;
+            width: 100%;
+            text-align: center;
+            padding: 15px 30px;
+            margin-top: 40px;
+            background-color: var(--cyan);
+            color: var(--bg);
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 1.2em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 0 15px var(--cyan);
+            transition: background-color 0.3s, transform 0.1s;
+        }
+
+        .start-btn:hover { background-color: #FFF; transform: translateY(-2px); }
+    </style>
+</head>
+<body>
+    <video autoplay loop muted class="video-background">
+        <source src="Analyst.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+    <div class="overlay"></div>
+
+    <div class="content-panel">
+        <h1>INSIDER THREAT INVESTIGATION</h1>
+
+        <div class="briefing-section" data-index="0">
+            <div class="section-title reveal-line">CASE BACKGROUND: THE GHOST IN THE SYSTEM</div>
+            <p class="reveal-line">
+                This isn't an active breach response—it's a forensic reconstruction. The damage was done years ago, but the full picture of <em>how</em> remains unclear.
+            </p>
+            <p class="reveal-line">
+                Your experimental threat-hunting query has done what legacy systems couldn't: it correlated scattered log data from <strong style="color: var(--danger);">Spring 2013</strong>, revealing a systematic, methodical data exfiltration operation.
+            </p>
+            <p class="reveal-line">
+                The perpetrator: <strong style="color: var(--danger);">Edward Snowden</strong>, a trusted NSA contractor with privileged system administrator access. He used that trust as a weapon, operating in the shadows of routine system administration.
+            </p>
+
+            <div class="suspect-profile reveal-line">
+                <div class="suspect-header">
+                    <div class="suspect-avatar">👤</div>
+                    <div class="suspect-details">
+                        <h3>SUBJECT: Edward Snowden</h3>
+                        <p><strong>Role:</strong> NSA Contractor (Booz Allen Hamilton)</p>
+                        <p><strong>Clearance:</strong> Top Secret</p>
+                        <p><strong>Access Level:</strong> Privileged System Administrator</p>
+                        <p><strong>Active Period:</strong> March-May 2013</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="briefing-section" data-index="1">
+            <div class="section-title reveal-line">YOUR MISSION: RECONSTRUCT THE CRIME</div>
+            <p class="reveal-line">
+                The Threat Review Board needs answers. Not just what was taken, but the complete technical narrative: the tactics, techniques, and procedures (TTPs) used to execute the largest intelligence leak in U.S. history.
+            </p>
+            <p class="reveal-line">
+                You must identify <strong>15 Indicators of Compromise (IoCs)</strong> hidden across <strong>6 investigation areas</strong> to answer five critical questions:
+            </p>
+
+            <ol class="objective-list reveal-line">
+                <li><strong>HOW</strong> did he abuse his privileged access? (The Behavioral Vector)</li>
+                <li><strong>WHAT</strong> did he systematically collect? (The Scope of Data Theft)</li>
+                <li><strong>WHEN</strong> did the operation occur? (The Precise Attack Timeline)</li>
+                <li><strong>WHERE</strong> did he stage the stolen data? (The Consolidation Points)</li>
+                <li><strong>WHY</strong> wasn't he detected in real-time? (The Stealth Mechanisms)</li>
+            </ol>
+        </div>
+
+        <div class="briefing-section" data-index="2">
+            <div class="section-title reveal-line">INVESTIGATION TIMELINE: FOLLOW THE EVIDENCE CHAIN</div>
+            <p class="reveal-line">
+                Your analysis must follow the chronological attack timeline. Each room builds on the previous, painting a complete picture of the operation:
+            </p>
+
+            <div class="timeline-flow reveal-line">
+                Database Access → File Servers → SharePoint Portal → Authentication → Host Forensics → Network Traffic
+            </div>
+
+            <p class="reveal-line" style="color: var(--danger);">
+                <strong>⏰ TIME LIMIT: 60 MINUTES</strong>
+            </p>
+
+            <p class="reveal-line">
+                The board meeting begins in one hour. Every correct IoC brings you closer to exposing the complete attack chain. Every mistake costs precious time.
+            </p>
+
+            <p class="reveal-line" style="color: var(--cyan);">
+                This is more than forensics—it's understanding how a trusted insider weaponized legitimate access to commit one of history's most significant security breaches.
+            </p>
+
+            <a href="index.html" class="start-btn reveal-line" id="start-btn">BEGIN INVESTIGATION</a>
+        </div>
+
+        <div class="nav-controls">
+            <button id="next-btn">Next &nbsp; &#9658;</button>
+        </div>
+    </div>
+
+    <script>
+        const sections = document.querySelectorAll('.briefing-section');
+        const nextBtn = document.getElementById('next-btn');
+        const startButton = document.getElementById('start-btn');
+        const videoBg = document.querySelector('.video-background');
+        let currentSectionIndex = 0;
+        let revealTimeout = null;
+
+        function revealContent(section) {
+            if (revealTimeout) clearTimeout(revealTimeout);
+
+            const revealableElements = section.querySelectorAll('.reveal-line, .objective-list li');
+            let delay = 300;
+            const blockDelay = 800;
+            const listItemDelay = 400;
+
+            revealableElements.forEach(el => { el.style.opacity = '0'; });
+
+            revealableElements.forEach(el => {
+                if (el) {
+                    revealTimeout = setTimeout(() => {
+                        el.style.opacity = '1';
+                    }, delay);
+
+                    if (el.tagName === 'LI') {
+                        delay += listItemDelay;
+                    } else {
+                        delay += blockDelay;
+                    }
+                }
+            });
+        }
+
+        function showSection(index) {
+            sections.forEach((section, i) => {
+                section.classList.remove('active');
+                if (i === index) {
+                    section.classList.add('active');
+                    section.scrollTop = 0;
+                    revealContent(section);
+                }
+            });
+
+            if (index === sections.length - 1) {
+                nextBtn.style.display = 'none';
+            } else {
+                nextBtn.style.display = 'inline-block';
+            }
+        }
+
+        nextBtn.addEventListener('click', () => {
+            if (currentSectionIndex < sections.length - 1) {
+                currentSectionIndex++;
+                showSection(currentSectionIndex);
+            }
+        });
+
+        if (startButton) {
+            startButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetUrl = startButton.href;
+                document.body.classList.add('page-transition-out');
+                setTimeout(() => {
+                    window.location.href = targetUrl;
+                }, 1000);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.body.classList.add('loaded');
+            setTimeout(() => {
+                videoBg.classList.add('dimmed-effect');
+            }, 100);
+            setTimeout(() => {
+                showSection(currentSectionIndex);
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

@@ -1,11 +1,10 @@
 /**
- * Complete Room Flow Management System - OPTIMIZED
+ * Insider Threat Room Flow Management System
  * Handles sequential room unlocking, global state, and cross-page synchronization
- * Performance improvements: debounced saves, state caching, reduced I/O
  */
 
-class RoomFlow {
-    static ROOM_ORDER = ['downloads', 'processes', 'authentication', 'network', 'registry', 'filesystem'];
+class InsiderRoomFlow {
+    static ROOM_ORDER = ['database-access', 'file-server-logs', 'sharepoint-logs', 'authentication-insider', 'host-forensics', 'network-analysis-insider'];
     static ROOM_TIME_LIMIT = 600; // 10 minutes per room
     static GLOBAL_TIME_LIMIT = 3600; // 60 minutes total
     
@@ -22,28 +21,35 @@ class RoomFlow {
         return {
             totalScore: 0,
             totalIocsFound: 0,
-            totalIocsAvailable: 12,
+            totalIocsAvailable: 15,
             globalTimeLeft: this.GLOBAL_TIME_LIMIT,
             gameStartTime: null,
             roomsCompleted: [],
             roomOrder: this.ROOM_ORDER,
-            roomUnlocked: ['downloads'],
+            roomUnlocked: ['database-access'],
             roomScores: {
-                downloads: 0, processes: 0, authentication: 0,
-                registry: 0, network: 0, filesystem: 0
+                'database-access': 0,
+                'file-server-logs': 0,
+                'sharepoint-logs': 0,
+                'authentication-insider': 0,
+                'host-forensics': 0,
+                'network-analysis-insider': 0
             },
             roomIocs: {
-                downloads: { found: 0, total: 1 },
-                processes: { found: 0, total: 2 },
-                authentication: { found: 0, total: 2 },
-                registry: { found: 0, total: 2 },
-                network: { found: 0, total: 3 },
-                filesystem: { found: 0, total: 3 }
+                'database-access': { found: 0, total: 4 },
+                'file-server-logs': { found: 0, total: 3 },
+                'sharepoint-logs': { found: 0, total: 3 },
+                'authentication-insider': { found: 0, total: 3 },
+                'host-forensics': { found: 0, total: 2 },
+                'network-analysis-insider': { found: 0, total: 2 }
             },
             roomTimers: {
-                downloads: this.ROOM_TIME_LIMIT, processes: this.ROOM_TIME_LIMIT,
-                authentication: this.ROOM_TIME_LIMIT, registry: this.ROOM_TIME_LIMIT,
-                network: this.ROOM_TIME_LIMIT, filesystem: this.ROOM_TIME_LIMIT
+                'database-access': this.ROOM_TIME_LIMIT,
+                'file-server-logs': this.ROOM_TIME_LIMIT,
+                'sharepoint-logs': this.ROOM_TIME_LIMIT,
+                'authentication-insider': this.ROOM_TIME_LIMIT,
+                'host-forensics': this.ROOM_TIME_LIMIT,
+                'network-analysis-insider': this.ROOM_TIME_LIMIT
             },
             roomStartTimes: {},
             currentRoom: null,
@@ -52,10 +58,9 @@ class RoomFlow {
         };
     }
 
-    // Simple tab-counting helpers for pausing when last tab closes
     static registerTab() {
         try {
-            const key = 'socOpenTabs';
+            const key = 'insiderOpenTabs';
             const current = parseInt(localStorage.getItem(key) || '0', 10) || 0;
             localStorage.setItem(key, String(current + 1));
             return current + 1;
@@ -66,7 +71,7 @@ class RoomFlow {
 
     static unregisterTab() {
         try {
-            const key = 'socOpenTabs';
+            const key = 'insiderOpenTabs';
             const current = parseInt(localStorage.getItem(key) || '0', 10) || 0;
             const next = Math.max(0, current - 1);
             if (next === 0) {
@@ -83,13 +88,12 @@ class RoomFlow {
     static loadGameState() {
         const now = Date.now();
         
-        // Return cached state if fresh
         if (this._cachedState && (now - this._cacheTime) < this.CACHE_DURATION) {
             return { ...this._cachedState };
         }
         
         try {
-            const saved = localStorage.getItem('socGameState');
+            const saved = localStorage.getItem('insiderGameState');
             if (saved) {
                 const state = JSON.parse(saved);
                 this._cachedState = { ...this.getInitialGameState(), ...state };
@@ -107,20 +111,17 @@ class RoomFlow {
     
     static saveGameState(state, immediate = false) {
         try {
-            // Update cache immediately
             this._cachedState = { ...state };
             this._cacheTime = Date.now();
             
             if (immediate) {
-                // Save immediately (for critical operations)
-                localStorage.setItem('socGameState', JSON.stringify(state));
+                localStorage.setItem('insiderGameState', JSON.stringify(state));
                 this.broadcastStateUpdate(state);
                 this._lastSaveTime = Date.now();
             } else {
-                // Debounce saves - only save after 200ms of no changes
                 clearTimeout(this._saveTimeout);
                 this._saveTimeout = setTimeout(() => {
-                    localStorage.setItem('socGameState', JSON.stringify(state));
+                    localStorage.setItem('insiderGameState', JSON.stringify(state));
                     this.broadcastStateUpdate(state);
                     this._lastSaveTime = Date.now();
                 }, 200);
@@ -131,21 +132,20 @@ class RoomFlow {
     }
     
     static broadcastStateUpdate(state) {
-        // Only dispatch custom event - storage event fires automatically
         window.dispatchEvent(new CustomEvent('gameStateUpdate', { detail: state }));
     }
     
     static initializeGame() {
         const state = this.getInitialGameState();
         state.gameStartTime = Date.now();
-        this.saveGameState(state, true); // Immediate save
+        this.saveGameState(state, true);
         return state;
     }
     
     static enterRoom(roomName) {
         const state = this.loadGameState();
         
-        if (!state.roomUnlocked.includes(roomName) && roomName !== 'downloads') {
+        if (!state.roomUnlocked.includes(roomName) && roomName !== 'database-access') {
             alert(`Room Locked!\n\nComplete previous rooms in order:\n${this.ROOM_ORDER.slice(0, this.ROOM_ORDER.indexOf(roomName)).join(' → ')}`);
             return false;
         }
@@ -160,7 +160,7 @@ class RoomFlow {
         
         state.currentRoom = roomName;
         state.lastVisitedRoom = roomName;
-        this.saveGameState(state, true); // Immediate save
+        this.saveGameState(state, true);
         return true;
     }
     
@@ -198,7 +198,7 @@ class RoomFlow {
             state.gameCompleted = true;
         }
         
-        this.saveGameState(state, true); // Immediate save for progress
+        this.saveGameState(state, true);
         return state;
     }
     
@@ -206,7 +206,6 @@ class RoomFlow {
         const state = this.loadGameState();
         if (!state.gameStartTime) return state.globalTimeLeft;
         
-        // If game is completed, stop the timer
         if (state.gameCompleted) {
             return state.globalTimeLeft;
         }
@@ -214,11 +213,9 @@ class RoomFlow {
         const elapsed = Math.floor((Date.now() - state.gameStartTime) / 1000);
         const remaining = Math.max(0, this.GLOBAL_TIME_LIMIT - elapsed);
         
-        // Only save every 5 seconds to reduce I/O
         if (saveState && (Date.now() - this._lastSaveTime) > 5000) {
             state.globalTimeLeft = remaining;
             if (remaining <= 0 && !state.gameCompleted) {
-                // Only mark as completed by timeout if not already completed
                 state.gameCompleted = true;
                 state.completedByTimeout = true;
             }
@@ -257,7 +254,7 @@ class RoomFlow {
     static redirectIfLocked() {
         const currentRoom = this.getCurrentRoom();
         
-        if (!currentRoom || ['index', 'instruction'].includes(currentRoom)) {
+        if (!currentRoom || ['index', 'convo', 'mission'].includes(currentRoom)) {
             return true;
         }
         
@@ -289,9 +286,9 @@ class RoomFlow {
     }
     
     static resetGame() {
-        localStorage.removeItem('socGameState');
-        localStorage.removeItem('socPausedRemaining');
-        localStorage.removeItem('socOpenTabs');
+        localStorage.removeItem('insiderGameState');
+        localStorage.removeItem('insiderPausedRemaining');
+        localStorage.removeItem('insiderOpenTabs');
         this._cachedState = null;
         this._cacheTime = 0;
         this.broadcastStateUpdate(this.getInitialGameState());
@@ -317,7 +314,6 @@ class RoomFlow {
     }
     
     static setupStateListener(callback) {
-        // Prevent duplicate listeners
         if (window._stateListenerAttached) return;
         window._stateListenerAttached = true;
         
@@ -328,7 +324,7 @@ class RoomFlow {
         });
         
         window.addEventListener('storage', (event) => {
-            if (event.key === 'socGameState' && event.newValue) {
+            if (event.key === 'insiderGameState' && event.newValue) {
                 try {
                     const newState = JSON.parse(event.newValue);
                     if (typeof callback === 'function') {
@@ -341,21 +337,15 @@ class RoomFlow {
         });
     }
 
-    /**
-     * Restore paused remaining time saved when the last tab closed.
-     * If 'socPausedRemaining' exists in localStorage, compute a gameStartTime
-     * that results in that remaining time and persist it.
-     */
     static restorePausedTimeIfNeeded() {
         try {
-            const key = 'socPausedRemaining';
+            const key = 'insiderPausedRemaining';
             const raw = localStorage.getItem(key);
             if (!raw) return;
             const paused = parseInt(raw, 10);
             if (isNaN(paused)) return;
 
             const state = this.loadGameState();
-            // Compute elapsed such that remaining = paused
             const elapsed = this.GLOBAL_TIME_LIMIT - paused;
             state.gameStartTime = Date.now() - (elapsed * 1000);
             state.globalTimeLeft = paused;
@@ -368,12 +358,12 @@ class RoomFlow {
     
     static showRoomUnlockedNotification(roomName) {
         const roomNames = {
-            downloads: 'Download Analysis',
-            processes: 'Process Monitor',
-            authentication: 'Authentication Logs',
-            network: 'Network Traffic Analysis', 
-            registry: 'Registry Analysis',
-            filesystem: 'File System Analysis'
+            'database-access': 'Database Access Logs',
+            'file-server-logs': 'File Server Access',
+            'sharepoint-logs': 'SharePoint Portal Logs',
+            'authentication-insider': 'Authentication Analysis',
+            'host-forensics': 'Host Forensics',
+            'network-analysis-insider': 'Network Traffic Analysis'
         };
         
         const notification = document.createElement('div');
@@ -426,16 +416,16 @@ class RoomFlow {
 }
 
 // Universal Room Integration Functions
-window.RoomIntegration = {
+window.InsiderRoomIntegration = {
     
     initializeRoom: function(roomName, iocsTotal) {
         console.log(`Initializing room: ${roomName}`);
         
-        if (!RoomFlow.redirectIfLocked()) {
+        if (!InsiderRoomFlow.redirectIfLocked()) {
             return false;
         }
         
-        RoomFlow.startTimer();
+        InsiderRoomFlow.startTimer();
         this.setupGlobalDisplayUpdates();
         this.updateAllDisplays();
         
@@ -443,8 +433,8 @@ window.RoomIntegration = {
     },
     
     updateAllDisplays: function() {
-        const state = RoomFlow.loadGameState();
-        const currentRoom = RoomFlow.getCurrentRoom();
+        const state = InsiderRoomFlow.loadGameState();
+        const currentRoom = InsiderRoomFlow.getCurrentRoom();
         
         const globalIocsElement = document.getElementById('globalIocs');
         if (globalIocsElement) {
@@ -464,8 +454,8 @@ window.RoomIntegration = {
         
         const timerElement = document.getElementById('timer');
         if (timerElement) {
-            const timeRemaining = RoomFlow.getGlobalTimeRemaining(true); // Save state every 5s
-            timerElement.textContent = RoomFlow.formatTime(timeRemaining);
+            const timeRemaining = InsiderRoomFlow.getGlobalTimeRemaining(true);
+            timerElement.textContent = InsiderRoomFlow.formatTime(timeRemaining);
             
             if (timeRemaining <= 300) {
                 timerElement.style.color = '#FF6666';
@@ -477,7 +467,6 @@ window.RoomIntegration = {
                 timerElement.style.animation = 'none';
             }
             
-            // Only end game on timeout, not on completion
             if (timeRemaining <= 0 && !state.gameCompleted) {
                 this.endGame('timeout');
             }
@@ -491,7 +480,7 @@ window.RoomIntegration = {
             }, 1000);
         }
         
-        RoomFlow.setupStateListener((state) => {
+        InsiderRoomFlow.setupStateListener((state) => {
             this.updateAllDisplays();
         });
         
@@ -506,7 +495,7 @@ window.RoomIntegration = {
     updateProgress: function(roomName, scoreChange, iocsChange) {
         console.log(`Updating ${roomName}: score=${scoreChange}, IoCs=${iocsChange}`);
         
-        const state = RoomFlow.updateRoomProgress(roomName, scoreChange, iocsChange);
+        const state = InsiderRoomFlow.updateRoomProgress(roomName, scoreChange, iocsChange);
         this.updateAllDisplays();
         
         if (state.roomIocs[roomName].found >= state.roomIocs[roomName].total) {
@@ -519,21 +508,17 @@ window.RoomIntegration = {
     },
     
     showRoomCompletion: function(roomName, state) {
-        // This function just redirects to the main command center
         window.location.href = 'index.html';
     },
     
     endGame: function(reason) {
-        const state = RoomFlow.loadGameState();
+        const state = InsiderRoomFlow.loadGameState();
         
         if (reason === 'timeout') {
-            // On timeout, reset the game and go to dashboard
-            RoomFlow.resetGame();
+            InsiderRoomFlow.resetGame();
             window.location.href = '../dashboard.html';
         } else if (reason === 'completed') {
-            // On completion, save the final state and do nothing else
-            // The page will remain on the command center, and the timer will stop
-            RoomFlow.saveGameState(state, true);
+            InsiderRoomFlow.saveGameState(state, true);
         }
     },
     
@@ -551,31 +536,28 @@ window.RoomIntegration = {
     }
 };
 
-window.RoomFlow = RoomFlow;
+window.InsiderRoomFlow = InsiderRoomFlow;
 
 document.addEventListener('DOMContentLoaded', function() {
-    const currentRoom = RoomFlow.getCurrentRoom();
-    if (currentRoom && currentRoom !== 'index' && currentRoom !== 'instruction') {
-        RoomIntegration.initializeRoom(currentRoom);
+    const currentRoom = InsiderRoomFlow.getCurrentRoom();
+    if (currentRoom && currentRoom !== 'index' && currentRoom !== 'convo' && currentRoom !== 'mission') {
+        InsiderRoomIntegration.initializeRoom(currentRoom);
     }
 });
 
-// Register tab and try to restore any paused time saved when all tabs were closed
 try {
-    RoomFlow.registerTab();
-    RoomFlow.restorePausedTimeIfNeeded();
+    InsiderRoomFlow.registerTab();
+    InsiderRoomFlow.restorePausedTimeIfNeeded();
 } catch (e) {
     // ignore
 }
 
 window.addEventListener('beforeunload', () => {
     try {
-        // Persist current remaining time
-        const remaining = RoomFlow.getGlobalTimeRemaining(true);
-        const next = RoomFlow.unregisterTab();
+        const remaining = InsiderRoomFlow.getGlobalTimeRemaining(true);
+        const next = InsiderRoomFlow.unregisterTab();
         if (next === 0) {
-            // Save paused remaining time for next load
-            localStorage.setItem('socPausedRemaining', String(remaining));
+            localStorage.setItem('insiderPausedRemaining', String(remaining));
         }
     } catch (e) {
         // ignore

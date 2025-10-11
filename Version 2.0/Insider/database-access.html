@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Access Logs - Insider Threat Investigation</title>
+    <style>
+        :root {
+            --bg: #0A0A1F;
+            --panel: #1A1A3A;
+            --cyan: #00FFFF;
+            --muted: #88BBDD;
+            --accent: #00FF00;
+            --danger: #FF6666;
+            --warning: #FFFF00;
+            --main-text: #DFFCFF;
+            --alert-banner-bg: #2C1B2A;
+            --alert-banner-border: #FF6666;
+            --alert-text: #FF9999;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Courier New', monospace;
+            color: var(--muted);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            overflow: auto;
+            background: #000;
+        }
+
+        .video-background {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            overflow: hidden;
+            z-index: -2;
+        }
+
+        .video-background video {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            filter: brightness(1) contrast(1.3);
+        }
+
+        .container {
+            max-width: 1400px; width: 100%;
+            margin: 0 auto; padding: 20px;
+            margin-top: 80px;
+        }
+
+        .header {
+            position: fixed; top: 0; left: 0; width: 100%;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 14px 20px;
+            background: rgba(10, 10, 31, 0.15);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+            z-index: 1000;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .back-btn {
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid var(--cyan);
+            color: var(--cyan);
+            padding: 8px 14px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-family: inherit;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(0, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .game-stats {
+            display: flex; gap: 20px;
+            background: rgba(26, 26, 58, 0.25);
+            backdrop-filter: blur(15px);
+            padding: 15px; border-radius: 15px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+        }
+
+        .stat-item {
+            text-align: center;
+            min-width: 80px;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--accent);
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: var(--muted);
+            font-size: 0.8rem;
+        }
+
+        .analysis-panel {
+            background: rgba(26, 26, 58, 0.2);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .panel-header-top {
+            background: linear-gradient(90deg, rgba(0, 255, 255, 0.1), transparent);
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+        }
+
+        .panel-header-left h1 {
+            font-size: 1.8rem;
+            color: var(--cyan);
+            margin: 0;
+        }
+
+        .metrics-grid-container {
+            display: flex;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+        }
+
+        .metric-card {
+            background: transparent;
+            padding: 20px;
+            border-right: 1px solid rgba(0, 255, 255, 0.1);
+            flex-grow: 1;
+            text-align: center;
+        }
+        .metric-card:last-child { border-right: none; }
+        .metric-card.alert { animation: pulse 2s ease-in-out infinite; }
+
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--accent);
+            margin-bottom: 5px;
+        }
+        .metric-value.danger { color: var(--danger); }
+
+        .security-alert {
+            background: var(--alert-banner-bg);
+            border: 1px solid var(--alert-banner-border);
+            border-radius: 10px;
+            padding: 20px; 
+            margin: 20px;
+            color: var(--alert-text);
+            line-height: 1.8;
+        }
+
+        .security-alert p {
+            margin-bottom: 10px;
+        }
+
+        .security-alert strong {
+            color: var(--alert-banner-border);
+        }
+
+        .proceed-btn {
+            background: linear-gradient(135deg, var(--cyan), rgba(0, 255, 255, 0.6));
+            border: 2px solid var(--cyan);
+            color: #000;
+            padding: 15px 40px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin: 20px auto;
+            display: block;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 5px 20px rgba(0, 255, 255, 0.3);
+        }
+
+        .proceed-btn:hover {
+            background: linear-gradient(135deg, var(--accent), rgba(0, 255, 0, 0.6));
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 255, 255, 0.5);
+        }
+
+        .proceed-btn:active {
+            transform: translateY(0);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .database-log {
+            background: rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 15px; padding: 20px;
+            max-height: 600px; overflow-y: auto;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+        }
+
+        .log-header {
+            display: flex; justify-content: space-between;
+            margin-bottom: 20px; padding-bottom: 10px;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+        }
+
+        .log-entry {
+            background: rgba(0, 0, 0, 0.15);
+            margin: 8px 0; padding: 15px;
+            border-radius: 8px; cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+            border: 1px solid rgba(0, 255, 255, 0.1);
+        }
+
+        .log-entry:hover {
+            background: rgba(0, 255, 255, 0.1);
+            border-left-color: var(--cyan);
+            transform: translateX(5px);
+        }
+
+        .log-entry.selected {
+            background: rgba(0, 255, 0, 0.15);
+            border-left: 3px solid var(--accent);
+        }
+
+        .log-entry.wrong {
+            background: rgba(255, 102, 102, 0.15);
+            border-left: 3px solid var(--danger);
+        }
+
+        .log-timestamp { color: #888; margin-right: 15px; font-weight: bold; }
+        .log-user { color: var(--accent); font-weight: bold; }
+        .log-query { color: var(--cyan); }
+        .log-details { color: #ccc; font-size: 0.9rem; margin-top: 5px; }
+
+        .query-pattern {
+            background: rgba(255, 102, 0, 0.1);
+            padding: 5px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        .bulk-indicator {
+            color: #ff3333;
+            font-weight: bold;
+        }
+
+        .progress-bar {
+            width: 100%; height: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px; overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--danger), var(--accent));
+            transition: width 0.5s ease;
+        }
+
+        .feedback {
+            position: fixed; top: 20px; right: 20px;
+            padding: 15px 25px; border-radius: 15px;
+            color: white; font-weight: bold; z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            max-width: 400px;
+            backdrop-filter: blur(15px);
+        }
+
+        .feedback.show { transform: translateX(0); }
+        .feedback.success { background: var(--accent); color: black; }
+        .feedback.error { background: var(--danger); }
+
+        @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.7; transform: scale(1.02); } }
+    </style>
+</head>
+<body>
+    <div class="video-background">
+        <video autoplay muted loop>
+            <source src="database_bg.mp4" type="video/mp4">
+        </video>
+    </div>
+
+    <div class="header">
+        <a href="index.html" class="back-btn">← Back to Command Center</a>
+        <div class="game-stats">
+            <div class="stat-item">
+                <div class="stat-value">ACTIVE</div>
+                <div class="stat-label">Status</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="globalIocs">0/15</div>
+                <div class="stat-label">Total IoCs</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="roomIocs">0/4</div>
+                <div class="stat-label">Room IoCs</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="timer">60:00</div>
+                <div class="stat-label">Time</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="totalScore">0</div>
+                <div class="stat-label">Score</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="analysis-panel">
+            <div class="metrics-grid-container">
+                <div class="panel-header-top">
+                    <div class="panel-header-left">
+                        <h1>🗃️ DATABASE ACCESS LOGS</h1>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">47,892</div>
+                    <div class="metric-label">Total Queries</div>
+                </div>
+                <div class="metric-card alert">
+                    <div class="metric-value danger">15,247</div>
+                    <div class="metric-label">Snowden Queries</div>
+                </div>
+                <div class="metric-card alert">
+                    <div class="metric-value danger">892</div>
+                    <div class="metric-label">Bulk Patterns</div>
+                </div>
+                <div class="metric-card alert">
+                    <div class="metric-value danger">67</div>
+                    <div class="metric-label">Cross-Program Access</div>
+                </div>
+            </div>
+
+            <div class="security-alert" id="securityAlert">
+                <p><strong>APRIL 15, 2013 - 03:47 AM</strong></p>
+                <p>You pull up the NSA's classified database query logs, filtering for user account <strong style="color: #00ffff;">esnowden</strong> during the March-May 2013 timeframe.</p>
+                <p>The volume is staggering. Thousands of queries. But it's not just the quantity that catches your attention—it's the <strong>pattern</strong>.</p>
+                <p>Normal database access looks like a human searching: specific keywords, limited results, targeted queries.</p>
+                <p><strong>This looks like a machine:</strong> Bulk SELECT statements. Wildcard operators pulling entire tables. Pagination patterns typical of automated web scrapers.</p>
+                <p>Someone wasn't searching the database. <strong>Someone was systematically harvesting it.</strong></p>
+            </div>
+
+            <button class="proceed-btn" id="proceedBtn">🔍 Analyze Database Queries</button>
+
+            <div class="progress-bar hidden" id="progressBar">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+
+            <div class="database-log hidden" id="databaseLog">
+            </div>
+        </div>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <script src="js/insiderRoomFlow.js"></script>
+    <script>
+        const ROOM_NAME = 'database-access';
+        let gameState = { iocsFound: 0, totalIocs: 4, gameActive: true };
+
+        const databaseData = [
+            // IoCs (suspicious database activities) - April 15 onwards
+            { 
+                id: 'db1', 
+                timestamp: '2013-04-15 03:47:23',
+                user: 'esnowden',
+                query: 'SELECT * FROM classified_docs WHERE program IN (\'PRISM\', \'XKEYSCORE\', \'MUSCULAR\')',
+                results: '2,847 documents',
+                database: 'NSA_CLASSIFIED_DB',
+                isIoc: true,
+                explanation: 'Cross-program bulk query accessing multiple surveillance programs outside normal job scope - systematic data collection',
+                type: 'bulk_query',
+                pattern: 'cross-program'
+            },
+            { 
+                id: 'db2', 
+                timestamp: '2013-05-02 02:15:41',
+                user: 'esnowden',
+                query: 'SELECT doc_id, title, classification FROM intel_reports ORDER BY doc_id LIMIT 10000 OFFSET 50000',
+                results: '10,000 documents',
+                database: 'INTEL_REPOSITORY',
+                isIoc: true,
+                explanation: 'Automated pagination pattern typical of web scraping tools - systematic enumeration of large document sets',
+                type: 'scraping_pattern',
+                pattern: 'pagination'
+            },
+            { 
+                id: 'db3', 
+                timestamp: '2013-04-28 04:22:17',
+                user: 'esnowden',
+                query: 'SELECT * FROM foreign_intelligence WHERE country LIKE \'%\' AND doc_date > \'2010-01-01\'',
+                results: '15,632 documents',
+                database: 'FOREIGN_INTEL_DB',
+                isIoc: true,
+                explanation: 'Wildcard query accessing all foreign intelligence documents - typical of automated data harvesting',
+                type: 'wildcard_bulk',
+                pattern: 'harvest'
+            },
+            { 
+                id: 'db4', 
+                timestamp: '2013-05-15 01:33:09',
+                user: 'esnowden',
+                query: 'SELECT file_path, doc_content FROM document_store WHERE access_level = \'TOP_SECRET\' LIMIT 5000',
+                results: '5,000 documents',
+                database: 'DOCUMENT_VAULT',
+                isIoc: true,
+                explanation: 'Direct access to TOP SECRET document content in bulk - clear exfiltration preparation',
+                type: 'content_extraction',
+                pattern: 'bulk_download'
+            },
+            
+            // Red herrings (legitimate database activities)
+            { 
+                id: 'db5', 
+                timestamp: '2013-04-12 09:15:22',
+                user: 'esnowden',
+                query: 'SELECT status FROM system_health WHERE component = \'database_cluster_3\'',
+                results: '1 record',
+                database: 'SYSTEM_MONITOR',
+                isIoc: false,
+                type: 'normal_admin',
+                pattern: 'maintenance'
+            },
+            { 
+                id: 'db6', 
+                timestamp: '2013-04-20 14:30:45',
+                user: 'esnowden',
+                query: 'UPDATE user_privileges SET last_access = NOW() WHERE user_id = \'esnowden\'',
+                results: '1 record updated',
+                database: 'USER_MANAGEMENT',
+                isIoc: false,
+                type: 'normal_admin',
+                pattern: 'routine'
+            },
+            { 
+                id: 'db7', 
+                timestamp: '2013-04-25 10:45:12',
+                user: 'mharris',
+                query: 'SELECT * FROM classified_docs WHERE program = \'PRISM\' AND assigned_analyst = \'mharris\'',
+                results: '47 documents',
+                database: 'NSA_CLASSIFIED_DB',
+                isIoc: false,
+                type: 'legitimate_access',
+                pattern: 'job_scope'
+            },
+            { 
+                id: 'db8', 
+                timestamp: '2013-05-03 13:22:33',
+                user: 'jdoe',
+                query: 'SELECT title, summary FROM daily_briefings WHERE date = \'2013-05-03\'',
+                results: '12 documents',
+                database: 'BRIEFING_DB',
+                isIoc: false,
+                type: 'routine_access',
+                pattern: 'daily_work'
+            },
+            { 
+                id: 'db9', 
+                timestamp: '2013-04-18 11:20:15',
+                user: 'esnowden',
+                query: 'SELECT server_status FROM infrastructure_monitor WHERE location = \'hawaii_facility\'',
+                results: '24 records',
+                database: 'INFRASTRUCTURE_DB',
+                isIoc: false,
+                type: 'legitimate_admin',
+                pattern: 'job_duty'
+            },
+            { 
+                id: 'db10', 
+                timestamp: '2013-05-08 16:45:30',
+                user: 'asmith',
+                query: 'SELECT analyst_id, clearance_level FROM personnel WHERE department = \'cyber_operations\'',
+                results: '156 records',
+                database: 'HR_SYSTEM',
+                isIoc: false,
+                type: 'hr_query',
+                pattern: 'department_work'
+            }
+        ];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!InsiderRoomIntegration.initializeRoom(ROOM_NAME)) return;
+            
+            const proceedBtn = document.getElementById('proceedBtn');
+            const securityAlert = document.getElementById('securityAlert');
+            const progressBar = document.getElementById('progressBar');
+            const databaseLog = document.getElementById('databaseLog');
+            
+            proceedBtn.addEventListener('click', function() {
+                securityAlert.classList.add('hidden');
+                proceedBtn.classList.add('hidden');
+                progressBar.classList.remove('hidden');
+                databaseLog.classList.remove('hidden');
+                loadDatabaseEntries();
+            });
+            
+            updateProgressBar();
+            
+            document.addEventListener('click', function(event) {
+                const logEntry = event.target.closest('.log-entry');
+                if (!logEntry || !gameState.gameActive) return;
+                
+                const isIoc = logEntry.dataset.isIoc === 'true';
+                const isAlreadySelected = logEntry.classList.contains('selected') || logEntry.classList.contains('wrong');
+                if (isAlreadySelected) return;
+                
+                const itemData = databaseData.find(db => db.id === logEntry.dataset.id);
+                
+                if (isIoc) {
+                    logEntry.classList.add('selected');
+                    gameState.iocsFound++;
+                    InsiderRoomIntegration.updateProgress(ROOM_NAME, 100, 1);
+                    InsiderRoomIntegration.showFeedback(`Correct! ${itemData.explanation}`, 'success');
+                } else {
+                    logEntry.classList.add('wrong');
+                    InsiderRoomIntegration.updateProgress(ROOM_NAME, -50, 0);
+                    InsiderRoomIntegration.showFeedback('Wrong! This appears to be legitimate database activity within normal job scope.', 'error');
+                }
+                updateProgressBar();
+            });
+        });
+
+        function loadDatabaseEntries() {
+            const log = document.getElementById('databaseLog');
+            log.innerHTML = `<div class="log-header">
+                                <h3>NSA Classified Database Query Monitor</h3>
+                                <span>Filter: User "esnowden" Activity</span>
+                            </div>`;
+            
+            const sortedData = [...databaseData].sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+            
+            sortedData.forEach(entry => {
+                const logEntry = document.createElement('div');
+                logEntry.className = `log-entry ${entry.type}`;
+                logEntry.dataset.id = entry.id;
+                logEntry.dataset.isIoc = entry.isIoc;
+                
+                const queryPattern = entry.isIoc ? 'query-pattern' : '';
+                const bulkIndicator = entry.results.includes('000') ? 'bulk-indicator' : '';
+                
+                logEntry.innerHTML = `
+                    <div>
+                        <span class="log-timestamp">${entry.timestamp}</span>
+                        <span class="log-user">[${entry.user}]</span>
+                        <span class="log-query ${queryPattern}">${entry.query}</span>
+                    </div>
+                    <div class="log-details">
+                        Database: ${entry.database} | Results: <span class="${bulkIndicator}">${entry.results}</span> | Pattern: ${entry.pattern}
+                    </div>
+                `;
+                
+                log.appendChild(logEntry);
+            });
+        }
+
+        function updateProgressBar() {
+            const progress = (gameState.iocsFound / gameState.totalIocs) * 100;
+            const progressFill = document.getElementById('progressFill');
+            if (progressFill) progressFill.style.width = `${progress}%`;
+        }
+    </script>
+</body>
+</html>

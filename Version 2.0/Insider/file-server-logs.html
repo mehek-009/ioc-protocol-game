@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Server Access - Insider Threat Investigation</title>
+    <style>
+        :root {
+            --bg: #0A0A1F;
+            --panel: #1A1A3A;
+            --cyan: #00FFFF;
+            --muted: #88BBDD;
+            --accent: #00FF00;
+            --danger: #FF6666;
+            --warning: #FFFF00;
+            --main-text: #DFFCFF;
+            --alert-banner-bg: #2C1B2A;
+            --alert-banner-border: #FF6666;
+            --alert-text: #FF9999;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Courier New', monospace;
+            color: var(--muted);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            overflow: auto;
+            background: #000;
+        }
+
+        .video-background {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            overflow: hidden;
+            z-index: -2;
+        }
+
+        .video-background video {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            filter: brightness(1) contrast(1.3);
+        }
+
+        .container {
+            max-width: 1400px; width: 100%;
+            margin: 0 auto; padding: 20px;
+            margin-top: 80px;
+        }
+
+        .header {
+            position: fixed; top: 0; left: 0; width: 100%;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 14px 20px;
+            background: rgba(10, 10, 31, 0.15);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+            z-index: 1000;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .back-btn {
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid var(--cyan);
+            color: var(--cyan);
+            padding: 8px 14px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-family: inherit;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(0, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .game-stats {
+            display: flex; gap: 20px;
+            background: rgba(26, 26, 58, 0.25);
+            backdrop-filter: blur(15px);
+            padding: 15px; border-radius: 15px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+        }
+
+        .stat-item {
+            text-align: center;
+            min-width: 80px;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--accent);
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: var(--muted);
+            font-size: 0.8rem;
+        }
+
+        .analysis-panel {
+            background: rgba(26, 26, 58, 0.2);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .panel-header-top {
+            background: linear-gradient(90deg, rgba(0, 255, 255, 0.1), transparent);
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+        }
+
+        .panel-header-left h1 {
+            font-size: 1.8rem;
+            color: var(--cyan);
+            margin: 0;
+        }
+
+        .metrics-grid-container {
+            display: flex;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+        }
+
+        .metric-card {
+            background: transparent;
+            padding: 20px;
+            border-right: 1px solid rgba(0, 255, 255, 0.1);
+            flex-grow: 1;
+            text-align: center;
+        }
+        .metric-card:last-child { border-right: none; }
+        .metric-card.alert { animation: pulse 2s ease-in-out infinite; }
+
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--accent);
+            margin-bottom: 5px;
+        }
+        .metric-value.danger { color: var(--danger); }
+
+        .security-alert {
+            background: var(--alert-banner-bg);
+            border: 1px solid var(--alert-banner-border);
+            border-radius: 10px;
+            padding: 20px; 
+            margin: 20px;
+            color: var(--alert-text);
+            line-height: 1.8;
+        }
+
+        .security-alert p {
+            margin-bottom: 10px;
+        }
+
+        .security-alert strong {
+            color: var(--alert-banner-border);
+        }
+
+        .proceed-btn {
+            background: linear-gradient(135deg, var(--cyan), rgba(0, 255, 255, 0.6));
+            border: 2px solid var(--cyan);
+            color: #000;
+            padding: 15px 40px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin: 20px auto;
+            display: block;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 5px 20px rgba(0, 255, 255, 0.3);
+        }
+
+        .proceed-btn:hover {
+            background: linear-gradient(135deg, var(--accent), rgba(0, 255, 0, 0.6));
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 255, 255, 0.5);
+        }
+
+        .proceed-btn:active {
+            transform: translateY(0);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .file-server-log {
+            background: rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 15px; padding: 20px;
+            max-height: 600px; overflow-y: auto;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+        }
+
+        .log-header {
+            display: flex; justify-content: space-between;
+            margin-bottom: 20px; padding-bottom: 10px;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+        }
+
+        .log-entry {
+            background: rgba(0, 0, 0, 0.15);
+            margin: 8px 0; padding: 15px;
+            border-radius: 8px; cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+            border: 1px solid rgba(0, 255, 255, 0.1);
+        }
+
+        .log-entry:hover {
+            background: rgba(0, 255, 255, 0.1);
+            border-left-color: var(--cyan);
+            transform: translateX(5px);
+        }
+
+        .log-entry.selected {
+            background: rgba(0, 255, 0, 0.15);
+            border-left: 3px solid var(--accent);
+        }
+
+        .log-entry.wrong {
+            background: rgba(255, 102, 102, 0.15);
+            border-left: 3px solid var(--danger);
+        }
+
+        .log-timestamp { color: #888; margin-right: 15px; font-weight: bold; }
+        .log-user { color: var(--accent); font-weight: bold; }
+        .log-action { color: var(--cyan); }
+        .log-path { color: var(--warning); }
+        .log-details { color: #ccc; font-size: 0.9rem; margin-top: 5px; }
+
+        .bulk-size {
+            background: rgba(255, 102, 102, 0.2);
+            color: #ff6666;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
+        .enumeration-pattern {
+            background: rgba(255, 170, 136, 0.2);
+            color: #ffaa88;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
+        .progress-bar {
+            width: 100%; height: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px; overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--danger), var(--accent));
+            transition: width 0.5s ease;
+        }
+
+        .feedback {
+            position: fixed; top: 20px; right: 20px;
+            padding: 15px 25px; border-radius: 15px;
+            color: white; font-weight: bold; z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            max-width: 400px;
+            backdrop-filter: blur(15px);
+        }
+
+        .feedback.show { transform: translateX(0); }
+        .feedback.success { background: var(--accent); color: black; }
+        .feedback.error { background: var(--danger); }
+
+        @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.7; transform: scale(1.02); } }
+    </style>
+</head>
+<body>
+    <div class="video-background">
+        <video autoplay muted loop>
+            <source src="fileserver_bg.mp4" type="video/mp4">
+        </video>
+    </div>
+
+    <div class="header">
+        <a href="index.html" class="back-btn">← Back to Command Center</a>
+        <div class="game-stats">
+            <div class="stat-item">
+                <div class="stat-value">ACTIVE</div>
+                <div class="stat-label">Status</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="globalIocs">0/15</div>
+                <div class="stat-label">Total IoCs</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="roomIocs">0/3</div>
+                <div class="stat-label">Room IoCs</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="timer">60:00</div>
+                <div class="stat-label">Time</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="totalScore">0</div>
+                <div class="stat-label">Score</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="analysis-panel">
+            <div class="metrics-grid-container">
+                <div class="panel-header-top">
+                    <div class="panel-header-left">
+                        <h1>📂 FILE SERVER ACCESS</h1>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">127</div>
+                    <div class="metric-label">File Shares Accessed</div>
+                </div>
+                <div class="metric-card alert">
+                    <div class="metric-value danger">15.2 GB</div>
+                    <div class="metric-label">Bulk Downloads</div>
+                </div>
+                <div class="metric-card alert">
+                    <div class="metric-value danger">47</div>
+                    <div class="metric-label">Enumeration Scripts</div>
+                </div>
+                <div class="metric-card alert">
+                    <div class="metric-value danger">89%</div>
+                    <div class="metric-label">Automated Activity</div>
+                </div>
+            </div>
+
+            <div class="security-alert" id="securityAlert">
+                <p><strong>APRIL 18, 2013 - 03:15 AM</strong></p>
+                <p>The databases are one thing. But the classified file shares? That's where the unstructured intelligence lives—presentations, raw reports, operational documents.</p>
+                <p>You pull up the file server access logs from <strong style="color: #00ffff;">classified-fs01</strong> and <strong style="color: #00ffff;">classified-fs03</strong>.</p>
+                <p>Normal file access: an analyst opens a few specific documents related to their work.</p>
+                <p><strong>This isn't normal.</strong> You see wildcard patterns recursively crawling entire directory structures. Someone was mapping the terrain.</p>
+                <p>Then, on May 12, the smoking gun: a massive <strong style="color: #ff6666;">6.5 GB compressed archive</strong> created on a staging server.</p>
+                <p><strong>The collection phase was over. The packaging phase had begun.</strong></p>
+            </div>
+
+            <button class="proceed-btn" id="proceedBtn">📂 Analyze File Server Logs</button>
+
+            <div class="progress-bar hidden" id="progressBar">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+
+            <div class="file-server-log hidden" id="fileServerLog">
+            </div>
+        </div>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <script src="js/insiderRoomFlow.js"></script>
+    <script>
+        const ROOM_NAME = 'file-server-logs';
+        let gameState = { iocsFound: 0, totalIocs: 3, gameActive: true };
+
+        const fileServerData = [
+            // IoCs (suspicious file server activities)
+            { 
+                id: 'fs1', 
+                timestamp: '2013-04-18 03:15:42',
+                user: 'esnowden',
+                action: 'ENUMERATE_DIRECTORIES',
+                path: '\\\\classified-fs01\\intel\\*\\*\\*',
+                size: 'N/A',
+                files: '47,892 items discovered',
+                isIoc: true,
+                explanation: 'Recursive directory enumeration using wildcard patterns - automated tool systematically mapping classified file structure',
+                type: 'directory_crawling'
+            },
+            { 
+                id: 'fs2', 
+                timestamp: '2013-05-06 02:47:18',
+                user: 'esnowden',
+                action: 'BULK_DOWNLOAD',
+                path: '\\\\classified-fs03\\compartmented\\PRISM_docs\\',
+                size: '8.7 GB',
+                files: '15,247 files',
+                isIoc: true,
+                explanation: 'Massive bulk download of PRISM compartmented documents - far exceeding normal access patterns for infrastructure role',
+                type: 'bulk_exfiltration'
+            },
+            { 
+                id: 'fs3', 
+                timestamp: '2013-05-12 01:33:27',
+                user: 'esnowden',
+                action: 'AUTOMATED_ARCHIVE',
+                path: '\\\\staging-server\\exfil\\intelligence_collection.7z',
+                size: '6.5 GB',
+                files: '23,891 files compressed',
+                isIoc: true,
+                explanation: 'Creation of compressed archive with intelligence documents on staging server - clear preparation for data exfiltration',
+                type: 'data_staging'
+            },
+            
+            // Red herrings (legitimate file server activities)
+            { 
+                id: 'fs4', 
+                timestamp: '2013-04-12 09:22:15',
+                user: 'esnowden',
+                action: 'ACCESS_FILE',
+                path: '\\\\admin-share\\scripts\\backup_verification.ps1',
+                size: '12 KB',
+                files: '1 file',
+                isIoc: false,
+                type: 'admin_work'
+            },
+            { 
+                id: 'fs5', 
+                timestamp: '2013-04-25 14:45:33',
+                user: 'mharris',
+                action: 'DOWNLOAD',
+                path: '\\\\classified-fs01\\intel\\PRISM\\analysis_april.docx',
+                size: '2.3 MB',
+                files: '1 file',
+                isIoc: false,
+                type: 'authorized_access'
+            },
+            { 
+                id: 'fs6', 
+                timestamp: '2013-05-08 10:30:20',
+                user: 'jdoe',
+                action: 'UPLOAD',
+                path: '\\\\shared-fs\\reports\\weekly_summary_may08.pdf',
+                size: '845 KB',
+                files: '1 file',
+                isIoc: false,
+                type: 'routine_work'
+            },
+            { 
+                id: 'fs7', 
+                timestamp: '2013-04-20 16:15:45',
+                user: 'esnowden',
+                action: 'BACKUP_VERIFICATION',
+                path: '\\\\backup-server\\hawaii_facility\\system_files\\',
+                size: '47 MB',
+                files: '892 files verified',
+                isIoc: false,
+                type: 'admin_task'
+            },
+            { 
+                id: 'fs8', 
+                timestamp: '2013-05-01 11:20:10',
+                user: 'asmith',
+                action: 'ACCESS_FILE',
+                path: '\\\\training-fs\\cyber_ops\\training_materials.zip',
+                size: '156 MB',
+                files: '47 files',
+                isIoc: false,
+                type: 'training_access'
+            },
+            { 
+                id: 'fs9', 
+                timestamp: '2013-04-28 13:45:12',
+                user: 'esnowden',
+                action: 'SYSTEM_MAINTENANCE',
+                path: '\\\\infrastructure\\logs\\system_health_check.log',
+                size: '89 KB',
+                files: '1 file',
+                isIoc: false,
+                type: 'maintenance'
+            },
+            { 
+                id: 'fs10', 
+                timestamp: '2013-05-03 15:30:25',
+                user: 'rjohnson',
+                action: 'DOWNLOAD',
+                path: '\\\\analyst-share\\threat_intel\\weekly_briefing.pptx',
+                size: '12.4 MB',
+                files: '1 file',
+                isIoc: false,
+                type: 'analyst_work'
+            }
+        ];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!InsiderRoomIntegration.initializeRoom(ROOM_NAME)) return;
+            
+            const proceedBtn = document.getElementById('proceedBtn');
+            const securityAlert = document.getElementById('securityAlert');
+            const progressBar = document.getElementById('progressBar');
+            const fileServerLog = document.getElementById('fileServerLog');
+            
+            proceedBtn.addEventListener('click', function() {
+                securityAlert.classList.add('hidden');
+                proceedBtn.classList.add('hidden');
+                progressBar.classList.remove('hidden');
+                fileServerLog.classList.remove('hidden');
+                loadFileServerEntries();
+            });
+            
+            updateProgressBar();
+            
+            document.addEventListener('click', function(event) {
+                const logEntry = event.target.closest('.log-entry');
+                if (!logEntry || !gameState.gameActive) return;
+                
+                const isIoc = logEntry.dataset.isIoc === 'true';
+                const isAlreadySelected = logEntry.classList.contains('selected') || logEntry.classList.contains('wrong');
+                if (isAlreadySelected) return;
+                
+                const itemData = fileServerData.find(fs => fs.id === logEntry.dataset.id);
+                
+                if (isIoc) {
+                    logEntry.classList.add('selected');
+                    gameState.iocsFound++;
+                    InsiderRoomIntegration.updateProgress(ROOM_NAME, 100, 1);
+                    InsiderRoomIntegration.showFeedback(`Correct! ${itemData.explanation}`, 'success');
+                } else {
+                    logEntry.classList.add('wrong');
+                    InsiderRoomIntegration.updateProgress(ROOM_NAME, -50, 0);
+                    InsiderRoomIntegration.showFeedback('Wrong! This appears to be legitimate file server activity within normal job duties.', 'error');
+                }
+                updateProgressBar();
+            });
+        });
+
+        function loadFileServerEntries() {
+            const log = document.getElementById('fileServerLog');
+            log.innerHTML = `<div class="log-header">
+                                <h3>File Share Activity Monitor</h3>
+                                <span>Monitoring: Bulk Operations & Enumeration</span>
+                            </div>`;
+            
+            const sortedData = [...fileServerData].sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+            
+            sortedData.forEach(entry => {
+                const logEntry = document.createElement('div');
+                logEntry.className = `log-entry ${entry.type}`;
+                logEntry.dataset.id = entry.id;
+                logEntry.dataset.isIoc = entry.isIoc;
+                
+                const sizeClass = entry.size.includes('GB') ? 'bulk-size' : '';
+                const enumClass = entry.action === 'ENUMERATE_DIRECTORIES' ? 'enumeration-pattern' : '';
+                
+                logEntry.innerHTML = `
+                    <div>
+                        <span class="log-timestamp">${entry.timestamp}</span>
+                        <span class="log-user">[${entry.user}]</span>
+                        <span class="log-action ${enumClass}">${entry.action}</span>
+                        <span class="log-path">${entry.path}</span>
+                    </div>
+                    <div class="log-details">
+                        Size: <span class="${sizeClass}">${entry.size}</span> | 
+                        Files: ${entry.files}
+                    </div>
+                `;
+                
+                log.appendChild(logEntry);
+            });
+        }
+
+        function updateProgressBar() {
+            const progress = (gameState.iocsFound / gameState.totalIocs) * 100;
+            const progressFill = document.getElementById('progressFill');
+            if (progressFill) progressFill.style.width = `${progress}%`;
+        }
+    </script>
+</body>
+</html>

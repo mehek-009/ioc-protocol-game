@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SOC Analyst - LockBit Investigation</title>
+    <title>Insider Threat - Command Center</title>
     <style>
         @font-face {
             font-family: 'custom_font';
@@ -371,7 +371,7 @@
     
     <div class="main-container">
         <div class="breadcrumb">
-            <span>SOC Investigation</span>
+            <span>Insider Threat Investigation</span>
             <span class="arrow">→</span>
             <span>Command Center</span>
             <span class="arrow">→</span>
@@ -379,18 +379,18 @@
         </div>
 
         <div class="game-status">
-            <h3>🔍 CURRENT THREAT STATUS</h3>
+            <h3>🔍 CURRENT INVESTIGATION STATUS</h3>
             <div class="status-grid">
                 <div class="status-item">
                     <div class="status-value">ACTIVE</div>
-                    <div class="status-label">Incident Status</div>
+                    <div class="status-label">Investigation Status</div>
                 </div>
                 <div class="status-item">
-                    <div class="status-value">HIGH</div>
+                    <div class="status-value">CRITICAL</div>
                     <div class="status-label">Threat Level</div>
                 </div>
                 <div class="status-item">
-                    <div class="status-value" id="globalIocsFound">0/12</div>
+                    <div class="status-value" id="globalIocsFound">0/15</div>
                     <div class="status-label">IoCs Found</div>
                 </div>
                 <div class="status-item">
@@ -409,7 +409,7 @@
         </div>
 
         <div class="rooms-grid">
-            <div class="room-card" data-room="downloads" data-order="1">
+            <div class="room-card" data-room="database-access" data-order="1">
                 <div class="terminal-header">
                     <div class="window-controls">
                         <div class="control-circle"></div>
@@ -420,17 +420,17 @@
                 <div class="room-content">
                     <div class="threat-level threat-start">START HERE</div>
                     <div class="room-header">
-                        <div class="room-icon">⬇️</div>
-                        <div class="room-title">Download Analysis</div>
+                        <div class="room-icon">🗃️</div>
+                        <div class="room-title">Database Access Logs</div>
                     </div>
                     <div class="room-description">
-                        Investigate the initial attack vector. Analyze recent file downloads to identify the ransomware payload.
+                        Examine classified database query patterns. Look for automated scraping and bulk document requests.
                     </div>
-                    <div class="room-progress" id="downloads-progress">0/1 IoCs</div>
+                    <div class="room-progress" id="database-access-progress">0/4 IoCs</div>
                 </div>
             </div>
 
-            <div class="room-card locked" data-room="processes" data-order="2">
+            <div class="room-card locked" data-room="file-server-logs" data-order="2">
                 <div class="lock-overlay">🔒</div>
                 <div class="terminal-header">
                     <div class="window-controls">
@@ -442,17 +442,39 @@
                 <div class="room-content">
                     <div class="threat-level threat-locked">LOCKED</div>
                     <div class="room-header">
-                        <div class="room-icon">⚙️</div>
-                        <div class="room-title">Process Monitor</div>
+                        <div class="room-icon">📂</div>
+                        <div class="room-title">File Server Access</div>
                     </div>
                     <div class="room-description">
-                        Examine running processes for malicious activity. Identify ransomware processes consuming system resources.
+                        Track file share enumeration and bulk downloads. Identify automated crawling of classified repositories.
                     </div>
-                    <div class="room-progress" id="processes-progress">0/2 IoCs</div>
+                    <div class="room-progress" id="file-server-logs-progress">0/3 IoCs</div>
                 </div>
             </div>
 
-            <div class="room-card locked" data-room="authentication" data-order="3">
+            <div class="room-card locked" data-room="sharepoint-logs" data-order="3">
+                <div class="lock-overlay">🔒</div>
+                <div class="terminal-header">
+                    <div class="window-controls">
+                        <div class="control-circle"></div>
+                        <div class="control-circle"></div>
+                        <div class="control-circle"></div>
+                    </div>
+                </div>
+                <div class="room-content">
+                    <div class="threat-level threat-locked">LOCKED</div>
+                    <div class="room-header">
+                        <div class="room-icon">🔗</div>
+                        <div class="room-title">SharePoint Portal Logs</div>
+                    </div>
+                    <div class="room-description">
+                        Analyze PRISM and SharePoint access. Find systematic document enumeration outside authorized scope.
+                    </div>
+                    <div class="room-progress" id="sharepoint-logs-progress">0/3 IoCs</div>
+                </div>
+            </div>
+
+            <div class="room-card locked" data-room="authentication-insider" data-order="4">
                 <div class="lock-overlay">🔒</div>
                 <div class="terminal-header">
                     <div class="window-controls">
@@ -465,16 +487,38 @@
                     <div class="threat-level threat-locked">LOCKED</div>
                     <div class="room-header">
                         <div class="room-icon">🔐</div>
-                        <div class="room-title">Authentication Logs</div>
+                        <div class="room-title">Authentication Analysis</div>
                     </div>
                     <div class="room-description">
-                        Analyze login events and credential usage. Track how the attacker gained system access.
+                        Examine privileged account usage. Identify off-hours access and credential sharing patterns.
                     </div>
-                    <div class="room-progress" id="authentication-progress">0/2 IoCs</div>
+                    <div class="room-progress" id="authentication-insider-progress">0/3 IoCs</div>
                 </div>
             </div>
 
-            <div class="room-card locked" data-room="network" data-order="4">
+            <div class="room-card locked" data-room="host-forensics" data-order="5">
+                <div class="lock-overlay">🔒</div>
+                <div class="terminal-header">
+                    <div class="window-controls">
+                        <div class="control-circle"></div>
+                        <div class="control-circle"></div>
+                        <div class="control-circle"></div>
+                    </div>
+                </div>
+                <div class="room-content">
+                    <div class="threat-level threat-locked">LOCKED</div>
+                    <div class="room-header">
+                        <div class="room-icon">💻</div>
+                        <div class="room-title">Host Forensics</div>
+                    </div>
+                    <div class="room-description">
+                        Analyze endpoint activities. Look for data staging and compression operations.
+                    </div>
+                    <div class="room-progress" id="host-forensics-progress">0/2 IoCs</div>
+                </div>
+            </div>
+            
+            <div class="room-card locked" data-room="network-analysis-insider" data-order="6">
                 <div class="lock-overlay">🔒</div>
                 <div class="terminal-header">
                     <div class="window-controls">
@@ -487,62 +531,18 @@
                     <div class="threat-level threat-locked">LOCKED</div>
                     <div class="room-header">
                         <div class="room-icon">🌐</div>
-                        <div class="room-title">Network Traffic</div>
+                        <div class="room-title">Network Traffic Analysis</div>
                     </div>
                     <div class="room-description">
-                        Investigate network communications. Identify C&C servers and data exfiltration.
+                        Monitor internal network communications. Identify data transfer patterns to staging systems.
                     </div>
-                    <div class="room-progress" id="network-progress">0/3 IoCs</div>
-                </div>
-            </div>
-
-            <div class="room-card locked" data-room="registry" data-order="5">
-                <div class="lock-overlay">🔒</div>
-                <div class="terminal-header">
-                    <div class="window-controls">
-                        <div class="control-circle"></div>
-                        <div class="control-circle"></div>
-                        <div class="control-circle"></div>
-                    </div>
-                </div>
-                <div class="room-content">
-                    <div class="threat-level threat-locked">LOCKED</div>
-                    <div class="room-header">
-                        <div class="room-icon">📋</div>
-                        <div class="room-title">Registry Analysis</div>
-                    </div>
-                    <div class="room-description">
-                        Examine system registry modifications. Discover persistence mechanisms.
-                    </div>
-                    <div class="room-progress" id="registry-progress">0/2 IoCs</div>
-                </div>
-            </div>
-            
-            <div class="room-card locked" data-room="filesystem" data-order="6">
-                <div class="lock-overlay">🔒</div>
-                <div class="terminal-header">
-                    <div class="window-controls">
-                        <div class="control-circle"></div>
-                        <div class="control-circle"></div>
-                        <div class="control-circle"></div>
-                    </div>
-                </div>
-                <div class="room-content">
-                    <div class="threat-level threat-locked">LOCKED</div>
-                    <div class="room-header">
-                        <div class="room-icon">📁</div>
-                        <div class="room-title">File System Analysis</div>
-                    </div>
-                    <div class="room-description">
-                        Investigate file system changes. Locate encrypted files and assess attack impact.
-                    </div>
-                    <div class="room-progress" id="filesystem-progress">0/3 IoCs</div>
+                    <div class="room-progress" id="network-analysis-insider-progress">0/2 IoCs</div>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="js/roomFlow.js"></script>
+    <script src="js/insiderRoomFlow.js"></script>
     <script>
         let globalGameState;
         let timerInterval;
@@ -550,7 +550,7 @@
 
         function initializeDashboard() {
             console.log('Initializing dashboard...');
-            globalGameState = RoomFlow.loadGameState();
+            globalGameState = InsiderRoomFlow.loadGameState();
             console.log('Game state loaded:', globalGameState);
             
             updateAllDisplays();
@@ -558,7 +558,7 @@
             startTimerUpdates();
             setupEventHandlers();
             
-            RoomFlow.setupStateListener(handleStateUpdate);
+            InsiderRoomFlow.setupStateListener(handleStateUpdate);
             console.log('Dashboard initialization complete');
         }
 
@@ -573,7 +573,7 @@
             document.getElementById('globalIocsFound').textContent = 
                 `${globalGameState.totalIocsFound}/${globalGameState.totalIocsAvailable}`;
             document.getElementById('roomsCompleted').textContent = 
-                `${globalGameState.roomsCompleted.length}/${RoomFlow.ROOM_ORDER.length}`;
+                `${globalGameState.roomsCompleted.length}/${InsiderRoomFlow.ROOM_ORDER.length}`;
             
             updateTimerDisplay();
             
@@ -596,10 +596,10 @@
             const now = Date.now();
             const shouldSave = (now - lastTimerUpdate) > 5000;
             
-            const timeLeft = RoomFlow.getGlobalTimeRemaining(shouldSave);
+            const timeLeft = InsiderRoomFlow.getGlobalTimeRemaining(shouldSave);
             const timerElement = document.getElementById('globalTimer');
             
-            timerElement.textContent = RoomFlow.formatTime(timeLeft);
+            timerElement.textContent = InsiderRoomFlow.formatTime(timeLeft);
             
             if (shouldSave) {
                 lastTimerUpdate = now;
@@ -622,7 +622,7 @@
         }
 
         function updateRoomStates() {
-            RoomFlow.ROOM_ORDER.forEach((roomName) => {
+            InsiderRoomFlow.ROOM_ORDER.forEach((roomName) => {
                 const roomCard = document.querySelector(`[data-room="${roomName}"]`);
                 if (!roomCard) return;
                 
@@ -657,16 +657,16 @@
                     const lockOverlay = roomCard.querySelector('.lock-overlay');
                     if (lockOverlay) lockOverlay.remove();
                     
-                    if (roomName === 'downloads') {
+                    if (roomName === 'database-access') {
                         threatElement.textContent = 'START HERE';
                         threatElement.className = 'threat-level threat-start';
                     } else {
                         const threatLevels = {
-                            processes: { text: 'MEDIUM', class: 'threat-medium' },
-                            authentication: { text: 'MEDIUM', class: 'threat-medium' },
-                            network: { text: 'HIGH', class: 'threat-high' },
-                            registry: { text: 'LOW', class: 'threat-low' },
-                            filesystem: { text: 'HIGH', class: 'threat-high' }
+                            'file-server-logs': { text: 'HIGH', class: 'threat-high' },
+                            'sharepoint-logs': { text: 'HIGH', class: 'threat-high' },
+                            'authentication-insider': { text: 'MEDIUM', class: 'threat-medium' },
+                            'host-forensics': { text: 'MEDIUM', class: 'threat-medium' },
+                            'network-analysis-insider': { text: 'LOW', class: 'threat-low' }
                         };
                         
                         const threatInfo = threatLevels[roomName];
@@ -719,7 +719,7 @@
                         return false;
                     }
                     
-                    RoomFlow.enterRoom(roomName);
+                    InsiderRoomFlow.enterRoom(roomName);
                     console.log('Navigating to:', `${roomName}.html`);
                     window.location.href = `${roomName}.html`;
                 }, true);
@@ -727,36 +727,33 @@
         }
 
         function showLockedRoomMessage(roomName) {
-            const roomIndex = RoomFlow.ROOM_ORDER.indexOf(roomName);
-            const requiredRooms = RoomFlow.ROOM_ORDER.slice(0, roomIndex);
+            const roomIndex = InsiderRoomFlow.ROOM_ORDER.indexOf(roomName);
+            const requiredRooms = InsiderRoomFlow.ROOM_ORDER.slice(0, roomIndex);
             
             alert(`Room Locked!\n\nComplete these rooms first:\n${requiredRooms.join(' → ')}`);
         }
 
         function endGame() {
             clearInterval(timerInterval);
-            const stats = RoomFlow.getGameStatistics();
+            const stats = InsiderRoomFlow.getGameStatistics();
             
-            // Handle game completion - stay on the page, do nothing
             if (stats.gameCompleted && !stats.completedByTimeout) {
                 console.log("Investigation Complete! All IoCs found. Timer stopped.");
                 try {
-                    const finalState = RoomFlow.loadGameState();
-                    RoomFlow.saveGameState(finalState, true);
+                    const finalState = InsiderRoomFlow.loadGameState();
+                    InsiderRoomFlow.saveGameState(finalState, true);
                 } catch (e) {
                     console.error('Failed to save final game state:', e);
                 }
-                // Stay on this page - do nothing else
                 return;
             }
 
-            // Handle timeout - redirect to dashboard.html
-            const timeLeft = RoomFlow.getGlobalTimeRemaining();
+            const timeLeft = InsiderRoomFlow.getGlobalTimeRemaining();
             if (timeLeft <= 0 || stats.completedByTimeout) {
-                const message = `Time Expired!\n\nIoCs Found: ${stats.totalIocsFound}/${stats.totalIocsAvailable}\nFinal Score: ${stats.totalScore}\nThe ransomware attack could not be fully contained.`;
+                const message = `Time Expired!\n\nIoCs Found: ${stats.totalIocsFound}/${stats.totalIocsAvailable}\nFinal Score: ${stats.totalScore}\nThe investigation could not be completed in time.`;
                 setTimeout(() => {
                     alert(message);
-                    RoomFlow.resetGame();
+                    InsiderRoomFlow.resetGame();
                     window.location.href = '../dashboard.html';
                 }, 500);
             }
@@ -764,8 +761,7 @@
 
         function resetGame() {
             if (confirm('Are you sure? All progress will be lost.')) {
-                RoomFlow.resetGame();
-                // After reset, stay on the current page and reload to reflect changes
+                InsiderRoomFlow.resetGame();
                 window.location.reload();
             }
         }
