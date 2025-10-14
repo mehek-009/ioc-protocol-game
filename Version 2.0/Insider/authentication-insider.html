@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Authentication Logs - SOC Analyst</title>
+    <title>Authentication Analysis - Insider Threat Investigation</title>
     <style>
         :root {
             --bg: #0A0A1F;
@@ -208,7 +208,7 @@
             border: 1px solid rgba(0, 255, 255, 0.2);
         }
 
-        .monitor-header {
+        .log-header {
             display: flex; justify-content: space-between;
             margin-bottom: 20px; padding-bottom: 10px;
             border-bottom: 1px solid rgba(0, 255, 255, 0.1);
@@ -242,11 +242,27 @@
         .log-timestamp { color: #888; margin-right: 15px; font-weight: bold; }
         .log-level { margin-right: 15px; font-weight: bold; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
         .level-success { background: rgba(0, 255, 65, 0.2); color: var(--accent); }
-        .level-failure { background: rgba(255, 107, 107, 0.2); color: var(--danger); }
         .level-info { background: rgba(255, 255, 0, 0.2); color: var(--warning); }
-        .log-details { color: var(--cyan); }
+        .log-event { color: var(--cyan); }
         .log-user { color: var(--accent); font-weight: bold; }
         .log-source { color: var(--warning); }
+        .log-details { color: #ccc; font-size: 0.9rem; margin-top: 5px; }
+
+        .off-hours {
+            background: rgba(255, 102, 102, 0.2);
+            color: #ff6666;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
+        .privilege-badge {
+            background: rgba(255, 170, 136, 0.2);
+            color: #ffaa88;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
 
         .progress-bar {
             width: 100%; height: 8px;
@@ -293,11 +309,11 @@
                 <div class="stat-label">Status</div>
             </div>
             <div class="stat-item">
-                <div class="stat-value" id="globalIocs">0/12</div>
+                <div class="stat-value" id="globalIocs">0/15</div>
                 <div class="stat-label">Total IoCs</div>
             </div>
             <div class="stat-item">
-                <div class="stat-value" id="roomIocs">0/2</div>
+                <div class="stat-value" id="roomIocs">0/3</div>
                 <div class="stat-label">Room IoCs</div>
             </div>
             <div class="stat-item">
@@ -316,39 +332,39 @@
             <div class="metrics-grid-container">
                 <div class="panel-header-top">
                     <div class="panel-header-left">
-                        <h1>🔐 AUTHENTICATION LOGS</h1>
+                        <h1>🔐 AUTHENTICATION ANALYSIS</h1>
                     </div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">52</div>
-                    <div class="metric-label">Total Login Attempts</div>
+                    <div class="metric-value">892</div>
+                    <div class="metric-label">Privileged Sessions</div>
                 </div>
                 <div class="metric-card alert">
-                    <div class="metric-value danger">47</div>
-                    <div class="metric-label">Failed Attempts</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-value">5</div>
-                    <div class="metric-label">Successful Logins</div>
+                    <div class="metric-value danger">67%</div>
+                    <div class="metric-label">Off-Hours Access</div>
                 </div>
                 <div class="metric-card alert">
-                    <div class="metric-value danger">1</div>
-                    <div class="metric-label">Privilege Escalations</div>
+                    <div class="metric-value danger">15</div>
+                    <div class="metric-label">Shared Credentials</div>
+                </div>
+                <div class="metric-card alert">
+                    <div class="metric-value danger">247</div>
+                    <div class="metric-label">Anomalous Logins</div>
                 </div>
             </div>
 
             <div class="security-alert" id="securityAlert">
-    <p>You open the Security Event Logs, focusing on authentication activity around the time of the incident.</p>
-    <p><strong>Multiple entries detected — both successful and failed logins.</strong></p>
-    <p>Source: <strong>192.168.1.15 (Jennifer's workstation)</strong></p>
-    <p>The accounts used belong to employees who haven’t accessed the system in several days, making the pattern stand out.</p>
-    <p>At first glance, everything appears routine — familiar usernames, standard logon types — but the timestamps don’t add up.</p>
-    <p><strong>The activity looks legitimate on the surface, yet the timing and source raise a red flag.</strong></p>
-    <p><strong>Someone is moving through the network using trusted credentials — and Jennifer’s machine is their launch point.</strong></p>
-</div>
+                <p><strong>APRIL 25, 2013 - 03:22 AM</strong></p>
+                <p>Before you can know <em>what</em> he did, you need to know <em>when</em> and <em>how</em> he operated.</p>
+                <p>You pull up the Security Event Logs from the Hawaii facility, filtering for user <strong style="color: #00ffff;">esnowden</strong> during the critical timeframe.</p>
+                <p>You're looking for patterns—deviations from the norm that signal malicious intent hiding in plain sight.</p>
+                <p><strong>The timestamps tell the story:</strong> Dozens of privileged login sessions starting between 2 AM and 4 AM. This isn't emergency maintenance—this is a pattern.</p>
+                <p>Then you see it: On April 25, his credentials are used to access <strong style="color: #ff6666;">three separate systems simultaneously</strong>. He wasn't just working late—he was using his credentials to orchestrate a distributed operation.</p>
+                <p>And just days before his departure? A final <strong>8.7-hour marathon session</strong>. His last chance to ensure everything was collected and staged.</p>
+                <p><strong>This wasn't a smash-and-grab. This was patient, methodical abuse of trust.</strong></p>
+            </div>
 
-
-            <button class="proceed-btn" id="proceedBtn">🔍 Analyze Authentication Events</button>
+            <button class="proceed-btn" id="proceedBtn">🔐 Analyze Authentication Events</button>
 
             <div class="progress-bar hidden" id="progressBar">
                 <div class="progress-fill" id="progressFill" style="width: 0%"></div>
@@ -361,163 +377,163 @@
 
     <div class="feedback" id="feedback"></div>
 
-    <script src="js/roomFlow.js"></script>
+    <script src="js/insiderRoomFlow.js"></script>
     <script>
-        const ROOM_NAME = 'authentication';
-        let gameState = { iocsFound: 0, totalIocs: 2, gameActive: true };
+        const ROOM_NAME = 'authentication-insider';
+        let gameState = { iocsFound: 0, totalIocs: 3, gameActive: true };
 
-  // ----------------------
-// Authentication Events (10 entries)
-// ----------------------
-const authData = [
-  {
-    id: 'auth1',
-    timestamp: '15:42:15',
-    level: 'SUCCESS',
-    event: 'Event ID 4624 - Successful Logon',
-    user: 'jdoe',
-    source: '192.168.1.15',
-    method: 'RDP',
-    details: 'Remote Desktop Protocol (Logon Type 10) connection established as jdoe from Jennifer’s workstation.',
-    isIoc: true,
-    explanation: 'Stolen credentials used to log in as privileged user (pivot for privilege escalation).',
-    type: 'success'
-  },
-  {
-    id: 'auth2',
-    timestamp: '15:42:25',
-    level: 'INFO',
-    event: 'Event ID 4703 - Privilege Rights Used',
-    user: 'jdoe',
-    source: '192.168.1.15',
-    method: 'SeDebugPrivilege',
-    details: 'SeDebugPrivilege acquired for process manipulation and encryption.',
-    isIoc: true,
-    explanation: 'Privilege escalation enabling malicious processes to access system-level files.',
-    type: 'info'
-  },
-  {
-    id: 'auth3',
-    timestamp: '15:41:55',
-    level: 'FAILURE',
-    event: 'Event ID 4625 - Failed Logon',
-    user: 'jdoe',
-    source: '192.168.1.15',
-    method: 'Local',
-    details: 'Invalid password attempt recorded (pre-attack brute force/credential spray activity).',
-    isIoc: false,
-    explanation: 'Failed interactive login before successful reuse/stolen credentials.',
-    type: 'failure'
-  },
-  {
-    id: 'auth4',
-    timestamp: '15:41:00',
-    level: 'SUCCESS',
-    event: 'Event ID 4647 - User Initiated Logoff',
-    user: 'jennifer',
-    source: '192.168.1.15',
-    method: 'Local',
-    details: 'Jennifer logged off workstation shortly before attack window.',
-    isIoc: false,
-    explanation: 'Creates opportunity for attacker to use the workstation while owner absent.',
-    type: 'success'
-  },
-  {
-    id: 'auth5',
-    timestamp: '15:40:00',
-    level: 'SUCCESS',
-    event: 'Event ID 4624 - Successful Logon',
-    user: 'jennifer',
-    source: '192.168.1.15',
-    method: 'Local',
-    details: 'Interactive logon session established (Jennifer).',
-    isIoc: false,
-    type: 'success'
-  },
-  {
-    id: 'auth6',
-    timestamp: '15:42:13',
-    level: 'FAILURE',
-    event: 'Event ID 4625 - Failed Logon',
-    user: 'administrator',
-    source: '192.168.1.15',
-    method: 'RDP',
-    details: 'Invalid password attempt to admin account (likely scanning/enumeration).',
-    isIoc: false,
-    explanation: 'Failed attempts preceding successful privileged login.',
-    type: 'failure'
-  },
-  {
-    id: 'auth7',
-    timestamp: '15:41:20',
-    level: 'FAILURE',
-    event: 'Event ID 4625 - Failed Logon',
-    user: 'unknown',
-    source: '10.50.50.50',
-    method: 'SMB',
-    details: 'Incorrect target account name provided.',
-    isIoc: false,
-    explanation: 'Background noise - failed SMB access from random internal IP.',
-    type: 'failure'
-  },
-  {
-    id: 'auth8',
-    timestamp: '15:42:50',
-    level: 'SUCCESS',
-    event: 'Event ID 4624 - Service Logon',
-    user: 'svc_backup',
-    source: '127.0.0.1',
-    method: 'Scheduled Task',
-    details: 'Scheduled backup service executed (normal).',
-    isIoc: false,
-    type: 'success'
-  },
-  {
-    id: 'auth9',
-    timestamp: '15:39:30',
-    level: 'SUCCESS',
-    event: 'Event ID 4624 - Successful Logon',
-    user: 'msmith',
-    source: '192.168.1.22',
-    method: 'Local',
-    details: 'Normal interactive session established by another user.',
-    isIoc: false,
-    type: 'success'
-  },
-  {
-    id: 'auth10',
-    timestamp: '15:43:05',
-    level: 'FAILURE',
-    event: 'Event ID 4625 - Failed Logon',
-    user: 'jdoe',
-    source: '10.10.10.5',
-    method: 'Kerberos',
-    details: 'Multiple invalid password failures from a different internal source (suspicious but not direct IoC).',
-    isIoc: false,
-    type: 'failure'
-  }
-];
-
+        const authData = [
+            // IoCs (suspicious authentication patterns)
+            { 
+                id: 'auth1', 
+                timestamp: '2013-04-25 03:22:15',
+                user: 'esnowden',
+                level: 'INFO',
+                event: 'SHARED_CREDENTIAL_USAGE',
+                source: 'Multiple Workstations',
+                location: 'Hawaii Facility',
+                privilege: 'System Administrator',
+                session_duration: '4.2 hours',
+                isIoc: true,
+                explanation: 'Same credentials used across multiple workstations simultaneously - indicates credential sharing for broader access',
+                type: 'credential_sharing'
+            },
+            { 
+                id: 'auth2', 
+                timestamp: '2013-05-11 02:47:33',
+                user: 'esnowden',
+                level: 'INFO',
+                event: 'OFF_HOURS_PRIVILEGED_ACCESS',
+                source: 'NSA-WORKSTATION-247',
+                location: 'Hawaii Facility',
+                privilege: 'Administrator',
+                session_duration: '6.5 hours',
+                isIoc: true,
+                explanation: 'Prolonged off-hours privileged access during typical non-work hours - unusual pattern for infrastructure role',
+                type: 'off_hours_abuse'
+            },
+            { 
+                id: 'auth3', 
+                timestamp: '2013-05-16 01:15:42',
+                user: 'esnowden',
+                level: 'INFO',
+                event: 'FINAL_ACCESS_SURGE',
+                source: 'NSA-SECURE-TERMINAL-12',
+                location: 'Hawaii Facility',
+                privilege: 'Top Secret Access',
+                session_duration: '8.7 hours',
+                isIoc: true,
+                explanation: 'Extended final access session before departure - timing correlates with final data collection phase',
+                type: 'departure_correlation'
+            },
+            
+            // Red herrings (legitimate authentication activities)
+            { 
+                id: 'auth4', 
+                timestamp: '2013-04-15 09:30:22',
+                user: 'esnowden',
+                level: 'SUCCESS',
+                event: 'ROUTINE_LOGIN',
+                source: 'NSA-WORKSTATION-247',
+                location: 'Hawaii Facility',
+                privilege: 'Standard User',
+                session_duration: '8.5 hours',
+                isIoc: false,
+                type: 'normal_work'
+            },
+            { 
+                id: 'auth5', 
+                timestamp: '2013-04-28 14:45:12',
+                user: 'mharris',
+                level: 'SUCCESS',
+                event: 'ANALYST_LOGIN',
+                source: 'NSA-ANALYST-WORKSTATION-05',
+                location: 'Hawaii Facility',
+                privilege: 'Secret Clearance',
+                session_duration: '7.2 hours',
+                isIoc: false,
+                type: 'analyst_work'
+            },
+            { 
+                id: 'auth6', 
+                timestamp: '2013-05-03 10:15:45',
+                user: 'jdoe',
+                level: 'SUCCESS',
+                event: 'ADMIN_MAINTENANCE',
+                source: 'NSA-SERVER-ROOM-TERMINAL',
+                location: 'Hawaii Facility',
+                privilege: 'System Administrator',
+                session_duration: '2.5 hours',
+                isIoc: false,
+                type: 'maintenance'
+            },
+            { 
+                id: 'auth7', 
+                timestamp: '2013-04-20 16:22:30',
+                user: 'esnowden',
+                level: 'SUCCESS',
+                event: 'SCHEDULED_MAINTENANCE',
+                source: 'NSA-INFRASTRUCTURE-TERMINAL',
+                location: 'Hawaii Facility',
+                privilege: 'Infrastructure Admin',
+                session_duration: '3.5 hours',
+                isIoc: false,
+                type: 'scheduled_work'
+            },
+            { 
+                id: 'auth8', 
+                timestamp: '2013-05-01 11:30:15',
+                user: 'asmith',
+                level: 'SUCCESS',
+                event: 'TRAINING_ACCESS',
+                source: 'NSA-TRAINING-LAB-03',
+                location: 'Hawaii Facility',
+                privilege: 'Training User',
+                session_duration: '4.0 hours',
+                isIoc: false,
+                type: 'training'
+            },
+            { 
+                id: 'auth9', 
+                timestamp: '2013-04-18 08:45:20',
+                user: 'esnowden',
+                level: 'SUCCESS',
+                event: 'MORNING_LOGIN',
+                source: 'NSA-WORKSTATION-247',
+                location: 'Hawaii Facility',
+                privilege: 'Standard User',
+                session_duration: '8.2 hours',
+                isIoc: false,
+                type: 'routine_work'
+            },
+            { 
+                id: 'auth10', 
+                timestamp: '2013-05-08 13:20:45',
+                user: 'rjohnson',
+                level: 'SUCCESS',
+                event: 'ANALYST_SESSION',
+                source: 'NSA-SECURE-WORKSTATION-18',
+                location: 'Hawaii Facility',
+                privilege: 'Top Secret Access',
+                session_duration: '6.5 hours',
+                isIoc: false,
+                type: 'analyst_work'
+            }
+        ];
 
         document.addEventListener('DOMContentLoaded', function() {
-            if (!RoomIntegration.initializeRoom(ROOM_NAME)) return;
+            if (!InsiderRoomIntegration.initializeRoom(ROOM_NAME)) return;
             
-            // Proceed button functionality
             const proceedBtn = document.getElementById('proceedBtn');
             const securityAlert = document.getElementById('securityAlert');
             const progressBar = document.getElementById('progressBar');
             const authMonitor = document.getElementById('authMonitor');
             
             proceedBtn.addEventListener('click', function() {
-                // Hide security alert and button
                 securityAlert.classList.add('hidden');
                 proceedBtn.classList.add('hidden');
-                
-                // Show progress bar and auth monitor
                 progressBar.classList.remove('hidden');
                 authMonitor.classList.remove('hidden');
-                
-                // Load the authentication logs
                 loadAuthEntries();
             });
             
@@ -536,12 +552,12 @@ const authData = [
                 if (isIoc) {
                     logEntry.classList.add('selected');
                     gameState.iocsFound++;
-                    RoomIntegration.updateProgress(ROOM_NAME, 100, 1);
-                    RoomIntegration.showFeedback(`Correct! ${itemData.explanation}`, 'success');
+                    InsiderRoomIntegration.updateProgress(ROOM_NAME, 100, 1);
+                    InsiderRoomIntegration.showFeedback(`Correct! ${itemData.explanation}`, 'success');
                 } else {
                     logEntry.classList.add('wrong');
-                    RoomIntegration.updateProgress(ROOM_NAME, -50, 0);
-                    RoomIntegration.showFeedback('Wrong! This appears to be legitimate authentication.', 'error');
+                    InsiderRoomIntegration.updateProgress(ROOM_NAME, -50, 0);
+                    InsiderRoomIntegration.showFeedback('Wrong! This appears to be legitimate authentication activity within normal work patterns.', 'error');
                 }
                 updateProgressBar();
             });
@@ -549,7 +565,7 @@ const authData = [
 
         function loadAuthEntries() {
             const monitor = document.getElementById('authMonitor');
-            monitor.innerHTML = `<div class="monitor-header">
+            monitor.innerHTML = `<div class="log-header">
                                     <h3>Security Event Logs</h3>
                                     <span>Filter: Authentication Events</span>
                                 </div>`;
@@ -562,14 +578,23 @@ const authData = [
                 logEntry.dataset.id = entry.id;
                 logEntry.dataset.isIoc = entry.isIoc;
                 
+                const hour = parseInt(entry.timestamp.split(' ')[1].split(':')[0]);
+                const isOffHours = hour < 6 || hour >= 22;
+                const offHoursClass = isOffHours ? 'off-hours' : '';
+                
+                const privilegeClass = entry.privilege.includes('Administrator') || entry.privilege.includes('Top Secret') ? 'privilege-badge' : '';
+                
                 logEntry.innerHTML = `
                     <div style="display: flex; align-items: center; margin-bottom: 5px;">
-                        <span class="log-timestamp">${entry.timestamp}</span>
+                        <span class="log-timestamp ${offHoursClass}">${entry.timestamp}</span>
                         <span class="log-level level-${entry.level.toLowerCase()}">${entry.level}</span>
-                        <span class="log-details">${entry.event} <span class="log-user">${entry.user}</span></span>
+                        <span class="log-event">${entry.event}</span>
+                        <span class="log-user">[${entry.user}]</span>
                     </div>
-                    <div style="margin-left: 100px; font-size: 0.9rem; color: #888;">
-                        Source: <span class="log-source">${entry.source}</span> | Method: ${entry.method} | ${entry.details}
+                    <div class="log-details">
+                        Source: <span class="log-source">${entry.source}</span> | 
+                        Privilege: <span class="${privilegeClass}">${entry.privilege}</span> | 
+                        Duration: ${entry.session_duration}
                     </div>
                 `;
                 

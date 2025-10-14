@@ -456,147 +456,151 @@
         let gameState = { iocsFound: 0, totalIocs: 3, gameActive: true, cpuUsage: 78 };
 
         // --- UPDATED PROCESS DATA LOGS ---
-        const processData = [
-    // 🚨 ATTACK EXECUTION CHAIN (CRITICAL IoCs - Latest Events First) 🚨
-    {
-        id: 'proc2',
-        name: 'conhost.exe',
-        pid: '3401',
-        cpu: 67,
-        memory: '120 MB',
-        started: '15:42:30',
-        path: 'C:\\Windows\\System32\\conhost.exe',
-        parent: 'svchost.exe',
-        parentPath: 'C:\\Temp\\svchost.exe', // Confirms malicious parent
-        isIoc: true,
-        explanation: '**Legitimate process (conhost.exe) being used by the malicious svchost** (proc1) likely for high-intensity tasks like file encryption. Extremely high CPU usage.',
-        type: 'malicious',
-        status: 'running'
-    },
-    {
-        id: 'proc1',
-        name: 'svchost.exe',
-        pid: '1847',
-        cpu: 85,
-        memory: '245 MB',
-        started: '15:42:28',
-        path: 'C:\\Temp\\svchost.exe', // Suspicious path
-        parent: 'security_update.exe',
-        parentStatus: 'terminated',
-        isIoc: true,
-        explanation: 'Malicious process **masquerading as legitimate svchost** - running from C:\\Temp\\ (wrong path) with abnormally high CPU. Parent (security_update.exe) is terminated.',
-        type: 'malicious',
-        status: 'running'
-    },
-
-    // User Applications (Reverse Chronological)
-    {
-        id: 'proc7',
-        name: 'notepad.exe',
-        pid: '4521',
-        cpu: 1,
-        memory: '25 MB',
-        started: '14:22:15',
-        path: 'C:\\Windows\\System32\\notepad.exe',
-        parent: 'explorer.exe',
-        isIoc: false,
-        type: 'normal',
-        status: 'running'
-    },
-    {
-        id: 'proc8',
-        name: 'winword.exe',
-        pid: '5632',
-        cpu: 15,
-        memory: '145 MB',
-        started: '13:45:30',
-        path: 'C:\\Program Files\\Microsoft Office\\WINWORD.exe',
-        parent: 'explorer.exe',
-        isIoc: false,
-        type: 'normal',
-        status: 'running'
-    },
-    {
-        id: 'proc3',
-        name: 'chrome.exe',
-        pid: '2156',
-        cpu: 12,
-        memory: '180 MB',
-        started: '09:15:22',
-        path: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
-        parent: 'explorer.exe',
-        isIoc: false,
-        type: 'normal',
-        status: 'running'
-    },
-
-    // Core System Processes (Earliest Events Last)
-    {
-        id: 'proc4',
-        name: 'explorer.exe',
-        pid: '1234',
-        cpu: 5,
-        memory: '95 MB',
-        started: '08:30:45',
-        path: 'C:\\Windows\\explorer.exe',
-        parent: 'userinit.exe',
-        isIoc: false,
-        type: 'normal',
-        status: 'running'
-    },
-    {
-        id: 'proc9',
-        name: 'MsMpEng.exe',
-        pid: '3245',
-        cpu: 45,
-        memory: '234 MB',
-        started: '08:30:25',
-        path: 'C:\\Program Files\\Windows Defender\\MsMpEng.exe',
-        parent: 'services.exe',
-        isIoc: false,
-        type: 'high-cpu',
-        status: 'running'
-    },
-    {
-        id: 'proc6',
-        name: 'dwm.exe',
-        pid: '1456',
-        cpu: 8,
-        memory: '78 MB',
-        started: '08:30:20',
-        path: 'C:\\Windows\\System32\\dwm.exe',
-        parent: 'csrss.exe',
-        isIoc: false,
-        type: 'normal',
-        status: 'running'
-    },
-    {
-        id: 'proc5',
-        name: 'winlogon.exe',
-        pid: '892',
-        cpu: 2,
-        memory: '45 MB',
-        started: '08:30:15',
-        path: 'C:\\Windows\\System32\\winlogon.exe',
-        parent: 'smss.exe',
-        isIoc: false,
-        type: 'normal',
-        status: 'running'
-    },
-    {
-        id: 'proc10',
-        name: 'services.exe',
-        pid: '720',
-        cpu: 1,
-        memory: '28 MB',
-        started: '08:30:10',
-        path: 'C:\\Windows\\System32\\services.exe',
-        parent: 'wininit.exe',
-        isIoc: false,
-        type: 'normal',
-        status: 'running'
-    }
+       const processData = [
+  {
+    id: 'proc1',
+    name: 'rundll32.exe',
+    pid: '1802',
+    cpu: 2,
+    memory: '18 MB',
+    started: '15:41:31',
+    path: 'C:\\Windows\\System32\\rundll32.exe',
+    parent: 'rs35_thumbnail.lnk',
+    parentPath: 'C:\\Users\\jdoe\\Downloads\\rs35_thumbnail.lnk',
+    isIoc: true,
+    explanation: 'Image preview created/triggered a shortcut that launched rundll32 to load a malicious DLL embedded via steganography in PNG.',
+    type: 'malicious',
+    status: 'terminated'
+  },
+  {
+    id: 'proc2',
+    name: 'svchost.exe',
+    pid: '1847',
+    cpu: 85,
+    memory: '245 MB',
+    started: '15:41:34',
+    path: 'C:\\Temp\\svchost.exe',
+    parent: 'rundll32.exe',
+    parentPath: 'C:\\Windows\\System32\\rundll32.exe',
+    parentStatus: 'terminated',
+    isIoc: true,
+    explanation: 'Malicious svchost spawned by loader, running from C:\\Temp (masquerading as legitimate service). High CPU indicates encryption activity.',
+    type: 'malicious',
+    status: 'running'
+  },
+  {
+    id: 'proc3',
+    name: 'conhost.exe',
+    pid: '3401',
+    cpu: 67,
+    memory: '120 MB',
+    started: '15:41:36',
+    path: 'C:\\Windows\\System32\\conhost.exe',
+    parent: 'svchost.exe',
+    parentPath: 'C:\\Temp\\svchost.exe',
+    isIoc: true,
+    explanation: 'Legitimate console host being used by malicious svchost for heavy I/O and encryption operations.',
+    type: 'malicious',
+    status: 'running'
+  },
+  {
+    id: 'proc4',
+    name: 'powershell.exe',
+    pid: '1920',
+    cpu: 40,
+    memory: '98 MB',
+    started: '15:41:40',
+    path: 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe',
+    parent: 'svchost.exe',
+    parentPath: 'C:\\Temp\\svchost.exe',
+    isIoc: true,
+    explanation: 'PowerShell used to download additional payloads and perform credential harvesting and lateral movement tasks.',
+    type: 'malicious',
+    status: 'running'
+  },
+  {
+    id: 'proc5',
+    name: 'MsMpEng.exe',
+    pid: '3245',
+    cpu: 45,
+    memory: '234 MB',
+    started: '08:30:25',
+    path: 'C:\\Program Files\\Windows Defender\\MsMpEng.exe',
+    parent: 'services.exe',
+    isIoc: false,
+    explanation: 'Windows Defender service (high CPU due to scanning).',
+    type: 'high-cpu',
+    status: 'running'
+  },
+  {
+    id: 'proc6',
+    name: 'explorer.exe',
+    pid: '1234',
+    cpu: 5,
+    memory: '95 MB',
+    started: '08:30:45',
+    path: 'C:\\Windows\\explorer.exe',
+    parent: 'userinit.exe',
+    isIoc: false,
+    type: 'normal',
+    status: 'running'
+  },
+  {
+    id: 'proc7',
+    name: 'chrome.exe',
+    pid: '2156',
+    cpu: 12,
+    memory: '180 MB',
+    started: '09:15:22',
+    path: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+    parent: 'explorer.exe',
+    isIoc: false,
+    type: 'normal',
+    status: 'running'
+  },
+  {
+    id: 'proc8',
+    name: 'notepad.exe',
+    pid: '4521',
+    cpu: 1,
+    memory: '25 MB',
+    started: '14:22:15',
+    path: 'C:\\Windows\\System32\\notepad.exe',
+    parent: 'explorer.exe',
+    isIoc: false,
+    type: 'normal',
+    status: 'running'
+  },
+  {
+    id: 'proc9',
+    name: 'taskmgr.exe',
+    pid: '4780',
+    cpu: 3,
+    memory: '40 MB',
+    started: '15:42:10',
+    path: 'C:\\Windows\\System32\\taskmgr.exe',
+    parent: 'explorer.exe',
+    isIoc: false,
+    explanation: 'Opened by user or analyst for triage (post-infection activity).',
+    type: 'normal',
+    status: 'running'
+  },
+  {
+    id: 'proc10',
+    name: 'winword.exe',
+    pid: '5632',
+    cpu: 15,
+    memory: '145 MB',
+    started: '13:45:30',
+    path: 'C:\\Program Files\\Microsoft Office\\WINWORD.exe',
+    parent: 'explorer.exe',
+    isIoc: false,
+    type: 'normal',
+    status: 'running'
+  }
 ];
+
+
 
         document.addEventListener('DOMContentLoaded', function() {
             // Note: Updated iocsFound logic in the click handler to handle proc0 being "terminated" but still an IoC

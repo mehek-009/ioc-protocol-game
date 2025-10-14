@@ -379,70 +379,105 @@
         // Note: Global gameState object is assumed to be defined/loaded by roomFlow.js or a global script
         let gameState = { iocsFound: 0, totalIocs: 2, gameActive: true };
 
-        const registryData = {
-            'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run': [
-                {
-                    id: 'reg1',
-                    key: 'SecurityUpdate',
-                    value: 'C:\\Temp\\svchost.exe',
-                    type: 'REG_SZ',
-                    modified: '15:42:28',
-                    isIoc: true,
-                    explanation: 'LockBit persistence mechanism - malicious executable set to run at startup',
-                    category: 'suspicious'
-                },
-                {
-                    id: 'reg2',
-                    key: 'WindowsDefender',
-                    value: 'C:\\Program Files\\Windows Defender\\MSASCuiL.exe',
-                    type: 'REG_SZ',
-                    modified: '08:30:15',
-                    isIoc: false,
-                    category: 'normal'
-                },
-                {
-                    id: 'reg3',
-                    key: 'VMware User Process',
-                    value: 'C:\\Program Files\\VMware\\VMware Tools\\vmtoolsd.exe -n vmusr',
-                    type: 'REG_SZ',
-                    modified: '08:30:20',
-                    isIoc: false,
-                    category: 'normal'
-                }
-            ],
-            'HKEY_LOCAL_MACHINE\\SOFTWARE\\Classes': [
-                {
-                    id: 'reg4',
-                    key: '.lockbit\\DefaultIcon',
-                    value: 'C:\\Temp\\svchost.exe,0',
-                    type: 'REG_SZ',
-                    modified: '15:42:35',
-                    isIoc: true,
-                    explanation: 'File association for encrypted .lockbit files - used to display ransom message icon',
-                    category: 'suspicious'
-                },
-                {
-                    id: 'reg5',
-                    key: '.txt\\DefaultIcon',
-                    value: '%SystemRoot%\\system32\\imageres.dll,-102',
-                    type: 'REG_EXPAND_SZ',
-                    modified: '08:30:25',
-                    isIoc: false,
-                    category: 'normal'
-                }
-            ],
-            'HKEY_CURRENT_USER\\Software\\Microsoft\\Office\\16.0': [
-                {
-                    id: 'reg6',
-                    key: 'Outlook\\Profiles\\Default',
-                    value: 'Outlook Profile Configuration',
-                    type: 'REG_BINARY',
-                    modified: '14:22:15',
-                    isIoc: false,
-                    category: 'normal'
-                }
-            ]
-        };
+        // ----------------------
+// Registry (object with locations; total entries >= 10 across keys)
+// ----------------------
+const registryData = {
+  'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run': [
+    {
+      id: 'reg1',
+      key: 'ImageUpdater',
+      value: 'C:\\Temp\\svchost.exe',
+      type: 'REG_SZ',
+      modified: '15:41:34',
+      isIoc: true,
+      explanation: 'Persistence added by malware after image-triggered execution: malicious binary set to autostart.',
+      category: 'suspicious'
+    },
+    {
+      id: 'reg2',
+      key: 'WindowsDefender',
+      value: 'C:\\Program Files\\Windows Defender\\MSASCuiL.exe',
+      type: 'REG_SZ',
+      modified: '08:30:15',
+      isIoc: false,
+      category: 'normal'
+    },
+    {
+      id: 'reg3',
+      key: 'VMware User Process',
+      value: 'C:\\Program Files\\VMware\\VMware Tools\\vmtoolsd.exe -n vmusr',
+      type: 'REG_SZ',
+      modified: '08:30:20',
+      isIoc: false,
+      category: 'normal'
+    }
+  ],
+  'HKEY_LOCAL_MACHINE\\SOFTWARE\\Classes': [
+    {
+      id: 'reg4',
+      key: '.lockbit\\DefaultIcon',
+      value: 'C:\\Temp\\svchost.exe,0',
+      type: 'REG_SZ',
+      modified: '15:42:35',
+      isIoc: true,
+      explanation: 'File association for encrypted .lockbit files - points to malicious binary for psychological effect.',
+      category: 'suspicious'
+    },
+    {
+      id: 'reg5',
+      key: '.png\\Shell\\Open\\Command',
+      value: 'rundll32.exe C:\\Temp\\image_loader.dll,Run',
+      type: 'REG_SZ',
+      modified: '15:41:31',
+      isIoc: true,
+      explanation: 'Registry override for .png open handler to launch embedded loader via rundll32.',
+      category: 'suspicious'
+    },
+    {
+      id: 'reg6',
+      key: '.txt\\DefaultIcon',
+      value: '%SystemRoot%\\system32\\imageres.dll,-102',
+      type: 'REG_EXPAND_SZ',
+      modified: '08:30:25',
+      isIoc: false,
+      category: 'normal'
+    }
+  ],
+  'HKEY_CURRENT_USER\\Software\\Microsoft\\Office\\16.0': [
+    {
+      id: 'reg7',
+      key: 'Outlook\\Profiles\\Default',
+      value: 'Outlook Profile Configuration',
+      type: 'REG_BINARY',
+      modified: '14:22:15',
+      isIoc: false,
+      category: 'normal'
+    }
+  ],
+  'HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services': [
+    {
+      id: 'reg8',
+      key: 'ImageSvc',
+      value: 'C:\\Temp\\svchost.exe',
+      type: 'REG_SZ',
+      modified: '15:41:36',
+      isIoc: true,
+      explanation: 'Fake service entry created to mask malicious process as a system service.',
+      category: 'suspicious'
+    },
+    {
+      id: 'reg9',
+      key: 'LanmanServer',
+      value: 'C:\\Windows\\System32\\svchost.exe -k NetworkService',
+      type: 'REG_MULTI_SZ',
+      modified: '08:30:10',
+      isIoc: false,
+      category: 'normal'
+    }
+  ]
+};
+
 
         function startGameFlow() {
             // 1. Hide the warning banner and start button

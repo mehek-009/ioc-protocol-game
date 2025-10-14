@@ -359,77 +359,128 @@
         const ROOM_NAME = 'filesystem';
         let gameState = { iocsFound: 0, totalIocs: 3, gameActive: true, encryptedCount: 3 };
 
-        const fileData = [
-            { 
-                id: 'file1', 
-                name: 'README_TO_RESTORE_FILES.txt',
-                path: 'C:\\Users\\jdoe\\Desktop\\',
-                size: '2.1 KB',
-                modified: '15:42:45',
-                icon: '📄',
-                isIoc: true,
-                explanation: 'LockBit ransom note - contains instructions for payment',
-                type: 'ransom-note',
-                status: 'suspicious'
-            },
-            { 
-                id: 'file2', 
-                name: 'update.exe',
-                path: 'C:\\Users\\jdoe\\Downloads\\',
-                size: '2.4 MB',
-                modified: '15:41:30',
-                icon: '⚠️',
-                isIoc: true,
-                explanation: 'LockBit ransomware payload disguised as system update',
-                type: 'suspicious',
-                status: 'suspicious'
-            },
-            { 
-                id: 'file3', 
-                name: 'Financial_Report_2024.xlsx.lockbit',
-                path: 'C:\\Documents\\Finance\\',
-                size: '1.2 MB',
-                modified: '15:42:52',
-                icon: '🔒',
-                isIoc: true,
-                explanation: 'File encrypted by LockBit ransomware (.lockbit extension)',
-                type: 'encrypted',
-                status: 'encrypted'
-            },
-            { 
-                id: 'file4', 
-                name: 'vacation_photos.zip.bak',
-                path: 'C:\\Users\\jdoe\\Pictures\\',
-                size: '45.8 MB',
-                modified: '12:15:22',
-                icon: '📦',
-                isIoc: false,
-                type: 'normal',
-                status: 'normal'
-            },
-            { 
-                id: 'file5', 
-                name: 'system_backup.lock',
-                path: 'C:\\System\\Backup\\',
-                size: '156 KB',
-                modified: '08:30:15',
-                icon: '🔧',
-                isIoc: false,
-                type: 'normal',
-                status: 'normal'
-            },
-            { 
-                id: 'file6', 
-                name: 'project_draft.docx',
-                path: 'C:\\Users\\jdoe\\Documents\\',
-                size: '890 KB',
-                modified: '14:25:33',
-                icon: '📝',
-                isIoc: false,
-                type: 'normal',
-                status: 'normal'
-            }
-        ];
+        // ----------------------
+// Filesystem (10 entries)
+// ----------------------
+const fileData = [
+  {
+    id: 'file1',
+    name: 'README_TO_RESTORE_FILES.txt',
+    path: 'C:\\Users\\jdoe\\Desktop\\',
+    size: '2.1 KB',
+    modified: '15:42:45',
+    icon: '📄',
+    isIoc: true,
+    explanation: 'LockBit ransom note - instructions for payment and contact for leak site.',
+    type: 'ransom-note',
+    status: 'suspicious'
+  },
+  {
+    id: 'file2',
+    name: 'rs35.png',
+    path: 'C:\\Users\\jdoe\\Downloads\\',
+    size: '546.00 KB',
+    modified: '15:41:30',
+    icon: '🖼️',
+    isIoc: true,
+    explanation: 'Malicious PNG containing embedded loader/steganographic payload (initial vector).',
+    type: 'malicious-image',
+    status: 'suspicious'
+  },
+  {
+    id: 'file3',
+    name: 'Financial_Report_2024.xlsx.lockbit',
+    path: 'C:\\Documents\\Finance\\',
+    size: '1.2 MB',
+    modified: '15:42:52',
+    icon: '🔒',
+    isIoc: true,
+    explanation: 'File encrypted by LockBit ransomware (.lockbit extension).',
+    type: 'encrypted',
+    status: 'encrypted'
+  },
+  {
+    id: 'file4',
+    name: 'update.exe',
+    path: 'C:\\Users\\jdoe\\Downloads\\',
+    size: '2.4 MB',
+    modified: '15:41:31',
+    icon: '⚠️',
+    isIoc: true,
+    explanation: 'Dropped executable created by image loader (actual ransomware payload location before moving to C:\\Temp).',
+    type: 'suspicious',
+    status: 'suspicious'
+  },
+  {
+    id: 'file5',
+    name: 'vacation_photos.zip.bak',
+    path: 'C:\\Users\\jdoe\\Pictures\\',
+    size: '45.8 MB',
+    modified: '12:15:22',
+    icon: '📦',
+    isIoc: false,
+    type: 'normal',
+    status: 'normal'
+  },
+  {
+    id: 'file6',
+    name: 'system_backup.lock',
+    path: 'C:\\System\\Backup\\',
+    size: '156 KB',
+    modified: '08:30:15',
+    icon: '🔧',
+    isIoc: false,
+    type: 'normal',
+    status: 'normal'
+  },
+  {
+    id: 'file7',
+    name: 'image_loader.dll',
+    path: 'C:\\Temp\\image_loader.dll',
+    size: '98 KB',
+    modified: '15:41:31',
+    icon: '📦',
+    isIoc: true,
+    explanation: 'DLL extracted from PNG via steganography; executed through rundll32 to spawn payload.',
+    type: 'dll',
+    status: 'suspicious'
+  },
+  {
+    id: 'file8',
+    name: 'encrypted_Client_Database.csv.lockbit',
+    path: 'C:\\Data\\Clients\\',
+    size: '640 KB',
+    modified: '15:43:05',
+    icon: '🔒',
+    isIoc: true,
+    explanation: 'Another data file encrypted by LockBit.',
+    type: 'encrypted',
+    status: 'encrypted'
+  },
+  {
+    id: 'file9',
+    name: 'rs35_thumbnail.lnk',
+    path: 'C:\\Users\\jdoe\\Downloads\\',
+    size: '1 KB',
+    modified: '15:41:32',
+    icon: '🔗',
+    isIoc: true,
+    explanation: 'Shortcut that executed rundll32 after previewing rs35.png (evidence of image-triggered execution).',
+    type: 'shortcut',
+    status: 'suspicious'
+  },
+  {
+    id: 'file10',
+    name: 'project_draft.docx',
+    path: 'C:\\Users\\jdoe\\Documents\\',
+    size: '890 KB',
+    modified: '14:25:33',
+    icon: '📝',
+    isIoc: false,
+    type: 'normal',
+    status: 'normal'
+  }
+];
 
         let encryptableFiles = [
             'presentation.pptx',

@@ -485,241 +485,121 @@
         const ROOM_NAME = 'network';
         let gameState = { iocsFound: 0, totalIocs: 3, gameActive: true };
 
-        const networkTraffic = [
-            // --- New Early Noise Entries (Jennifer's Machine & Background Traffic) ---
-            {
-                id: 'net12',
-                timestamp: '15:39:45',
-                protocol: 'DNS',
-                source: '192.168.1.15',
-                destination: 'onedrive.microsoft.com:53',
-                status: 'RESOLVED',
-                isIoc: false,
-                explanation: 'Normal cloud storage sync lookup before the attack window.',
-                type: 'normal'
-            },
-            {
-                id: 'net13',
-                timestamp: '15:40:00',
-                protocol: 'TCP',
-                source: '192.168.1.55',
-                destination: '192.168.1.10:445',
-                status: 'ESTABLISHED',
-                isIoc: false,
-                explanation: 'Internal file share access (SMB) from a different user.',
-                type: 'normal'
-            },
-            {
-                id: 'net8',
-                timestamp: '15:40:15',
-                protocol: 'DNS',
-                source: '192.168.1.15',
-                destination: 'outlook.office365.com:53',
-                status: 'RESOLVED',
-                isIoc: false,
-                explanation: 'Normal DNS lookup for email just before Jennifer logs off.',
-                type: 'normal'
-            },
-            {
-                id: 'net14',
-                timestamp: '15:40:30',
-                protocol: 'UDP',
-                source: '192.168.1.15',
-                destination: '192.168.1.1:137',
-                status: 'NETBIOS_QUERY',
-                isIoc: false,
-                explanation: 'Local network name resolution query (standard workstation noise).',
-                type: 'normal'
-            },
-            {
-                id: 'net9',
-                timestamp: '15:41:05',
-                protocol: 'TCP',
-                source: '192.168.1.50',
-                destination: '192.168.1.15:3389',
-                status: 'CONNECTION_REFUSED',
-                isIoc: false,
-                explanation: 'Failed RDP attempt from another machine (noise/red herring).',
-                type: 'failure'
-            },
-            {
-                id: 'net15',
-                timestamp: '15:41:30',
-                protocol: 'HTTPS',
-                source: '192.168.1.15',
-                destination: 'api.dropbox.com:443',
-                status: 'CLOSED',
-                isIoc: false,
-                explanation: 'Sync client communication closing just as the malicious file was downloaded.',
-                type: 'normal'
-            },
-            {
-                id: 'net10',
-                timestamp: '15:42:00',
-                protocol: 'HTTPS',
-                source: '192.168.1.25',
-                destination: 'google.com:443',
-                status: 'ESTABLISHED',
-                isIoc: false,
-                explanation: 'Normal browsing traffic from another user.',
-                type: 'normal'
-            },
-            {
-                id: 'net16',
-                timestamp: '15:42:10',
-                protocol: 'DNS',
-                source: '192.168.1.10',
-                destination: 'reports.finance.local:53',
-                status: 'RESOLVED',
-                isIoc: false,
-                explanation: 'Internal lookup from the Finance server (background traffic).',
-                type: 'normal'
-            },
-            {
-                id: 'net17',
-                timestamp: '15:42:20',
-                protocol: 'TCP',
-                source: '192.168.1.22',
-                destination: '142.250.72.78:443',
-                status: 'ESTABLISHED',
-                isIoc: false,
-                explanation: 'HTTPS traffic from another workstation (msmith\'s machine).',
-                type: 'normal'
-            },
-            {
-                id: 'net18',
-                timestamp: '15:42:29',
-                protocol: 'DNS',
-                source: '192.168.1.15',
-                destination: '185.220.102.8:53',
-                status: 'TIMEOUT',
-                isIoc: false,
-                explanation: 'Failed/blocked DNS query for the C&C IP right before the malicious TCP connection.',
-                type: 'failure'
-            },
-
-            // 🚨 ATTACK TRAFFIC (Critical IoCs) 🚨
-            {
-                id: 'net1',
-                timestamp: '15:42:30',
-                protocol: 'TCP',
-                source: '192.168.1.15',
-                destination: '185.220.102.8:443',
-                status: 'ESTABLISHED',
-                isIoc: true,
-                explanation: 'Initial Command and Control (C&C) connection to a known LockBit IP (185.220.102.8) established by the malicious svchost.exe process.',
-                type: 'malicious'
-            },
-            
-            // --- Interleaving Noise ---
-            {
-                id: 'net4',
-                timestamp: '15:42:31',
-                protocol: 'DNS',
-                source: '192.168.1.15',
-                destination: 'backup.company.local',
-                status: 'RESOLVED',
-                isIoc: false,
-                explanation: 'Legitimate internal DNS query (attempt to find local resources to encrypt).',
-                type: 'normal'
-            },
-
-            // 🚨 ATTACK TRAFFIC (Critical IoCs) 🚨
-            {
-                id: 'net2',
-                timestamp: '15:42:32',
-                protocol: 'HTTP',
-                source: '192.168.1.15',
-                destination: '185.220.102.8/gate.php',
-                status: '200 OK',
-                isIoc: true,
-                explanation: 'Data exfiltration request: HTTP POST to the LockBit C&C gate.php endpoint, indicating data theft or initial check-in.',
-                type: 'malicious'
-            },
-
-            // --- Interleaving Noise ---
-            {
-                id: 'net6',
-                timestamp: '15:42:33',
-                protocol: 'HTTPS',
-                source: '192.168.1.30',
-                destination: 'github.com:443',
-                status: 'ESTABLISHED',
-                isIoc: false,
-                explanation: 'Normal browsing traffic from another user.',
-                type: 'normal'
-            },
-            {
-                id: 'net7',
-                timestamp: '15:42:34',
-                protocol: 'DNS',
-                source: '192.168.1.22',
-                destination: '8.8.8.8:53',
-                status: 'RESOLVED',
-                isIoc: false,
-                explanation: 'Normal external DNS query from another machine.',
-                type: 'normal'
-            },
-            {
-                id: 'net5',
-                timestamp: '15:42:35',
-                protocol: 'SMTP',
-                source: '192.168.1.25',
-                destination: 'mail.company.com:587',
-                status: 'ESTABLISHED',
-                isIoc: false,
-                explanation: 'Email traffic from another user.',
-                type: 'normal'
-            },
-            {
-                id: 'net19',
-                timestamp: '15:42:36',
-                protocol: 'ICMP',
-                source: '192.168.1.15',
-                destination: '192.168.1.254',
-                status: 'ECHO_REQUEST',
-                isIoc: false,
-                explanation: 'A routine workstation ping (could be malicious or just background noise).',
-                type: 'normal'
-            },
-            {
-                id: 'net20',
-                timestamp: '15:42:38',
-                protocol: 'UDP',
-                source: '192.168.1.15',
-                destination: '224.0.0.251:5353',
-                status: 'MULTICAST',
-                isIoc: false,
-                explanation: 'mDNS multicast query (discovery protocol noise).',
-                type: 'normal'
-            },
-
-            // 🚨 ATTACK TRAFFIC (Secondary C&C) 🚨
-            {
-                id: 'net3',
-                timestamp: '15:42:40',
-                protocol: 'TCP',
-                source: '192.168.1.15',
-                destination: '45.142.214.12:8080',
-                status: 'SYN_SENT',
-                isIoc: true,
-                explanation: 'Secondary Command and Control (C&C) attempt on a non-standard port (8080), establishing redundancy for the ransomware communication.',
-                type: 'malicious'
-            },
-
-            // --- Final Noise Entries ---
-            {
-                id: 'net11',
-                timestamp: '15:42:45',
-                protocol: 'ICMP',
-                source: '192.168.1.1',
-                destination: '192.168.1.15',
-                status: 'ECHO_REPLY',
-                isIoc: false,
-                explanation: 'Network heartbeat/monitoring ping from the router.',
-                type: 'normal'
-            }
-        ];
+   // ----------------------
+// Network Traffic (10 entries)
+// ----------------------
+const networkTraffic = [
+  {
+    id: 'net1',
+    timestamp: '15:41:34',
+    protocol: 'DNS',
+    source: '192.168.1.15',
+    destination: 'malicious-ctf.example:53',
+    status: 'RESOLVED',
+    isIoc: false,
+    explanation: 'Initial DNS lookup from image loader to resolve remote resource (failed to resolve to C&C at first).',
+    type: 'normal'
+  },
+  {
+    id: 'net2',
+    timestamp: '15:41:45',
+    protocol: 'TCP',
+    source: '192.168.1.15',
+    destination: '185.220.102.8:443',
+    status: 'ESTABLISHED',
+    isIoc: true,
+    explanation: 'Initial Command & Control (C&C) connection established by malware (LockBit linked IP).',
+    type: 'malicious'
+  },
+  {
+    id: 'net3',
+    timestamp: '15:41:46',
+    protocol: 'HTTP',
+    source: '192.168.1.15',
+    destination: '185.220.102.8/gate.php',
+    status: '200 OK',
+    isIoc: true,
+    explanation: 'Data exfiltration POST to C&C endpoint (likely staging exfil before encryption).',
+    type: 'malicious'
+  },
+  {
+    id: 'net4',
+    timestamp: '15:42:00',
+    protocol: 'HTTPS',
+    source: '192.168.1.15',
+    destination: 'api.dropbox.com:443',
+    status: 'CLOSED',
+    isIoc: false,
+    explanation: 'Normal sync client traffic closing just as malware begins outbound connections.',
+    type: 'normal'
+  },
+  {
+    id: 'net5',
+    timestamp: '15:42:10',
+    protocol: 'TCP',
+    source: '192.168.1.15',
+    destination: '45.142.214.12:8080',
+    status: 'SYN_SENT',
+    isIoc: true,
+    explanation: 'Secondary C&C attempt (non-standard port) to establish redundancy.',
+    type: 'malicious'
+  },
+  {
+    id: 'net6',
+    timestamp: '15:42:20',
+    protocol: 'DNS',
+    source: '192.168.1.15',
+    destination: '8.8.8.8:53',
+    status: 'TIMEOUT',
+    isIoc: false,
+    explanation: 'Failed/blocked DNS query for alternate C&C domain prior to fallback.',
+    type: 'failure'
+  },
+  {
+    id: 'net7',
+    timestamp: '15:39:45',
+    protocol: 'DNS',
+    source: '192.168.1.15',
+    destination: 'onedrive.microsoft.com:53',
+    status: 'RESOLVED',
+    isIoc: false,
+    explanation: 'Normal cloud storage sync lookup before the attack window.',
+    type: 'normal'
+  },
+  {
+    id: 'net8',
+    timestamp: '15:42:30',
+    protocol: 'SMB',
+    source: '192.168.1.15',
+    destination: '192.168.1.10:445',
+    status: 'ESTABLISHED',
+    isIoc: false,
+    explanation: 'Internal file-share access as malware begins to enumerate network shares for encryption.',
+    type: 'normal'
+  },
+  {
+    id: 'net9',
+    timestamp: '15:42:45',
+    protocol: 'ICMP',
+    source: '192.168.1.1',
+    destination: '192.168.1.15',
+    status: 'ECHO_REPLY',
+    isIoc: false,
+    explanation: 'Router/monitor heartbeat to workstation (normal).',
+    type: 'normal'
+  },
+  {
+    id: 'net10',
+    timestamp: '15:43:10',
+    protocol: 'DNS',
+    source: '192.168.1.15',
+    destination: 'reports.finance.local:53',
+    status: 'RESOLVED',
+    isIoc: false,
+    explanation: 'Internal lookup as ransomware searches for common directories to encrypt.',
+    type: 'normal'
+  }
+];
 
         document.addEventListener('DOMContentLoaded', function() {
             if (!RoomIntegration.initializeRoom(ROOM_NAME)) return;

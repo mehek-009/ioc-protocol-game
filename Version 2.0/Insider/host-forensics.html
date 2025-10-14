@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Authentication Logs - SOC Analyst</title>
+    <title>Host Forensics - Insider Threat Investigation</title>
     <style>
         :root {
             --bg: #0A0A1F;
@@ -44,7 +44,7 @@
         .video-background video {
             width: 100%; height: 100%;
             object-fit: cover;
-            filter: brightness(1) contrast(1.3);
+            filter: brightness(1) contrast(1.1);
         }
 
         .container {
@@ -100,6 +100,7 @@
             color: var(--accent);
             margin-bottom: 5px;
         }
+        .stat-value.danger { color: var(--danger); }
 
         .stat-label {
             color: var(--muted);
@@ -200,7 +201,7 @@
             display: none !important;
         }
 
-        .auth-monitor {
+        .host-log {
             background: rgba(0, 0, 0, 0.15);
             backdrop-filter: blur(10px);
             border-radius: 15px; padding: 20px;
@@ -208,7 +209,7 @@
             border: 1px solid rgba(0, 255, 255, 0.2);
         }
 
-        .monitor-header {
+        .log-header {
             display: flex; justify-content: space-between;
             margin-bottom: 20px; padding-bottom: 10px;
             border-bottom: 1px solid rgba(0, 255, 255, 0.1);
@@ -240,13 +241,26 @@
         }
 
         .log-timestamp { color: #888; margin-right: 15px; font-weight: bold; }
-        .log-level { margin-right: 15px; font-weight: bold; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
-        .level-success { background: rgba(0, 255, 65, 0.2); color: var(--accent); }
-        .level-failure { background: rgba(255, 107, 107, 0.2); color: var(--danger); }
-        .level-info { background: rgba(255, 255, 0, 0.2); color: var(--warning); }
-        .log-details { color: var(--cyan); }
-        .log-user { color: var(--accent); font-weight: bold; }
-        .log-source { color: var(--warning); }
+        .log-process { color: var(--accent); font-weight: bold; }
+        .log-action { color: var(--cyan); }
+        .log-target { color: var(--warning); }
+        .log-details { color: #ccc; font-size: 0.9rem; margin-top: 5px; }
+
+        .staging-indicator {
+            background: rgba(255, 102, 102, 0.2);
+            color: #ff6666;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
+        .compression-tool {
+            background: rgba(255, 170, 136, 0.2);
+            color: #ffaa88;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
 
         .progress-bar {
             width: 100%; height: 8px;
@@ -281,7 +295,7 @@
 <body>
     <div class="video-background">
         <video autoplay muted loop>
-            <source src="authenticate_bg.mp4" type="video/mp4">
+            <source src="host_bg.mp4" type="video/mp4">
         </video>
     </div>
 
@@ -293,7 +307,7 @@
                 <div class="stat-label">Status</div>
             </div>
             <div class="stat-item">
-                <div class="stat-value" id="globalIocs">0/12</div>
+                <div class="stat-value" id="globalIocs">0/15</div>
                 <div class="stat-label">Total IoCs</div>
             </div>
             <div class="stat-item">
@@ -316,209 +330,198 @@
             <div class="metrics-grid-container">
                 <div class="panel-header-top">
                     <div class="panel-header-left">
-                        <h1>🔐 AUTHENTICATION LOGS</h1>
+                        <h1>💻 HOST FORENSICS</h1>
                     </div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">52</div>
-                    <div class="metric-label">Total Login Attempts</div>
+                    <div class="metric-value">15,447</div>
+                    <div class="metric-label">Processes Monitored</div>
                 </div>
                 <div class="metric-card alert">
-                    <div class="metric-value danger">47</div>
-                    <div class="metric-label">Failed Attempts</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-value">5</div>
-                    <div class="metric-label">Successful Logins</div>
+                    <div class="metric-value danger">4</div>
+                    <div class="metric-label">Staging Areas</div>
                 </div>
                 <div class="metric-card alert">
-                    <div class="metric-value danger">1</div>
-                    <div class="metric-label">Privilege Escalations</div>
+                    <div class="metric-value danger">892</div>
+                    <div class="metric-label">Archive Operations</div>
+                </div>
+                <div class="metric-card alert">
+                    <div class="metric-value danger">23.7 GB</div>
+                    <div class="metric-label">Data Compressed</div>
                 </div>
             </div>
 
             <div class="security-alert" id="securityAlert">
-    <p>You open the Security Event Logs, focusing on authentication activity around the time of the incident.</p>
-    <p><strong>Multiple entries detected — both successful and failed logins.</strong></p>
-    <p>Source: <strong>192.168.1.15 (Jennifer's workstation)</strong></p>
-    <p>The accounts used belong to employees who haven’t accessed the system in several days, making the pattern stand out.</p>
-    <p>At first glance, everything appears routine — familiar usernames, standard logon types — but the timestamps don’t add up.</p>
-    <p><strong>The activity looks legitimate on the surface, yet the timing and source raise a red flag.</strong></p>
-    <p><strong>Someone is moving through the network using trusted credentials — and Jennifer’s machine is their launch point.</strong></p>
-</div>
+                <p><strong>MAY 9, 2013 - 03:22 AM</strong></p>
+                <p>The file server logs showed you the <em>what</em>—the compressed archive. Now it's time to understand the <em>how</em>.</p>
+                <p>You load the forensic image of Snowden's workstation into your analysis tool. You're diving into the machine he used to orchestrate the entire operation.</p>
+                <p>You filter for process execution events during the staging timeline in May. Most of it is noise—legitimate system processes, user applications, background services.</p>
+                <p>Then you see it. <strong style="color: #ff6666;">7z.exe</strong> at 3:22 AM on May 9.</p>
+                <p>The command line tells the story: <strong>15,247 classified documents</strong> compressed into a single, password-protected, encrypted archive.</p>
+                <p>A few days later: <strong style="color: #ff6666;">robocopy.exe</strong>. Automated transfer of the compressed archives from his local machine to a pre-designated staging server.</p>
+                <p><strong>This is the operational core of the exfiltration plan.</strong> Specific, deliberate tool usage to prepare stolen data for removal. He was living off the land—using built-in system utilities to make his actions harder to distinguish from normal administrative tasks.</p>
+            </div>
 
-
-            <button class="proceed-btn" id="proceedBtn">🔍 Analyze Authentication Events</button>
+            <button class="proceed-btn" id="proceedBtn">💻 Analyze Host Activity</button>
 
             <div class="progress-bar hidden" id="progressBar">
                 <div class="progress-fill" id="progressFill" style="width: 0%"></div>
             </div>
 
-            <div class="auth-monitor hidden" id="authMonitor">
+            <div class="host-log hidden" id="hostLog">
             </div>
         </div>
     </div>
 
     <div class="feedback" id="feedback"></div>
 
-    <script src="js/roomFlow.js"></script>
+    <script src="js/insiderRoomFlow.js"></script>
     <script>
-        const ROOM_NAME = 'authentication';
+        const ROOM_NAME = 'host-forensics';
         let gameState = { iocsFound: 0, totalIocs: 2, gameActive: true };
 
-  // ----------------------
-// Authentication Events (10 entries)
-// ----------------------
-const authData = [
-  {
-    id: 'auth1',
-    timestamp: '15:42:15',
-    level: 'SUCCESS',
-    event: 'Event ID 4624 - Successful Logon',
-    user: 'jdoe',
-    source: '192.168.1.15',
-    method: 'RDP',
-    details: 'Remote Desktop Protocol (Logon Type 10) connection established as jdoe from Jennifer’s workstation.',
-    isIoc: true,
-    explanation: 'Stolen credentials used to log in as privileged user (pivot for privilege escalation).',
-    type: 'success'
-  },
-  {
-    id: 'auth2',
-    timestamp: '15:42:25',
-    level: 'INFO',
-    event: 'Event ID 4703 - Privilege Rights Used',
-    user: 'jdoe',
-    source: '192.168.1.15',
-    method: 'SeDebugPrivilege',
-    details: 'SeDebugPrivilege acquired for process manipulation and encryption.',
-    isIoc: true,
-    explanation: 'Privilege escalation enabling malicious processes to access system-level files.',
-    type: 'info'
-  },
-  {
-    id: 'auth3',
-    timestamp: '15:41:55',
-    level: 'FAILURE',
-    event: 'Event ID 4625 - Failed Logon',
-    user: 'jdoe',
-    source: '192.168.1.15',
-    method: 'Local',
-    details: 'Invalid password attempt recorded (pre-attack brute force/credential spray activity).',
-    isIoc: false,
-    explanation: 'Failed interactive login before successful reuse/stolen credentials.',
-    type: 'failure'
-  },
-  {
-    id: 'auth4',
-    timestamp: '15:41:00',
-    level: 'SUCCESS',
-    event: 'Event ID 4647 - User Initiated Logoff',
-    user: 'jennifer',
-    source: '192.168.1.15',
-    method: 'Local',
-    details: 'Jennifer logged off workstation shortly before attack window.',
-    isIoc: false,
-    explanation: 'Creates opportunity for attacker to use the workstation while owner absent.',
-    type: 'success'
-  },
-  {
-    id: 'auth5',
-    timestamp: '15:40:00',
-    level: 'SUCCESS',
-    event: 'Event ID 4624 - Successful Logon',
-    user: 'jennifer',
-    source: '192.168.1.15',
-    method: 'Local',
-    details: 'Interactive logon session established (Jennifer).',
-    isIoc: false,
-    type: 'success'
-  },
-  {
-    id: 'auth6',
-    timestamp: '15:42:13',
-    level: 'FAILURE',
-    event: 'Event ID 4625 - Failed Logon',
-    user: 'administrator',
-    source: '192.168.1.15',
-    method: 'RDP',
-    details: 'Invalid password attempt to admin account (likely scanning/enumeration).',
-    isIoc: false,
-    explanation: 'Failed attempts preceding successful privileged login.',
-    type: 'failure'
-  },
-  {
-    id: 'auth7',
-    timestamp: '15:41:20',
-    level: 'FAILURE',
-    event: 'Event ID 4625 - Failed Logon',
-    user: 'unknown',
-    source: '10.50.50.50',
-    method: 'SMB',
-    details: 'Incorrect target account name provided.',
-    isIoc: false,
-    explanation: 'Background noise - failed SMB access from random internal IP.',
-    type: 'failure'
-  },
-  {
-    id: 'auth8',
-    timestamp: '15:42:50',
-    level: 'SUCCESS',
-    event: 'Event ID 4624 - Service Logon',
-    user: 'svc_backup',
-    source: '127.0.0.1',
-    method: 'Scheduled Task',
-    details: 'Scheduled backup service executed (normal).',
-    isIoc: false,
-    type: 'success'
-  },
-  {
-    id: 'auth9',
-    timestamp: '15:39:30',
-    level: 'SUCCESS',
-    event: 'Event ID 4624 - Successful Logon',
-    user: 'msmith',
-    source: '192.168.1.22',
-    method: 'Local',
-    details: 'Normal interactive session established by another user.',
-    isIoc: false,
-    type: 'success'
-  },
-  {
-    id: 'auth10',
-    timestamp: '15:43:05',
-    level: 'FAILURE',
-    event: 'Event ID 4625 - Failed Logon',
-    user: 'jdoe',
-    source: '10.10.10.5',
-    method: 'Kerberos',
-    details: 'Multiple invalid password failures from a different internal source (suspicious but not direct IoC).',
-    isIoc: false,
-    type: 'failure'
-  }
-];
-
+        const hostData = [
+            // IoCs (suspicious host activities)
+            { 
+                id: 'host1', 
+                timestamp: '2013-05-09 03:22:47',
+                process: '7z.exe',
+                action: 'MASS_COMPRESSION',
+                target: 'C:\\Temp\\collection\\intelligence_docs.7z',
+                details: 'Compressed 15,247 classified documents into encrypted archive',
+                size: '8.2 GB → 2.1 GB',
+                command_line: '7z.exe a -p[REDACTED] -mhe=on intelligence_docs.7z C:\\staging\\classified\\*',
+                isIoc: true,
+                explanation: 'Mass compression of classified documents with password protection and header encryption - clear preparation for exfiltration',
+                type: 'data_preparation'
+            },
+            { 
+                id: 'host2', 
+                timestamp: '2013-05-13 02:15:33',
+                process: 'robocopy.exe',
+                action: 'AUTOMATED_STAGING',
+                target: '\\\\staging-server\\exfil\\final_collection\\',
+                details: 'Automated copying of compressed archives to staging server',
+                size: '6.5 GB transferred',
+                command_line: 'robocopy.exe C:\\Temp\\collection\\ \\\\staging-server\\exfil\\ *.7z /MIR /R:0',
+                isIoc: true,
+                explanation: 'Automated transfer of compressed intelligence data to external staging server - final step before exfiltration',
+                type: 'exfiltration_staging'
+            },
+            
+            // Red herrings (legitimate host activities)
+            { 
+                id: 'host3', 
+                timestamp: '2013-04-15 09:30:22',
+                process: 'backup.exe',
+                action: 'SCHEDULED_BACKUP',
+                target: 'D:\\backups\\system_backup_20130415.zip',
+                details: 'Routine system backup operation',
+                size: '2.3 GB',
+                command_line: 'backup.exe /system /destination:D:\\backups\\ /compress',
+                isIoc: false,
+                type: 'routine_backup'
+            },
+            { 
+                id: 'host4', 
+                timestamp: '2013-04-28 14:45:12',
+                process: 'winrar.exe',
+                action: 'USER_ARCHIVE',
+                target: 'C:\\Users\\mharris\\Documents\\project_files.rar',
+                details: 'User creating personal project archive',
+                size: '145 MB',
+                command_line: 'winrar.exe a project_files.rar C:\\Users\\mharris\\work\\project\\*',
+                isIoc: false,
+                type: 'user_activity'
+            },
+            { 
+                id: 'host5', 
+                timestamp: '2013-05-03 10:15:45',
+                process: 'powershell.exe',
+                action: 'SCRIPT_EXECUTION',
+                target: 'maintenance_cleanup.ps1',
+                details: 'Automated cleanup script execution',
+                size: 'N/A',
+                command_line: 'powershell.exe -ExecutionPolicy Bypass -File maintenance_cleanup.ps1',
+                isIoc: false,
+                type: 'maintenance'
+            },
+            { 
+                id: 'host6', 
+                timestamp: '2013-04-20 16:22:30',
+                process: 'xcopy.exe',
+                action: 'FILE_COPY',
+                target: 'C:\\Admin\\tools\\network_diagnostics\\',
+                details: 'Administrative file operations',
+                size: '47 MB',
+                command_line: 'xcopy.exe \\\\shared\\admin_tools\\* C:\\Admin\\tools\\ /S /E',
+                isIoc: false,
+                type: 'admin_work'
+            },
+            { 
+                id: 'host7', 
+                timestamp: '2013-05-01 11:30:15',
+                process: 'zip.exe',
+                action: 'DOCUMENT_ARCHIVE',
+                target: 'C:\\Users\\asmith\\training_materials.zip',
+                details: 'Training materials compression',
+                size: '234 MB',
+                command_line: 'zip.exe training_materials.zip C:\\Training\\materials\\*',
+                isIoc: false,
+                type: 'training_prep'
+            },
+            { 
+                id: 'host8', 
+                timestamp: '2013-04-25 13:45:20',
+                process: 'schtasks.exe',
+                action: 'TASK_CREATION',
+                target: 'Daily_System_Health_Check',
+                details: 'Scheduled task for system monitoring',
+                size: 'N/A',
+                command_line: 'schtasks.exe /create /tn "Daily_System_Health_Check" /tr "health_check.exe"',
+                isIoc: false,
+                type: 'system_admin'
+            },
+            { 
+                id: 'host9', 
+                timestamp: '2013-05-08 08:20:45',
+                process: 'diskpart.exe',
+                action: 'DISK_MANAGEMENT',
+                target: 'External Storage Configuration',
+                details: 'External drive preparation',
+                size: 'N/A',
+                command_line: 'diskpart.exe /s disk_config_script.txt',
+                isIoc: false,
+                type: 'hardware_config'
+            },
+            { 
+                id: 'host10', 
+                timestamp: '2013-04-18 15:30:25',
+                process: 'notepad.exe',
+                action: 'TEXT_EDITING',
+                target: 'C:\\Users\\esnowden\\Documents\\notes.txt',
+                details: 'Text file editing',
+                size: '12 KB',
+                command_line: 'notepad.exe C:\\Users\\esnowden\\Documents\\notes.txt',
+                isIoc: false,
+                type: 'document_work'
+            }
+        ];
 
         document.addEventListener('DOMContentLoaded', function() {
-            if (!RoomIntegration.initializeRoom(ROOM_NAME)) return;
+            if (!InsiderRoomIntegration.initializeRoom(ROOM_NAME)) return;
             
-            // Proceed button functionality
             const proceedBtn = document.getElementById('proceedBtn');
             const securityAlert = document.getElementById('securityAlert');
             const progressBar = document.getElementById('progressBar');
-            const authMonitor = document.getElementById('authMonitor');
+            const hostLog = document.getElementById('hostLog');
             
             proceedBtn.addEventListener('click', function() {
-                // Hide security alert and button
                 securityAlert.classList.add('hidden');
                 proceedBtn.classList.add('hidden');
-                
-                // Show progress bar and auth monitor
                 progressBar.classList.remove('hidden');
-                authMonitor.classList.remove('hidden');
-                
-                // Load the authentication logs
-                loadAuthEntries();
+                hostLog.classList.remove('hidden');
+                loadHostEntries();
             });
             
             updateProgressBar();
@@ -531,49 +534,54 @@ const authData = [
                 const isAlreadySelected = logEntry.classList.contains('selected') || logEntry.classList.contains('wrong');
                 if (isAlreadySelected) return;
                 
-                const itemData = authData.find(auth => auth.id === logEntry.dataset.id);
+                const itemData = hostData.find(host => host.id === logEntry.dataset.id);
                 
                 if (isIoc) {
                     logEntry.classList.add('selected');
                     gameState.iocsFound++;
-                    RoomIntegration.updateProgress(ROOM_NAME, 100, 1);
-                    RoomIntegration.showFeedback(`Correct! ${itemData.explanation}`, 'success');
+                    InsiderRoomIntegration.updateProgress(ROOM_NAME, 100, 1);
+                    InsiderRoomIntegration.showFeedback(`Correct! ${itemData.explanation}`, 'success');
                 } else {
                     logEntry.classList.add('wrong');
-                    RoomIntegration.updateProgress(ROOM_NAME, -50, 0);
-                    RoomIntegration.showFeedback('Wrong! This appears to be legitimate authentication.', 'error');
+                    InsiderRoomIntegration.updateProgress(ROOM_NAME, -50, 0);
+                    InsiderRoomIntegration.showFeedback('Wrong! This appears to be legitimate system administration or user activity.', 'error');
                 }
                 updateProgressBar();
             });
         });
 
-        function loadAuthEntries() {
-            const monitor = document.getElementById('authMonitor');
-            monitor.innerHTML = `<div class="monitor-header">
-                                    <h3>Security Event Logs</h3>
-                                    <span>Filter: Authentication Events</span>
-                                </div>`;
+        function loadHostEntries() {
+            const log = document.getElementById('hostLog');
+            log.innerHTML = `<div class="log-header">
+                                <h3>Endpoint Activity Monitor</h3>
+                                <span>Tracking: Data Staging & Compression Activities</span>
+                            </div>`;
             
-            const sortedAuth = [...authData].sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+            const sortedData = [...hostData].sort((a, b) => b.timestamp.localeCompare(a.timestamp));
             
-            sortedAuth.forEach(entry => {
+            sortedData.forEach(entry => {
                 const logEntry = document.createElement('div');
                 logEntry.className = `log-entry ${entry.type}`;
                 logEntry.dataset.id = entry.id;
                 logEntry.dataset.isIoc = entry.isIoc;
                 
+                const stagingClass = entry.target.includes('staging') || entry.target.includes('exfil') ? 'staging-indicator' : '';
+                const compressionClass = entry.process.includes('7z') || entry.process.includes('zip') || entry.process.includes('rar') ? 'compression-tool' : '';
+                
                 logEntry.innerHTML = `
-                    <div style="display: flex; align-items: center; margin-bottom: 5px;">
+                    <div>
                         <span class="log-timestamp">${entry.timestamp}</span>
-                        <span class="log-level level-${entry.level.toLowerCase()}">${entry.level}</span>
-                        <span class="log-details">${entry.event} <span class="log-user">${entry.user}</span></span>
+                        <span class="log-process ${compressionClass}">${entry.process}</span>
+                        <span class="log-action">${entry.action}</span>
+                        <span class="log-target ${stagingClass}">${entry.target}</span>
                     </div>
-                    <div style="margin-left: 100px; font-size: 0.9rem; color: #888;">
-                        Source: <span class="log-source">${entry.source}</span> | Method: ${entry.method} | ${entry.details}
+                    <div class="log-details">
+                        ${entry.details} | Size: ${entry.size}
+                        <br><small>Command: ${entry.command_line}</small>
                     </div>
                 `;
                 
-                monitor.appendChild(logEntry);
+                log.appendChild(logEntry);
             });
         }
 

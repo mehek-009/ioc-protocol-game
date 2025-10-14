@@ -519,8 +519,173 @@ window.RoomIntegration = {
     },
     
     showRoomCompletion: function(roomName, state) {
-        // This function just redirects to the main command center
-        window.location.href = 'index.html';
+        const roomNames = {
+            downloads: 'Download Analysis',
+            processes: 'Process Monitor', 
+            authentication: 'Authentication Logs',
+            network: 'Network Traffic Analysis',
+            registry: 'Registry Analysis',
+            filesystem: 'File System Analysis'
+        };
+        
+        const roomAchievements = {
+            downloads: '<p>Initial Attack Vector Identified</p><p>Malicious Download Located</p>',
+            processes: '<p>Malicious Processes Detected</p><p>Resource Abuse Identified</p>',
+            authentication: '<p>Compromised Credentials Found</p><p>Login Timeline Established</p>',
+            network: '<p>C&C Communication Detected</p><p>Data Exfiltration Identified</p>',
+            registry: '<p>Persistence Mechanisms Found</p><p>System Modifications Traced</p>',
+            filesystem: '<p>Encrypted Files Located</p><p>Ransomware Impact Assessed</p>'
+        };
+        
+        // Create backdrop
+        const backdrop = document.createElement('div');
+        backdrop.id = 'completion-backdrop';
+        backdrop.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 9999;
+            animation: fadeIn 0.3s ease;
+        `;
+        
+        const completionMessage = document.createElement('div');
+        completionMessage.id = 'completion-modal';
+        completionMessage.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            padding: 40px;
+            border-radius: 15px;
+            border: 2px solid #00ff41;
+            text-align: center;
+            z-index: 10000;
+            box-shadow: 0 0 50px rgba(0, 255, 65, 0.3);
+            max-width: 600px;
+            width: 90%;
+            color: #ffffff;
+            animation: slideIn 0.5s ease;
+        `;
+        
+        // Add animations if not already present
+        if (!document.querySelector('#completion-animations')) {
+            const style = document.createElement('style');
+            style.id = 'completion-animations';
+            style.textContent = `
+                @keyframes fadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                @keyframes slideIn {
+                    from { 
+                        transform: translate(-50%, -60%);
+                        opacity: 0;
+                    }
+                    to { 
+                        transform: translate(-50%, -50%);
+                        opacity: 1;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        const gameStats = RoomFlow.getGameStatistics();
+        let content = `
+            <h2 style="color: #00ff41; margin-bottom: 20px; font-size: 2rem;">${roomNames[roomName] || roomName} Complete!</h2>
+            <p style="margin-bottom: 20px; font-size: 1.1rem;">
+                You've identified all IoCs in this investigation area.
+            </p>
+            <div style="color: #00ff41; font-size: 1.1rem; margin-bottom: 30px;">
+                ${roomAchievements[roomName] || '<p>Investigation Complete</p>'}
+            </div>
+            <div style="margin-bottom: 20px;">
+                <p style="color: #00ffff;">Room Score: ${state.roomScores[roomName]} points</p>
+                <p style="color: #00ffff;">Global Score: ${state.totalScore} points</p>
+                <p style="color: #00ffff;">Global IoCs: ${state.totalIocsFound}/${state.totalIocsAvailable}</p>
+                <p style="color: #88BBDD;">Time Used: ${gameStats.timeUsed}</p>
+            </div>
+        `;
+        
+        if (gameStats.gameCompleted) {
+            content += `
+                <div style="background: rgba(0, 255, 0, 0.1); padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+                    <h3 style="color: #00ff41; margin-bottom: 10px;">🎉 INVESTIGATION COMPLETE!</h3>
+                    <p>All IoCs found across all investigation areas!</p>
+                    <p style="color: #FFFF00;">Final Score: ${gameStats.totalScore} points</p>
+                </div>
+            `;
+        }
+        
+        content += `
+            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 20px;">
+                <button id="continueBtn" style="
+                    background: #00ff41;
+                    color: black;
+                    padding: 12px 24px;
+                    border: none;
+                    border-radius: 25px;
+                    cursor: pointer;
+                    font-weight: bold;
+                    font-size: 1rem;
+                    transition: all 0.3s ease;
+                ">Continue Investigation</button>
+                <button id="replayBtn" style="
+                    background: #00ffff;
+                    color: black;
+                    padding: 12px 24px;
+                    border: none;
+                    border-radius: 25px;
+                    cursor: pointer;
+                    font-weight: bold;
+                    font-size: 1rem;
+                    transition: all 0.3s ease;
+                ">Analyze Again</button>
+            </div>
+        `;
+        
+        completionMessage.innerHTML = content;
+        
+        // Append to body
+        document.body.appendChild(backdrop);
+        document.body.appendChild(completionMessage);
+        
+        // Add event listeners to buttons
+        const continueBtn = document.getElementById('continueBtn');
+        const replayBtn = document.getElementById('replayBtn');
+        
+        if (continueBtn) {
+            continueBtn.addEventListener('click', function() {
+                window.location.href = 'index.html';
+            });
+            continueBtn.addEventListener('mouseenter', function() {
+                this.style.transform = 'scale(1.05)';
+                this.style.boxShadow = '0 5px 20px rgba(0, 255, 65, 0.5)';
+            });
+            continueBtn.addEventListener('mouseleave', function() {
+                this.style.transform = 'scale(1)';
+                this.style.boxShadow = 'none';
+            });
+        }
+        
+        if (replayBtn) {
+            replayBtn.addEventListener('click', function() {
+                location.reload();
+            });
+            replayBtn.addEventListener('mouseenter', function() {
+                this.style.transform = 'scale(1.05)';
+                this.style.boxShadow = '0 5px 20px rgba(0, 255, 255, 0.5)';
+            });
+            replayBtn.addEventListener('mouseleave', function() {
+                this.style.transform = 'scale(1)';
+                this.style.boxShadow = 'none';
+            });
+        }
     },
     
     endGame: function(reason) {

@@ -326,6 +326,10 @@
             background: var(--danger);
             color: white;
         }
+        .threat-very-high {
+            background: #FF00FF; /* Magenta for critical */
+            color: white;
+        }
 
         .threat-low {
             background: var(--accent);
@@ -489,114 +493,455 @@
         const ROOM_NAME = 'downloads';
         let gameState = { iocsFound: 0, totalIocs: 1, gameActive: true };
 
-        const downloadData = [
-            {
-                id: 'down1',
-                fileName: 'security_update.exe',
-                downloadTime: '15:41:30',
-                size: '2.4 MB',
-                source: 'https://updates.system-security.org/patches/security_update.exe',
-                browser: 'Chrome',
-                userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                md5: 'a1b2c3d4e5f6789012345678901234ab',
-                sha256: '6f2c8ab4d912345678901234567890abcdef1234567890abcdef1234567890ab',
-                isIoc: true,
-                explanation: 'LockBit ransomware payload downloaded just before the attack - timing correlates with subsequent compromise',
-                category: 'suspicious',
-                threat: 'high',
-                icon: '⚠️',
-                digitalSignature: 'Unsigned', 
-                signer: 'N/A' 
-            },
-            {
-                id: 'down2',
-                fileName: 'report_template.docx',
-                downloadTime: '12:15:45',
-                size: '156 KB',
-                source: 'https://sharepoint.company.local/templates/report_template.docx',
-                browser: 'Edge',
-                userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36 Edg/91.0.864.59',
-                md5: '9f8e7d6c5b4a392817263544938271ab',
-                sha256: '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
-                isIoc: false,
-                category: 'normal',
-                threat: 'low',
-                icon: '📄',
-                digitalSignature: 'N/A', 
-                signer: 'N/A'
-            },
-            {
-                id: 'down3',
-                fileName: 'system_patch.exe',
-                downloadTime: '08:20:15',
-                size: '1.8 MB',
-                source: 'https://download.microsoft.com/patches/KB5012345/system_patch.exe',
-                browser: 'Chrome',
-                userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                md5: 'f1e2d3c4b5a6988776554433221100ab',
-                sha256: 'abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
-                isIoc: false,
-                category: 'normal',
-                threat: 'low',
-                icon: '🔧',
-                digitalSignature: 'Signed', 
-                signer: 'Microsoft Corporation'
-            },
-            {
-                id: 'down4',
-                fileName: 'project_update.zip',
-                downloadTime: '14:25:30',
-                size: '8.5 MB',
-                source: 'https://gitlab.company.com/projects/quarterly/project_update.zip',
-                browser: 'Firefox',
-                userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0',
-                md5: 'b3c4d5e6f7a8910234567890123456cd',
-                sha256: '7890abcdef1234567890abcdef1234567890abcdef1234567890abcdef123456',
-                isIoc: false,
-                category: 'normal',
-                threat: 'low',
-                icon: '📦',
-                digitalSignature: 'N/A', 
-                signer: 'N/A'
-            },
-            {
-                id: 'down5',
-                fileName: 'chrome_installer.exe',
-                downloadTime: '09:45:12',
-                size: '1.1 MB',
-                source: 'https://dl.google.com/chrome/install/chrome_installer.exe',
-                browser: 'Edge',
-                userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                md5: 'e7f8a9b0c1d23456789012345678e9fa',
-                sha256: 'def1234567890abcdef1234567890abcdef1234567890abcdef1234567890abc',
-                isIoc: false,
-                category: 'normal',
-                threat: 'low',
-                icon: '🌐',
-                digitalSignature: 'Signed', 
-                signer: 'Google LLC'
-            }
-        ];
+const downloadData = [
+  {
+    id: 'down1',
+    fileName: 'update_patch.exe',
+    downloadTime: '18:41:20',
+    size: '2.4 MB',
+    source: 'https://update.cybertech-corp.com/patches/update_patch.exe',
+    browser: 'Chrome',
+    userAgent: 'Mozilla/5.0',
+    sha1: 'b12c34d56e78f90a12b34c56d78e90fa',
+    sha256: 'abc123def4567890abc123def4567890abc123def4567890abc123def4567890',
+    isIoc: true,
+    explanation: 'Executable masquerading as update, unsigned and downloaded near infection time.',
+    category: 'suspicious',
+    threat: 'high',
+    icon: '⚙️',
+    headers: {
+        'Content-Type': 'application/vnd.microsoft.portable-executable',
+        'File-Signature-Analysis': 'OK',
+        'Expected-Signature': '4D 5A 90 00 03 00 00 00 (MZ/PE Executable)',
+        'Actual-Signature': '4D 5A 90 00 03 00 00 00 (MZ/PE Executable)',
+        'X-Threat-Intel': 'File hash matches known malware C2 dropper.'
+    }
+  },
+  {
+    id: 'down2',
+    fileName: 'invoice_q3.pdf',
+    downloadTime: '18:40:15',
+    size: '182 KB',
+    source: 'https://mail.cybertech-corp.com/attachments/invoice_q3/invoice_q3.pdf',
+    browser: 'Chrome',
+    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+    sha1: 'd41d8cd98f00b204e9800998ecf8427e',
+    sha256: '6b3a55f1a2b4c9b1e1c2d3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b',
+    isIoc: false,
+    category: 'normal',
+    threat: 'low',
+    icon: '📄',
+    headers: {
+        'Content-Type': 'application/pdf',
+        'File-Signature-Analysis': 'OK',
+        'Expected-Signature': '25 50 44 46 2D 31 2E 37 (%PDF-1.7)',
+        'Actual-Signature': '25 50 44 46 2D 31 2E 37 (%PDF-1.7)'
+    }
+  },
+  {
+    id: 'down3',
+    fileName: 'rs35_thumbnail.lnk',
+    downloadTime: '18:41:32',
+    size: '1 KB',
+    source: 'C:\\Users\\jdoe\\Downloads\\rs35_thumbnail.lnk',
+    browser: 'FileSystem',
+    userAgent: 'N/A',
+    sha1: '11aa22bb33cc44dd55ee66ff77889900',
+    sha256: 'b2c3d4e5f6a7b8c9c0d1e2f3a4b5c6d7e8f90123456789abcdef0123456789ab',
+    isIoc: true,
+    explanation: 'Shortcut created by image viewer after preview; points to loader (Evidence of image-triggered execution).',
+    category: 'suspicious',
+    threat: 'high',
+    icon: '🔗',
+    headers: {
+        'Event-Type': 'FileCreate',
+        'File-Signature-Analysis': 'OK',
+        'Expected-Signature': '4C 00 00 00 01 14 02 00 (.LNK)',
+        'Actual-Signature': '4C 00 00 00 01 14 02 00 (.LNK)',
+        'X-Threat-Intel': 'LNK file created by COM Surrogate post-image view, points to suspicious loader.'
+    }
+  },
+  {
+    id: 'down4',
+    fileName: 'financial_chart.png',
+    downloadTime: '18:39:55',
+    size: '342 KB',
+    source: 'https://intranet.company.local/images/financial_chart.png',
+    browser: 'Chrome',
+    userAgent: 'Mozilla/5.0',
+    sha1: '123abc456def7890abc123def456ghi7',
+    sha256: '0f1e2d3c4b5a69788766554433221100aabbccddeeff00112233445566778899',
+    isIoc: false,
+    category: 'normal',
+    threat: 'low',
+    icon: '🖼️',
+    headers: {
+        'Content-Type': 'image/png',
+        'File-Signature-Analysis': 'OK',
+        'Expected-Signature': '89 50 4E 47 0D 0A 1A 0A (PNG)',
+        'Actual-Signature': '89 50 4E 47 0D 0A 1A 0A (PNG)'
+    }
+  },
+  {
+    id: 'down5',
+    fileName: 'client_backup.zip',
+    downloadTime: '18:25:14',
+    size: '4.5 MB',
+    source: 'https://drive.clientdata.com/backups/client_backup.zip',
+    browser: 'Edge',
+    userAgent: 'Mozilla/5.0',
+    sha1: 'cc1122aa33445566778899aabbccdde1',
+    sha256: 'e1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f70',
+    isIoc: false,
+    category: 'normal',
+    threat: 'low',
+    icon: '📦',
+    headers: {
+        'Content-Type': 'application/zip',
+        'File-Signature-Analysis': 'OK',
+        'Expected-Signature': '50 4B 03 04 14 00 00 00 (ZIP)',
+        'Actual-Signature': '50 4B 03 04 14 00 00 00 (ZIP)'
+    }
+  },
+  {
+    id: 'down6',
+    fileName: 'project_update.zip',
+    downloadTime: '17:25:30',
+    size: '8.5 MB',
+    source: 'https://gitlab.company.com/projects/quarterly/project_update.zip',
+    browser: 'Firefox',
+    userAgent: 'Mozilla/5.0',
+    sha1: 'b3c4d5e6f7a8910234567890123456cd',
+    sha256: '7890abcdef1234567890abcdef1234567890abcdef1234567890abcdef123456',
+    isIoc: false,
+    category: 'normal',
+    threat: 'low',
+    icon: '📦',
+    headers: {
+        'Content-Type': 'application/zip',
+        'File-Signature-Analysis': 'OK',
+        'Expected-Signature': '50 4B 03 04 14 00 00 00 (ZIP)',
+        'Actual-Signature': '50 4B 03 04 14 00 00 00 (ZIP)'
+    }
+  },
+  {
+    id: 'down7',
+    fileName: 'sales_report.docx',
+    downloadTime: '16:55:42',
+    size: '204 KB',
+    source: 'https://sharepoint.company.local/sales/q3/sales_report.docx',
+    browser: 'Edge',
+    userAgent: 'Mozilla/5.0',
+    sha1: '9a8b7c6d5e4f3a2b1c2d3e4f5a6b7c8d',
+    sha256: '1234abcd5678ef901234abcd5678ef901234abcd5678ef901234abcd5678ef90',
+    isIoc: false,
+    category: 'normal',
+    threat: 'low',
+    icon: '📄',
+    headers: {
+        'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'File-Signature-Analysis': 'OK',
+        'Expected-Signature': '50 4B 03 04 14 00 06 00 (DOCX)',
+        'Actual-Signature': '50 4B 03 04 14 00 06 00 (DOCX)'
+    }
+  },
+  {
+    id: 'down8',
+    fileName: 'meeting_audio.mp3',
+    downloadTime: '16:25:12',
+    size: '3.4 MB',
+    source: 'https://teams.company.com/recordings/meeting_audio.mp3',
+    browser: 'Edge',
+    userAgent: 'Mozilla/5.0',
+    sha1: 'aabbccddeeff00112233445566778899',
+    sha256: '99887766554433221100ffeeddccbbaa99887766554433221100ffeeddccbbaa',
+    isIoc: false,
+    category: 'normal',
+    threat: 'low',
+    icon: '🎧',
+    headers: {
+        'Content-Type': 'audio/mpeg',
+        'File-Signature-Analysis': 'OK',
+        'Expected-Signature': '49 44 33 03 00 00 00 00 (ID3/MP3)',
+        'Actual-Signature': '49 44 33 03 00 00 00 00 (ID3/MP3)'
+    }
+  },
+  {
+    id: 'down9',
+    fileName: 'report_template.docx',
+    downloadTime: '15:15:45',
+    size: '156 KB',
+    source: 'https://sharepoint.company.local/templates/report_template.docx',
+    browser: 'Edge',
+    userAgent: 'Mozilla/5.0',
+    sha1: '9f8e7d6c5b4a392817263544938271ab',
+    sha256: '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
+    isIoc: false,
+    category: 'normal',
+    threat: 'low',
+    icon: '📄',
+    headers: {
+        'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'File-Signature-Analysis': 'OK',
+        'Expected-Signature': '50 4B 03 04 14 00 06 00 (DOCX)',
+        'Actual-Signature': '50 4B 03 04 14 00 06 00 (DOCX)'
+    }
+  },
+  {
+    id: 'down10',
+    fileName: 'team_photos.zip',
+    downloadTime: '15:05:02',
+    size: '24.7 MB',
+    source: 'https://onedrive.company.com/team_photos.zip',
+    browser: 'Chrome',
+    userAgent: 'Mozilla/5.0',
+    sha1: 'aa11bb22cc33dd44ee55ff66778899aa',
+    sha256: 'a1b2c3d4e5f678901234567890abcdef1234567890abcdef1234567890abcd',
+    isIoc: false,
+    category: 'normal',
+    threat: 'low',
+    icon: '🖼️',
+    headers: {
+        'Content-Type': 'application/zip',
+        'File-Signature-Analysis': 'OK',
+        'Expected-Signature': '50 4B 03 04 14 00 00 00 (ZIP)',
+        'Actual-Signature': '50 4B 03 04 14 00 00 00 (ZIP)'
+    }
+  },
+  {
+    id: 'down11',
+    fileName: 'rs35.png',
+    downloadTime: '14:41:30',
+    size: '546.00 KB',
+    source: 'https://mail.cybertech-corp.com/attachments/invoice_q3/rs35.png',
+    browser: 'Chrome',
+    userAgent: 'Mozilla/5.0',
+    sha1: '488e532e55100da68eeeee30ba34',
+    sha256: 'ca57455fd148754bf443a2c8b06dc',
+    isIoc: true,
+    explanation: 'File analysis shows its actual header is for a PE Executable, not a PNG image. Classic masquerading technique.',
+    category: 'suspicious',
+    threat: 'high',
+    icon: '🖼️',
+    headers: {
+      'Content-Type': 'image/png',
+      'File-Signature-Analysis': 'Header Mismatch',
+      'Expected-Signature': '89 50 4E 47 0D 0A 1A 0A (PNG)',
+      'Actual-Signature': '4D 5A 90 00 03 00 00 00 (MZ/PE Executable)',
+      'X-Threat-Intel': 'File identified as PE executable masquerading as a PNG image.'
+    }
+  },
+  {
+    id: 'down12',
+    fileName: 'chrome_installer.exe',
+    downloadTime: '14:10:12',
+    size: '1.1 MB',
+    source: 'https://dl.google.com/chrome/install/chrome_installer.exe',
+    browser: 'Edge',
+    userAgent: 'Mozilla/5.0',
+    sha1: 'e7f8a9b0c1d23456789012345678e9fa',
+    sha256: 'def1234567890abcdef1234567890abcdef1234567890abcdef1234567890abc',
+    isIoc: false,
+    category: 'normal',
+    threat: 'low',
+    icon: '🌐',
+    headers: {
+        'Content-Type': 'application/vnd.microsoft.portable-executable',
+        'File-Signature-Analysis': 'OK',
+        'Expected-Signature': '4D 5A 90 00 03 00 00 00 (MZ/PE Executable)',
+        'Actual-Signature': '4D 5A 90 00 03 00 00 00 (MZ/PE Executable)'
+    }
+  },
+  {
+    id: 'down13',
+    fileName: 'vpn_config.ovpn',
+    downloadTime: '13:12:22',
+    size: '12 KB',
+    source: 'https://it.company.local/configs/vpn_config.ovpn',
+    browser: 'Firefox',
+    userAgent: 'Mozilla/5.0',
+    sha1: '1122aabb33445566778899ccddeeff00',
+    sha256: 'ccddeeff00112233445566778899aabbccddeeff00112233445566778899aabb',
+    isIoc: false,
+    category: 'normal',
+    threat: 'low',
+    icon: '🔐',
+    headers: {
+        'Content-Type': 'application/octet-stream',
+        'File-Signature-Analysis': 'N/A (Text-based)',
+        'Expected-Signature': '63 6C 69 65 6E 74 0D 0A (ASCII: client..)',
+        'Actual-Signature': '63 6C 69 65 6E 74 0D 0A (ASCII: client..)'
+    }
+  },
+  {
+    id: 'down14',
+    fileName: 'confidential_data.rar',
+    downloadTime: '12:58:41',
+    size: '12.3 MB',
+    source: 'https://transfer.cybertech-corp.com/confidential_data.rar',
+    browser: 'Chrome',
+    userAgent: 'Mozilla/5.0',
+    sha1: 'abcde12345f67890abcde12345f67890',
+    sha256: 'aabbccddeeff11223344556677889900aabbccddeeff11223344556677889900',
+    isIoc: true,
+    explanation: 'Archive containing exfiltrated data; correlates with outgoing traffic.',
+    category: 'critical',
+    threat: 'very high',
+    icon: '🗂️',
+    headers: {
+        'Content-Type': 'application/vnd.rar',
+        'File-Signature-Analysis': 'OK',
+        'Expected-Signature': '52 61 72 21 1A 07 00 (RAR)',
+        'Actual-Signature': '52 61 72 21 1A 07 00 (RAR)',
+        'X-Threat-Intel': 'Data exfiltration detected to known malicious staging server.'
+    }
+  },
+  {
+    id: 'down15',
+    fileName: 'policy_update.docx',
+    downloadTime: '12:05:20',
+    size: '92 KB',
+    source: 'https://sharepoint.company.local/policies/policy_update.docx',
+    browser: 'Chrome',
+    userAgent: 'Mozilla/5.0',
+    sha1: '77aa88bb99cc00112233445566778899',
+    sha256: '11223344556677889900aabbccddeeff00112233445566778899aabbccddeeff',
+    isIoc: false,
+    category: 'normal',
+    threat: 'low',
+    icon: '📄',
+    headers: {
+        'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'File-Signature-Analysis': 'OK',
+        'Expected-Signature': '50 4B 03 04 14 00 06 00 (DOCX)',
+        'Actual-Signature': '50 4B 03 04 14 00 06 00 (DOCX)'
+    }
+  },
+  {
+    id: 'down16',
+    fileName: 'temp_script.ps1',
+    downloadTime: '11:41:19',
+    size: '8 KB',
+    source: 'C:\\Users\\jdoe\\AppData\\Local\\Temp\\temp_script.ps1',
+    browser: 'FileSystem',
+    userAgent: 'N/A',
+    sha1: 'eeff112233445566778899aabbccdde0',
+    sha256: '77889900aabbccddeeff00112233445566778899aabbccddeeff001122334455',
+    isIoc: true,
+    explanation: 'PowerShell script dropped post infection; executed from temp path.',
+    category: 'suspicious',
+    threat: 'high',
+    icon: '💻',
+    headers: {
+        'Event-Type': 'FileCreate',
+        'File-Signature-Analysis': 'N/A (Text-based)',
+        'Expected-Signature': '24 73 65 72 76 65 72 (ASCII: $server)',
+        'Actual-Signature': '24 73 65 72 76 65 72 (ASCII: $server)',
+        'X-Threat-Intel': 'Script dropped by initial payload for persistence/lateral movement.'
+    }
+  },
+  {
+    id: 'down17',
+    fileName: 'backup_log.txt',
+    downloadTime: '11:19:01',
+    size: '3 KB',
+    source: 'C:\\System\\Backup\\backup_log.txt',
+    browser: 'FileSystem',
+    userAgent: 'N/A',
+    sha1: '00998877665544332211aabbccddeeff',
+    sha256: 'ffeeddccbbaa99887766554433221100ffeeddccbbaa99887766554433221100',
+    isIoc: false,
+    category: 'normal',
+    threat: 'low',
+    icon: '📁',
+    headers: {
+        'Event-Type': 'FileWrite',
+        'File-Signature-Analysis': 'N/A (Text-based)',
+        'Expected-Signature': '42 61 63 6B 75 70 20 (ASCII: Backup )',
+        'Actual-Signature': '42 61 63 6B 75 70 20 (ASCII: Backup )'
+    }
+  },
+  {
+    id: 'down18',
+    fileName: 'driver_update.sys',
+    downloadTime: '10:52:10',
+    size: '340 KB',
+    source: 'https://drivers.hp.com/updates/driver_update.sys',
+    browser: 'Edge',
+    userAgent: 'Mozilla/5.0',
+    sha1: 'aa11bb22cc33dd44ee55ff66778899bb',
+    sha256: '11aabbccddeeff00998877665544332211aabbccddeeff009988776655443322',
+    isIoc: false,
+    category: 'normal',
+    threat: 'low',
+    icon: '🧩',
+    headers: {
+        'Content-Type': 'application/octet-stream',
+        'File-Signature-Analysis': 'OK',
+        'Expected-Signature': '4D 5A 90 00 03 00 00 00 (MZ/PE Executable)',
+        'Actual-Signature': '4D 5A 90 00 03 00 00 00 (MZ/PE Executable)'
+    }
+  },
+  {
+    id: 'down19',
+    fileName: 'readme.txt',
+    downloadTime: '10:40:21',
+    size: '2 KB',
+    source: 'https://docs.cybertech-corp.com/readme.txt',
+    browser: 'Chrome',
+    userAgent: 'Mozilla/5.0',
+    sha1: 'bbccddeeff00112233445566778899aa',
+    sha256: '223344556677889900aabbccddeeff11223344556677889900aabbccddeeff11',
+    isIoc: false,
+    category: 'normal',
+    threat: 'low',
+    icon: '📘',
+    headers: {
+        'Content-Type': 'text/plain',
+        'File-Signature-Analysis': 'N/A (Text-based)',
+        'Expected-Signature': '49 6E 73 74 61 6C 6C (ASCII: Install)',
+        'Actual-Signature': '49 6E 73 74 61 6C 6C (ASCII: Install)'
+    }
+  },
+  {
+    id: 'down20',
+    fileName: 'system_scan.log',
+    downloadTime: '10:21:12',
+    size: '5 KB',
+    source: 'C:\\ProgramData\\System\\system_scan.log',
+    browser: 'FileSystem',
+    userAgent: 'N/A',
+    sha1: 'ddccbb99887766554433221100aabbcc',
+    sha256: '33445566778899aabbccddeeff00112233445566778899aabbccddeeff001122',
+    isIoc: false,
+    category: 'normal',
+    threat: 'low',
+    icon: '📋',
+    headers: {
+        'Event-Type': 'FileWrite',
+        'File-Signature-Analysis': 'N/A (Text-based)',
+        'Expected-Signature': '53 63 61 6E 20 73 74 (ASCII: Scan st)',
+        'Actual-Signature': '53 63 61 6E 20 73 74 (ASCII: Scan st)'
+    }
+  }
+];
+
 
         document.addEventListener('DOMContentLoaded', function() {
-            if (!RoomIntegration.initializeRoom(ROOM_NAME)) return;
+            if (typeof RoomIntegration !== 'undefined' && !RoomIntegration.initializeRoom(ROOM_NAME)) return;
             
-            // Proceed button functionality
             const proceedBtn = document.getElementById('proceedBtn');
             const timelineInfo = document.getElementById('timelineInfo');
             const progressBar = document.getElementById('progressBar');
             const downloadsList = document.getElementById('downloadsList');
             
             proceedBtn.addEventListener('click', function() {
-                // Hide timeline info and button
                 timelineInfo.classList.add('hidden');
                 proceedBtn.classList.add('hidden');
                 
-                // Show progress bar and downloads list
                 progressBar.classList.remove('hidden');
                 downloadsList.classList.remove('hidden');
                 
-                // Load the downloads
                 loadDownloadEntries();
             });
             
@@ -615,12 +960,16 @@
                 if (isIoc) {
                     downloadItem.classList.add('selected');
                     gameState.iocsFound++;
-                    RoomIntegration.updateProgress(ROOM_NAME, 100, 1);
-                    RoomIntegration.showFeedback(`Correct! ${itemData.explanation}`, 'success');
+                    if (typeof RoomIntegration !== 'undefined') {
+                        RoomIntegration.updateProgress(ROOM_NAME, 100, 1);
+                        RoomIntegration.showFeedback(`Correct! ${itemData.explanation}`, 'success');
+                    }
                 } else {
                     downloadItem.classList.add('wrong');
-                    RoomIntegration.updateProgress(ROOM_NAME, -50, 0);
-                    RoomIntegration.showFeedback('Wrong! This appears to be a legitimate download from a trusted source.', 'error');
+                    if (typeof RoomIntegration !== 'undefined') {
+                        RoomIntegration.updateProgress(ROOM_NAME, -50, 0);
+                        RoomIntegration.showFeedback('Wrong! This appears to be a legitimate download from a trusted source.', 'error');
+                    }
                 }
                 updateProgressBar();
             });
@@ -635,14 +984,29 @@
             
             const sortedDownloads = [...downloadData].sort((a, b) => b.downloadTime.localeCompare(a.downloadTime));
             
+            const getHostname = (source) => {
+                try {
+                    return new URL(source).hostname;
+                } catch (e) {
+                    return 'Local File System';
+                }
+            };
+
+            const formatHeaders = (headers) => {
+                return Object.entries(headers)
+                    .map(([key, value]) => `<div><span class="hash-label" style="color: #bbb;">${key}:</span> <span class="hash-value" style="color: var(--warning); word-break: break-all;">${value}</span></div>`)
+                    .join('');
+            };
+
             sortedDownloads.forEach(download => {
                 const downloadItem = document.createElement('div');
+                const threatClass = download.threat.replace(' ', '-');
                 downloadItem.className = `download-item ${download.category}`;
                 downloadItem.dataset.id = download.id;
                 downloadItem.dataset.isIoc = download.isIoc;
                 
                 downloadItem.innerHTML = `
-                    <div class="threat-level threat-${download.threat}">${download.threat.toUpperCase()}</div>
+                    <div class="threat-level threat-${threatClass}">${download.threat.toUpperCase()}</div>
                     
                     <div class="download-header">
                         <div class="file-icon">${download.icon}</div>
@@ -661,41 +1025,33 @@
                             <span class="detail-label">Browser:</span>
                             <span class="detail-value">${download.browser}</span>
                         </div>
-
                         <div class="detail-item">
                             <span class="detail-label">File Type:</span>
                             <span class="detail-value">${download.fileName.split('.').pop().toUpperCase()}</span>
                         </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Signature:</span>
-                            <span class="detail-value" 
-                                style="color: ${download.digitalSignature === 'Unsigned' ? 'var(--danger)' : 'var(--cyan)'};">
-                                ${download.digitalSignature}
-                            </span>
+                         <div class="detail-item">
+                            <span class="detail-label">Source:</span>
+                            <span class="detail-value">${getHostname(download.source)}</span>
                         </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Signer:</span>
-                            <span class="detail-value">${download.signer}</span>
-                        </div>
-                        
-                        </div>
+                    </div>
                     
                     <div class="hash-info">
-                        <div class="detail-item">
-                            <span class="detail-label">Source Domain:</span>
-                            <span class="detail-value">${new URL(download.source).hostname}</span>
-                        </div>
-                        <div style="margin-bottom: 5px;">
-                            <span class="hash-label">MD5:</span>
-                            <span class="hash-value">${download.md5}</span>
+                         <div style="margin-bottom: 5px;">
+                            <span class="hash-label">SHA1:</span>
+                            <span class="hash-value">${download.sha1}</span>
                         </div>
                         <div style="margin-bottom: 5px;">
                             <span class="hash-label">SHA256:</span>
                             <span class="hash-value">${download.sha256}</span>
                         </div>
-                        <div style="font-size: 0.7rem; color: #666; margin-top: 5px;">
-                            User-Agent: ${download.userAgent.substring(0, 60)}...
+                        <div style="font-size: 0.7rem; color: #666; margin-top: 5px; word-break: break-all;">
+                            User-Agent: ${download.userAgent}
                         </div>
+                    </div>
+                    
+                    <div class="hash-info" style="margin-top: 10px; background: rgba(0, 255, 255, 0.05);">
+                        <h4 style="color: var(--cyan); margin-bottom: 8px; border-bottom: 1px solid rgba(0,255,255,0.2); padding-bottom: 5px;">Analysis Headers</h4>
+                        ${formatHeaders(download.headers)}
                     </div>
                 `;
                 
