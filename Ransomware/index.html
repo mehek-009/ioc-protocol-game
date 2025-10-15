@@ -366,7 +366,7 @@
     </video>
     <div class="overlay"></div> 
     
-    <a href="../index.html" class="dashboard-btn">← Dashboard</a>
+    <a href="../dashboard.html" class="dashboard-btn">← Dashboard</a>
     <button class="reset-btn" onclick="resetGame()">Reset Game</button>
     
     <div class="main-container">
@@ -750,14 +750,14 @@
                 return;
             }
 
-            // Handle timeout - redirect to index.html
+            // Handle timeout - redirect to dashboard.html
             const timeLeft = RoomFlow.getGlobalTimeRemaining();
             if (timeLeft <= 0 || stats.completedByTimeout) {
                 const message = `Time Expired!\n\nIoCs Found: ${stats.totalIocsFound}/${stats.totalIocsAvailable}\nFinal Score: ${stats.totalScore}\nThe ransomware attack could not be fully contained.`;
                 setTimeout(() => {
                     alert(message);
                     RoomFlow.resetGame();
-                    window.location.href = '../index.html';
+                    window.location.href = '../dashboard.html';
                 }, 500);
             }
         }

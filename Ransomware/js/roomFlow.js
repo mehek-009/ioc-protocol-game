@@ -1,7 +1,7 @@
 /**
- * Complete Room Flow Management System - OPTIMIZED
- * Handles sequential room unlocking, global state, and cross-page synchronization
- * Performance improvements: debounced saves, state caching, reduced I/O
+ * Complete Room Flow Management System - FIXED IoC COUNTS
+ * The totalIocsAvailable must match the sum of all room IoC totals
+ * downloads(5) + processes(4) + authentication(2) + network(3) + registry(4) + filesystem(7) = 25
  */
 
 class RoomFlow {
@@ -22,7 +22,7 @@ class RoomFlow {
         return {
             totalScore: 0,
             totalIocsFound: 0,
-            totalIocsAvailable: 12,
+            totalIocsAvailable: 25, // FIXED: Was 19, should be 25
             globalTimeLeft: this.GLOBAL_TIME_LIMIT,
             gameStartTime: null,
             roomsCompleted: [],
@@ -33,12 +33,12 @@ class RoomFlow {
                 registry: 0, network: 0, filesystem: 0
             },
             roomIocs: {
-                downloads: { found: 0, total: 1 },
-                processes: { found: 0, total: 2 },
-                authentication: { found: 0, total: 2 },
-                registry: { found: 0, total: 2 },
-                network: { found: 0, total: 3 },
-                filesystem: { found: 0, total: 3 }
+                downloads: { found: 0, total: 5 },    // Matches downloads.html
+                processes: { found: 0, total: 4 },    // Matches processes.html  
+                authentication: { found: 0, total: 2 }, // Matches authentication.html
+                network: { found: 0, total: 3 },      // Matches network.html
+                registry: { found: 0, total: 4 },     // Matches registry.html
+                filesystem: { found: 0, total: 7 }    // Matches filesystem.html
             },
             roomTimers: {
                 downloads: this.ROOM_TIME_LIMIT, processes: this.ROOM_TIME_LIMIT,
@@ -343,8 +343,6 @@ class RoomFlow {
 
     /**
      * Restore paused remaining time saved when the last tab closed.
-     * If 'socPausedRemaining' exists in localStorage, compute a gameStartTime
-     * that results in that remaining time and persist it.
      */
     static restorePausedTimeIfNeeded() {
         try {
@@ -464,7 +462,7 @@ window.RoomIntegration = {
         
         const timerElement = document.getElementById('timer');
         if (timerElement) {
-            const timeRemaining = RoomFlow.getGlobalTimeRemaining(true); // Save state every 5s
+            const timeRemaining = RoomFlow.getGlobalTimeRemaining(true);
             timerElement.textContent = RoomFlow.formatTime(timeRemaining);
             
             if (timeRemaining <= 300) {
@@ -697,7 +695,6 @@ window.RoomIntegration = {
             window.location.href = '../dashboard.html';
         } else if (reason === 'completed') {
             // On completion, save the final state and do nothing else
-            // The page will remain on the command center, and the timer will stop
             RoomFlow.saveGameState(state, true);
         }
     },
