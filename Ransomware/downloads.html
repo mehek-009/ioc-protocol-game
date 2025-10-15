@@ -63,425 +63,180 @@
         }
 
         .back-btn {
-            background: rgba(0, 255, 255, 0.1);
-            border: 1px solid var(--cyan);
-            color: var(--cyan);
-            padding: 8px 14px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.2s ease;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-family: inherit;
+            background: rgba(0, 255, 255, 0.1); border: 1px solid var(--cyan); color: var(--cyan);
+            padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 600;
+            transition: all 0.2s ease; text-decoration: none; display: flex;
+            align-items: center; gap: 6px; font-family: inherit;
         }
 
-        .back-btn:hover {
-            background: rgba(0, 255, 255, 0.2);
-            transform: translateY(-1px);
-        }
+        .back-btn:hover { background: rgba(0, 255, 255, 0.2); transform: translateY(-1px); }
 
         .game-stats {
-            display: flex; gap: 20px;
-            background: rgba(26, 26, 58, 0.25);
-            backdrop-filter: blur(15px);
-            padding: 15px;
-            border-radius: 15px;
-            border: 1px solid rgba(0, 255, 255, 0.3);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            display: flex; gap: 20px; background: rgba(26, 26, 58, 0.25);
+            backdrop-filter: blur(15px); padding: 15px; border-radius: 15px;
+            border: 1px solid rgba(0, 255, 255, 0.3); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
 
-        .stat-item {
-            text-align: center;
-            min-width: 80px;
-        }
-
-        .stat-value {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: var(--accent);
-            margin-bottom: 5px;
-        }
-
+        .stat-item { text-align: center; min-width: 80px; }
+        .stat-value { font-size: 1.2rem; font-weight: bold; color: var(--accent); margin-bottom: 5px; }
         .stat-value.danger { color: var(--danger); }
-
-        .stat-label {
-            color: var(--muted);
-            font-size: 0.8rem;
-        }
-
+        .stat-label { color: var(--muted); font-size: 0.8rem; }
         .timer { color: var(--danger); }
 
         .analysis-panel {
-            background: rgba(26, 26, 58, 0.2);
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(0, 255, 255, 0.3);
-            border-radius: 20px;
-            padding: 0;
-            margin-bottom: 30px;
-            overflow: hidden;
+            background: rgba(26, 26, 58, 0.2); backdrop-filter: blur(15px);
+            border: 1px solid rgba(0, 255, 255, 0.3); border-radius: 20px;
+            padding: 20px; margin-bottom: 30px; overflow: hidden;
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
         }
 
         .panel-header-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: linear-gradient(90deg, rgba(0, 255, 255, 0.1), transparent);
-            padding: 15px 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            padding-bottom: 15px; margin-bottom: 15px;
             border-bottom: 1px solid rgba(0, 255, 255, 0.1);
         }
 
-        .panel-header-left h1 {
-            font-size: 1.8rem;
-            color: var(--cyan);
-            margin: 0;
-        }
-
-        .metrics-grid-container {
-            display: flex;
-            border-bottom: 1px solid rgba(0, 255, 255, 0.1);
-        }
-
-        .metric-card {
-            background: transparent;
-            padding: 20px;
-            border-right: 1px solid rgba(0, 255, 255, 0.1);
-            flex-grow: 1;
-            text-align: center;
-            position: relative;
-        }
-        .metric-card:last-child { border-right: none; }
-        .metric-card.alert { animation: pulse 2s ease-in-out infinite; }
-
-        .metric-value {
-            font-size: 1.8rem;
-            font-weight: bold;
-            color: var(--accent);
-            margin-bottom: 5px;
-        }
-        .metric-value.danger { color: var(--danger); }
-
-        .metric-label {
-            font-size: 0.9rem;
-            color: var(--muted);
-        }
-        .metric-card.alert .metric-value { color: var(--danger); }
+        .panel-header-left h1 { font-size: 1.8rem; color: var(--cyan); margin: 0; }
 
         .timeline-info {
-            background: var(--alert-banner-bg);
-            border: 1px solid var(--alert-banner-border);
-            border-radius: 10px;
-            padding: 15px; margin: 20px;
-            text-align: center;
-            box-shadow: 0 0 15px rgba(255, 102, 102, 0.2);
-            color: var(--alert-text);
-        }
-
-        .timeline-info strong {
-            color: var(--alert-banner-border);
-            font-weight: bold;
+            background: var(--alert-banner-bg); border: 1px solid var(--alert-banner-border);
+            border-radius: 10px; padding: 15px; margin: 20px 0; text-align: center;
+            box-shadow: 0 0 15px rgba(255, 102, 102, 0.2); color: var(--alert-text);
         }
 
         .proceed-btn {
-            background: linear-gradient(135deg, var(--cyan), rgba(0, 255, 255, 0.6));
-            border: 2px solid var(--cyan);
-            color: #000;
-            padding: 15px 40px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 1.1rem;
-            margin: 20px auto;
-            display: block;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            background: linear-gradient(135deg, var(--cyan), rgba(0, 255, 255, 0.6)); border: 2px solid var(--cyan); color: #000;
+            padding: 15px 40px; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1.1rem;
+            margin: 20px auto; display: block; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px;
             box-shadow: 0 5px 20px rgba(0, 255, 255, 0.3);
         }
+        .proceed-btn:hover { background: linear-gradient(135deg, var(--accent), rgba(0, 255, 0, 0.6)); border-color: var(--accent); transform: translateY(-2px); }
+        .hidden { display: none !important; }
 
-        .proceed-btn:hover {
-            background: linear-gradient(135deg, var(--accent), rgba(0, 255, 0, 0.6));
-            border-color: var(--accent);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 30px rgba(0, 255, 255, 0.5);
+        /* New List Styles */
+        .downloads-list-container {
+            max-height: 500px;
+            overflow-y: auto;
         }
-
-        .proceed-btn:active {
-            transform: translateY(0);
+        .downloads-list-header, .list-item {
+            display: grid;
+            grid-template-columns: 50px 1fr 1.5fr 1fr;
+            gap: 15px;
+            align-items: center;
+            padding: 10px 15px;
+            color: var(--muted);
         }
-
-        .hidden {
-            display: none !important;
-        }
-
-        .downloads-list {
-            background: rgba(0, 0, 0, 0.15);
-            backdrop-filter: blur(10px);
-            border-radius: 15px; padding: 20px;
-            max-height: 600px; overflow-y: auto;
-            border: 1px solid rgba(0, 255, 255, 0.2);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-        }
-
-        .list-header {
-            display: flex; justify-content: space-between;
-            align-items: center; margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid rgba(0, 255, 255, 0.1);
-        }
-
-        .download-item {
-            background: rgba(0, 0, 0, 0.15);
-            margin: 15px 0; padding: 20px;
-            border-radius: 12px; cursor: pointer;
-            transition: all 0.3s ease;
-            border-left: 4px solid transparent;
-            position: relative;
-            backdrop-filter: blur(3px);
-            border: 1px solid rgba(0, 255, 255, 0.1);
-        }
-
-        .download-item:hover {
-            background: rgba(0, 255, 255, 0.1);
-            border-left-color: var(--cyan);
-            transform: translateX(5px);
-        }
-
-        .download-item.selected {
-            background: rgba(0, 255, 0, 0.15);
-            border-left: 3px solid var(--accent);
-        }
-
-        .download-item.wrong {
-            background: rgba(255, 102, 102, 0.15);
-            border-left: 3px solid var(--danger);
-        }
-
-        .download-header {
-            display: flex; align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .file-icon {
-            font-size: 2rem;
-            margin-right: 15px;
-            min-width: 40px;
-        }
-
-        .file-info { flex-grow: 1; }
-
-        .file-name {
-            font-size: 1.2rem;
+        .downloads-list-header {
             font-weight: bold;
             color: var(--cyan);
-            margin-bottom: 5px;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+            position: sticky; top: 0;
+            background: rgba(26, 26, 58, 0.7);
+            backdrop-filter: blur(5px);
         }
-.file-details {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 30px;
-            margin-top: 10px; padding: 10px;
+
+        .list-item {
             background: rgba(0, 0, 0, 0.2);
             border-radius: 8px;
+            margin-top: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
         }
+        .list-item:hover {
+            background: rgba(0, 255, 255, 0.1);
+            border-color: var(--cyan);
+            transform: translateX(5px);
+        }
+        .list-item.selected { border: 1px solid var(--accent); background: rgba(0, 255, 0, 0.15); }
+        .list-item.wrong { border: 1px solid var(--danger); background: rgba(255, 102, 102, 0.15); }
 
-     .detail-item {
-            display: flex;
-            justify-content: flex-start;
-            align-items: baseline;
-            gap: 0; 
-            min-width: 0; 
-        }
-.detail-label {
-            color: #888;
-            font-size: 0.9rem;
-            margin-right: 5px; 
-            white-space: nowrap; 
-        }
-.detail-value {
-            color: var(--cyan);
-            font-weight: bold;
-            font-size: 0.9rem;
-            flex-grow: 1;
-            white-space: nowrap; 
-            overflow: hidden; 
-            text-overflow: ellipsis; 
-            flex-shrink: 0;
-            min-width: 0;
-        }
+        .list-icon { font-size: 1.8rem; }
+        .list-type, .list-time, .list-size { color: var(--main-text); }
+        .list-size { text-align: right; }
 
-        .threat-level {
-            position: absolute;
-            top: 15px; right: 15px;
-            padding: 5px 15px;
-            border-radius: 15px;
-            font-size: 0.8rem;
-            font-weight: bold;
-        }
+        /* Scrollbar */
+        .downloads-list-container::-webkit-scrollbar { width: 8px; }
+        .downloads-list-container::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.3); }
+        .downloads-list-container::-webkit-scrollbar-thumb { background: var(--cyan); border-radius: 4px; }
 
-        .threat-high {
-            background: var(--danger);
-            color: white;
+        /* Modal Styles */
+        .modal-backdrop {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px);
+            z-index: 2000; display: flex; justify-content: center; align-items: center;
         }
-        .threat-very-high {
-            background: #FF00FF; /* Magenta for critical */
-            color: white;
+        .modal-content {
+            background: rgba(26, 26, 58, 0.9); border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 15px; width: 90%; max-width: 800px; max-height: 90vh;
+            overflow-y: auto; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            display: flex; flex-direction: column;
         }
-
-        .threat-low {
-            background: var(--accent);
-            color: black;
-        }
-
-        .hash-info {
-            background: rgba(0, 0, 0, 0.4);
-            padding: 10px; border-radius: 5px;
-            margin-top: 10px; font-size: 0.8rem;
-        }
-
-        .hash-label {
-            color: #888; margin-right: 10px;
-        }
-
-        .hash-value {
-            color: var(--warning);
-            font-family: monospace;
-            word-break: break-all;
-        }
-
-        .feedback {
-            position: fixed; top: 20px; right: 20px;
-            padding: 15px 25px; border-radius: 15px;
-            color: white; font-weight: bold; z-index: 1000;
-            transform: translateX(100%);
-            transition: transform 0.3s ease;
-            max-width: 400px;
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-        }
-
+        .modal-header { padding: 15px 20px; border-bottom: 1px solid rgba(0, 255, 255, 0.2); display: flex; justify-content: space-between; align-items: center; }
+        .modal-title { font-size: 1.5rem; color: var(--cyan); display: flex; align-items: center; gap: 15px; }
+        .modal-close { font-size: 2rem; color: var(--muted); cursor: pointer; background: none; border: none; }
+        .modal-body { padding: 20px; }
+        .modal-footer { padding: 15px 20px; border-top: 1px solid rgba(0, 255, 255, 0.2); text-align: right; }
+        .flag-ioc-btn { background: var(--danger); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background 0.2s ease; }
+        .flag-ioc-btn:hover { background: #ff4d4d; }
+        
+        .hash-info { background: rgba(0, 0, 0, 0.4); padding: 10px; border-radius: 5px; margin-top: 10px; font-size: 0.8rem; }
+        .hash-label { color: #888; margin-right: 10px; }
+        .hash-value { color: var(--warning); font-family: monospace; word-break: break-all; }
+        
+        .feedback { position: fixed; top: 20px; right: 20px; padding: 15px 25px; border-radius: 15px; color: white; font-weight: bold; z-index: 3000; transform: translateX(120%); transition: transform 0.3s ease; max-width: 400px; backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4); }
         .feedback.show { transform: translateX(0); }
-        .feedback.success {
-            background: var(--accent);
-            color: black;
-            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
-        }
-        .feedback.error {
-            background: var(--danger);
-            box-shadow: 0 0 20px rgba(255, 102, 102, 0.5);
-        }
-
-        .progress-bar {
-            width: 100%; height: 8px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 4px; overflow: hidden;
-            margin: 15px 0;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--danger), var(--accent));
-            transition: width 0.5s ease;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.7; transform: scale(1.02); }
-        }
-
-        .downloads-list::-webkit-scrollbar { width: 8px; }
-        .downloads-list::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.3); }
-        .downloads-list::-webkit-scrollbar-thumb { background: var(--cyan); border-radius: 4px; }
+        .feedback.success { background: var(--accent); color: black; box-shadow: 0 0 20px rgba(0, 255, 0, 0.5); }
+        .feedback.error { background: var(--danger); box-shadow: 0 0 20px rgba(255, 102, 102, 0.5); }
     </style>
 </head>
 <body>
     <div class="video-background">
-        <video autoplay muted loop preload="none">
-            <source src="downloads_bg.mp4" type="video/mp4">
-        </video>
+        <video autoplay muted loop preload="none"><source src="downloads_bg.mp4" type="video/mp4"></video>
     </div>
 
     <div class="header">
-        <a href="index.html" class="back-btn">
-            ← Back to Command Center
-        </a>
+        <a href="index.html" class="back-btn">← Back to Command Center</a>
         <div class="game-stats">
-            <div class="stat-item">
-                <div class="stat-value">ACTIVE</div>
-                <div class="stat-label">Status</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value">HIGH</div>
-                <div class="stat-label">Priority</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value" id="globalIocs">0/12</div>
-                <div class="stat-label">Total IoCs</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value" id="roomIocs">0/1</div>
-                <div class="stat-label">Room IoCs</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value timer" id="timer">60:00</div>
-                <div class="stat-label">Time</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value" id="totalScore">0</div>
-                <div class="stat-label">Score</div>
-            </div>
+            <div class="stat-item"><div class="stat-value">ACTIVE</div><div class="stat-label">Status</div></div>
+            <div class="stat-item"><div class="stat-value">HIGH</div><div class="stat-label">Priority</div></div>
+            <div class="stat-item"><div class="stat-value" id="globalIocs">0/12</div><div class="stat-label">Total IoCs</div></div>
+            <div class="stat-item"><div class="stat-value" id="roomIocs">0/1</div><div class="stat-label">Room IoCs</div></div>
+            <div class="stat-item"><div class="stat-value timer" id="timer">60:00</div><div class="stat-label">Time</div></div>
+            <div class="stat-item"><div class="stat-value" id="totalScore">0</div><div class="stat-label">Score</div></div>
         </div>
     </div>
 
     <div class="container">
         <div class="analysis-panel">
-            <div class="metrics-grid-container">
-                <div class="panel-header-top">
-                    <div class="panel-header-left">
-                        <h1>⬇️ DOWNLOADS ANALYSIS</h1>
-                    </div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-value">5</div>
-                    <div class="metric-label">Recent Downloads</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-value">0</div>
-                    <div class="metric-label">Quarantined Files</div>
-                </div>
-                <div class="metric-card alert">
-                    <div class="metric-value danger">2</div>
-                    <div class="metric-label">Executable Files</div>
-                </div>
-                <div class="metric-card alert">
-                    <div class="metric-value danger">1</div>
-                    <div class="metric-label">Suspicious Timing</div>
-                </div>
+            <div class="panel-header-top">
+                <div class="panel-header-left"><h1>⬇️ Download Logs</h1></div>
             </div>
-
             <div class="timeline-info" id="timelineInfo">
-            You return to your SOC workstation, pulling up the forensic image
-            of Jennifer's computer.<br>
-            <br>
-            "Start with the entry point," you remind yourself. "Everything begins with the download."<br>
-             <br>
-            You navigate to the Downloads folder and filter by yesterday's date.<br>
-            Several files appear. Most look legitimate - some PDFs, a project ZIP file. But one stands out...<br>
-            <br>
-            The timestamp. Just minutes before the first file was encrypted.
+                You begin analyzing the download history. Each entry is a potential clue. Your task is to review the logs and identify any file that served as the entry point for the attack.
             </div>
-
             <button class="proceed-btn" id="proceedBtn">🔍 Begin Analysis</button>
-
-            <div class="progress-bar hidden" id="progressBar">
-                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            <div class="downloads-list-container hidden" id="downloadsListContainer">
+                <div class="downloads-list-header">
+                    <div></div>
+                    <div>File Type</div>
+                    <div>Timestamp</div>
+                    <div style="text-align: right;">Size</div>
+                </div>
+                <div id="downloadsList"></div>
             </div>
+        </div>
+    </div>
 
-            <div class="downloads-list hidden" id="downloadsList">
+    <div class="modal-backdrop hidden" id="metadata-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title"><span id="modal-icon"></span><span id="modal-filename"></span></h2>
+                <button class="modal-close" id="modal-close-btn">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-body-content"></div>
+            <div class="modal-footer">
+                <button class="flag-ioc-btn" id="flag-ioc-btn">Flag as IoC</button>
             </div>
         </div>
     </div>
@@ -494,29 +249,6 @@
         let gameState = { iocsFound: 0, totalIocs: 1, gameActive: true };
 
 const downloadData = [
-  {
-    id: 'down1',
-    fileName: 'update_patch.exe',
-    downloadTime: '18:41:20',
-    size: '2.4 MB',
-    source: 'https://update.cybertech-corp.com/patches/update_patch.exe',
-    browser: 'Chrome',
-    userAgent: 'Mozilla/5.0',
-    sha1: 'b12c34d56e78f90a12b34c56d78e90fa',
-    sha256: 'abc123def4567890abc123def4567890abc123def4567890abc123def4567890',
-    isIoc: true,
-    explanation: 'Executable masquerading as update, unsigned and downloaded near infection time.',
-    category: 'suspicious',
-    threat: 'high',
-    icon: '⚙️',
-    headers: {
-        'Content-Type': 'application/vnd.microsoft.portable-executable',
-        'File-Signature-Analysis': 'OK',
-        'Expected-Signature': '4D 5A 90 00 03 00 00 00 (MZ/PE Executable)',
-        'Actual-Signature': '4D 5A 90 00 03 00 00 00 (MZ/PE Executable)',
-        'X-Threat-Intel': 'File hash matches known malware C2 dropper.'
-    }
-  },
   {
     id: 'down2',
     fileName: 'invoice_q3.pdf',
@@ -536,29 +268,6 @@ const downloadData = [
         'File-Signature-Analysis': 'OK',
         'Expected-Signature': '25 50 44 46 2D 31 2E 37 (%PDF-1.7)',
         'Actual-Signature': '25 50 44 46 2D 31 2E 37 (%PDF-1.7)'
-    }
-  },
-  {
-    id: 'down3',
-    fileName: 'rs35_thumbnail.lnk',
-    downloadTime: '18:41:32',
-    size: '1 KB',
-    source: 'C:\\Users\\jdoe\\Downloads\\rs35_thumbnail.lnk',
-    browser: 'FileSystem',
-    userAgent: 'N/A',
-    sha1: '11aa22bb33cc44dd55ee66ff77889900',
-    sha256: 'b2c3d4e5f6a7b8c9c0d1e2f3a4b5c6d7e8f90123456789abcdef0123456789ab',
-    isIoc: true,
-    explanation: 'Shortcut created by image viewer after preview; points to loader (Evidence of image-triggered execution).',
-    category: 'suspicious',
-    threat: 'high',
-    icon: '🔗',
-    headers: {
-        'Event-Type': 'FileCreate',
-        'File-Signature-Analysis': 'OK',
-        'Expected-Signature': '4C 00 00 00 01 14 02 00 (.LNK)',
-        'Actual-Signature': '4C 00 00 00 01 14 02 00 (.LNK)',
-        'X-Threat-Intel': 'LNK file created by COM Surrogate post-image view, points to suspicious loader.'
     }
   },
   {
@@ -667,6 +376,121 @@ const downloadData = [
     }
   },
   {
+    id: 'down14',
+    fileName: 'confidential_data.rar',
+    downloadTime: '16:15:10',
+    size: '12.3 MB',
+    source: 'C:\\Users\\jdoe\\AppData\\Local\\Temp\\confidential_data.rar',
+    browser: 'FileSystem',
+    userAgent: 'N/A',
+    sha1: 'abcde12345f67890abcde12345f67890',
+    sha256: 'aabbccddeeff11223344556677889900aabbccddeeff11223344556677889900',
+    isIoc: true,
+    explanation: 'Archive containing exfiltrated data; created locally by malware before exfiltration.',
+    category: 'critical',
+    threat: 'very high',
+    icon: '🗂️',
+    headers: {
+        'Content-Type': 'application/vnd.rar',
+        'File-Signature-Analysis': 'OK',
+        'Expected-Signature': '52 61 72 21 1A 07 00 (RAR)',
+        'Actual-Signature': '52 61 72 21 1A 07 00 (RAR)',
+        'X-Threat-Intel': 'Data exfiltration detected to known malicious staging server.'
+    }
+  },
+  {
+    id: 'down16',
+    fileName: 'temp_script.ps1',
+    downloadTime: '15:42:19',
+    size: '8 KB',
+    source: 'C:\\Users\\jdoe\\AppData\\Local\\Temp\\temp_script.ps1',
+    browser: 'FileSystem',
+    userAgent: 'N/A',
+    sha1: 'eeff112233445566778899aabbccdde0',
+    sha256: '77889900aabbccddeeff00112233445566778899aabbccddeeff001122334455',
+    isIoc: true,
+    explanation: 'PowerShell script dropped post infection; executed from temp path.',
+    category: 'suspicious',
+    threat: 'high',
+    icon: '💻',
+    headers: {
+        'Event-Type': 'FileCreate',
+        'File-Signature-Analysis': 'N/A (Text-based)',
+        'Expected-Signature': '24 73 65 72 76 65 72 (ASCII: $server)',
+        'Actual-Signature': '24 73 65 72 76 65 72 (ASCII: $server)',
+        'X-Threat-Intel': 'Script dropped by initial payload for persistence/lateral movement.'
+    }
+  },
+  {
+    id: 'down1',
+    fileName: 'update_patch.exe',
+    downloadTime: '15:41:45',
+    size: '2.4 MB',
+    source: 'C:\\Users\\jdoe\\AppData\\Local\\Temp\\update_patch.exe',
+    browser: 'FileSystem',
+    userAgent: 'N/A',
+    sha1: 'b12c34d56e78f90a12b34c56d78e90fa',
+    sha256: 'abc123def4567890abc123def4567890abc123def4567890abc123def4567890',
+    isIoc: true,
+    explanation: 'Executable dropped by the initial payload to establish persistence and contact the C2 server.',
+    category: 'suspicious',
+    threat: 'high',
+    icon: '⚙️',
+    headers: {
+        'Content-Type': 'application/vnd.microsoft.portable-executable',
+        'File-Signature-Analysis': 'OK',
+        'Expected-Signature': '4D 5A 90 00 03 00 00 00 (MZ/PE Executable)',
+        'Actual-Signature': '4D 5A 90 00 03 00 00 00 (MZ/PE Executable)',
+        'X-Threat-Intel': 'File hash matches known malware C2 dropper.'
+    }
+  },
+  {
+    id: 'down3',
+    fileName: 'rs35_thumbnail.lnk',
+    downloadTime: '15:41:32',
+    size: '1 KB',
+    source: 'C:\\Users\\jdoe\\Downloads\\rs35_thumbnail.lnk',
+    browser: 'FileSystem',
+    userAgent: 'N/A',
+    sha1: '11aa22bb33cc44dd55ee66ff77889900',
+    sha256: 'b2c3d4e5f6a7b8c9c0d1e2f3a4b5c6d7e8f90123456789abcdef0123456789ab',
+    isIoc: true,
+    explanation: 'Shortcut created by image viewer after preview; points to loader (Evidence of image-triggered execution).',
+    category: 'suspicious',
+    threat: 'high',
+    icon: '🔗',
+    headers: {
+        'Event-Type': 'FileCreate',
+        'File-Signature-Analysis': 'OK',
+        'Expected-Signature': '4C 00 00 00 01 14 02 00 (.LNK)',
+        'Actual-Signature': '4C 00 00 00 01 14 02 00 (.LNK)',
+        'X-Threat-Intel': 'LNK file created by COM Surrogate post-image view, points to suspicious loader.'
+    }
+  },
+  {
+    id: 'down11',
+    fileName: 'rs35.png',
+    downloadTime: '15:41:30',
+    size: '546.00 KB',
+    source: 'https://mail.cybertech-corp.com/attachments/invoice_q3/rs35.png',
+    browser: 'Chrome',
+    userAgent: 'Mozilla/5.0',
+    sha1: '488e532e55100da68eeeee30ba34',
+    sha256: 'ca57455fd148754bf443a2c8b06dc',
+    isIoc: true,
+    explanation: 'File analysis shows its actual header is for a PE Executable, not a PNG image. Classic masquerading technique.',
+    category: 'suspicious',
+    threat: 'high',
+    icon: '🖼️',
+    headers: {
+        'Content-Type': 'image/png',
+        'File-Signature-Analysis': 'Header Mismatch',
+        'Expected-Signature': '89 50 4E 47 0D 0A 1A 0A (PNG)',
+        'Actual-Signature': '4D 5A 90 00 03 00 00 00 (MZ/PE Executable)',
+        'X-Threat-Intel': 'File identified as PE executable masquerading as a PNG image.'
+    }
+  },
+  {
     id: 'down9',
     fileName: 'report_template.docx',
     downloadTime: '15:15:45',
@@ -706,29 +530,6 @@ const downloadData = [
         'File-Signature-Analysis': 'OK',
         'Expected-Signature': '50 4B 03 04 14 00 00 00 (ZIP)',
         'Actual-Signature': '50 4B 03 04 14 00 00 00 (ZIP)'
-    }
-  },
-  {
-    id: 'down11',
-    fileName: 'rs35.png',
-    downloadTime: '14:41:30',
-    size: '546.00 KB',
-    source: 'https://mail.cybertech-corp.com/attachments/invoice_q3/rs35.png',
-    browser: 'Chrome',
-    userAgent: 'Mozilla/5.0',
-    sha1: '488e532e55100da68eeeee30ba34',
-    sha256: 'ca57455fd148754bf443a2c8b06dc',
-    isIoc: true,
-    explanation: 'File analysis shows its actual header is for a PE Executable, not a PNG image. Classic masquerading technique.',
-    category: 'suspicious',
-    threat: 'high',
-    icon: '🖼️',
-    headers: {
-      'Content-Type': 'image/png',
-      'File-Signature-Analysis': 'Header Mismatch',
-      'Expected-Signature': '89 50 4E 47 0D 0A 1A 0A (PNG)',
-      'Actual-Signature': '4D 5A 90 00 03 00 00 00 (MZ/PE Executable)',
-      'X-Threat-Intel': 'File identified as PE executable masquerading as a PNG image.'
     }
   },
   {
@@ -774,29 +575,6 @@ const downloadData = [
     }
   },
   {
-    id: 'down14',
-    fileName: 'confidential_data.rar',
-    downloadTime: '12:58:41',
-    size: '12.3 MB',
-    source: 'https://transfer.cybertech-corp.com/confidential_data.rar',
-    browser: 'Chrome',
-    userAgent: 'Mozilla/5.0',
-    sha1: 'abcde12345f67890abcde12345f67890',
-    sha256: 'aabbccddeeff11223344556677889900aabbccddeeff11223344556677889900',
-    isIoc: true,
-    explanation: 'Archive containing exfiltrated data; correlates with outgoing traffic.',
-    category: 'critical',
-    threat: 'very high',
-    icon: '🗂️',
-    headers: {
-        'Content-Type': 'application/vnd.rar',
-        'File-Signature-Analysis': 'OK',
-        'Expected-Signature': '52 61 72 21 1A 07 00 (RAR)',
-        'Actual-Signature': '52 61 72 21 1A 07 00 (RAR)',
-        'X-Threat-Intel': 'Data exfiltration detected to known malicious staging server.'
-    }
-  },
-  {
     id: 'down15',
     fileName: 'policy_update.docx',
     downloadTime: '12:05:20',
@@ -815,29 +593,6 @@ const downloadData = [
         'File-Signature-Analysis': 'OK',
         'Expected-Signature': '50 4B 03 04 14 00 06 00 (DOCX)',
         'Actual-Signature': '50 4B 03 04 14 00 06 00 (DOCX)'
-    }
-  },
-  {
-    id: 'down16',
-    fileName: 'temp_script.ps1',
-    downloadTime: '11:41:19',
-    size: '8 KB',
-    source: 'C:\\Users\\jdoe\\AppData\\Local\\Temp\\temp_script.ps1',
-    browser: 'FileSystem',
-    userAgent: 'N/A',
-    sha1: 'eeff112233445566778899aabbccdde0',
-    sha256: '77889900aabbccddeeff00112233445566778899aabbccddeeff001122334455',
-    isIoc: true,
-    explanation: 'PowerShell script dropped post infection; executed from temp path.',
-    category: 'suspicious',
-    threat: 'high',
-    icon: '💻',
-    headers: {
-        'Event-Type': 'FileCreate',
-        'File-Signature-Analysis': 'N/A (Text-based)',
-        'Expected-Signature': '24 73 65 72 76 65 72 (ASCII: $server)',
-        'Actual-Signature': '24 73 65 72 76 65 72 (ASCII: $server)',
-        'X-Threat-Intel': 'Script dropped by initial payload for persistence/lateral movement.'
     }
   },
   {
@@ -926,144 +681,110 @@ const downloadData = [
   }
 ];
 
-
         document.addEventListener('DOMContentLoaded', function() {
             if (typeof RoomIntegration !== 'undefined' && !RoomIntegration.initializeRoom(ROOM_NAME)) return;
             
             const proceedBtn = document.getElementById('proceedBtn');
             const timelineInfo = document.getElementById('timelineInfo');
-            const progressBar = document.getElementById('progressBar');
+            const downloadsListContainer = document.getElementById('downloadsListContainer');
             const downloadsList = document.getElementById('downloadsList');
-            
-            proceedBtn.addEventListener('click', function() {
+            const modal = document.getElementById('metadata-modal');
+            const modalCloseBtn = document.getElementById('modal-close-btn');
+            const flagIocBtn = document.getElementById('flag-ioc-btn');
+
+            proceedBtn.addEventListener('click', () => {
                 timelineInfo.classList.add('hidden');
                 proceedBtn.classList.add('hidden');
-                
-                progressBar.classList.remove('hidden');
-                downloadsList.classList.remove('hidden');
-                
+                downloadsListContainer.classList.remove('hidden');
                 loadDownloadEntries();
             });
+
+            modalCloseBtn.addEventListener('click', hideModal);
+            modal.addEventListener('click', (event) => {
+                if (event.target === modal) hideModal();
+            });
             
-            updateProgressBar();
-            
-            document.addEventListener('click', function(event) {
-                const downloadItem = event.target.closest('.download-item');
-                if (!downloadItem || !gameState.gameActive) return;
+            flagIocBtn.addEventListener('click', handleIocFlagging);
+
+            function loadDownloadEntries() {
+                downloadsList.innerHTML = '';
+                const sortedDownloads = [...downloadData].sort((a, b) => b.downloadTime.localeCompare(a.downloadTime));
                 
-                const isIoc = downloadItem.dataset.isIoc === 'true';
-                const isAlreadySelected = downloadItem.classList.contains('selected') || downloadItem.classList.contains('wrong');
+                sortedDownloads.forEach(download => {
+                    const item = document.createElement('div');
+                    item.className = 'list-item';
+                    item.dataset.id = download.id;
+                    item.innerHTML = `
+                        <div class="list-icon">${download.icon}</div>
+                        <div class="list-type">${download.fileName.split('.').pop().toUpperCase()}</div>
+                        <div class="list-time">${download.downloadTime}</div>
+                        <div class="list-size">${download.size}</div>
+                    `;
+                    item.addEventListener('click', () => showModal(download));
+                    downloadsList.appendChild(item);
+                });
+            }
+
+            function showModal(data) {
+                const getHostname = (source) => {
+                    try { return new URL(source).hostname; } catch (e) { return 'Local File System'; }
+                };
+                const formatHeaders = (headers) => Object.entries(headers).map(([key, value]) => `<div><span class="hash-label" style="color: #bbb;">${key}:</span> <span class="hash-value" style="word-break: break-all;">${value}</span></div>`).join('');
+
+                document.getElementById('modal-icon').textContent = data.icon;
+                document.getElementById('modal-filename').textContent = data.fileName;
+                
+                document.getElementById('modal-body-content').innerHTML = `
+                    <p style="color: var(--muted); margin-bottom: 20px;"><strong>Source:</strong> ${getHostname(data.source)}<br>
+                    <strong>Size:</strong> ${data.size} | <strong>Browser:</strong> ${data.browser}</p>
+                    <div class="hash-info">
+                        <div style="margin-bottom: 5px;"><span class="hash-label">SHA1:</span><span class="hash-value">${data.sha1}</span></div>
+                        <div><span class="hash-label">SHA256:</span><span class="hash-value">${data.sha256}</span></div>
+                    </div>
+                    <div class="hash-info" style="margin-top: 10px; background: rgba(0, 255, 255, 0.05);">
+                        <h4 style="color: var(--cyan); margin-bottom: 8px;">File Signature Analysis</h4>
+                        ${formatHeaders(data.headers)}
+                    </div>
+                `;
+                
+                modal.dataset.activeId = data.id;
+                modal.classList.remove('hidden');
+            }
+
+            function hideModal() {
+                modal.classList.add('hidden');
+                modal.dataset.activeId = '';
+            }
+
+            function handleIocFlagging() {
+                if (!gameState.gameActive) return;
+                const activeId = modal.dataset.activeId;
+                if (!activeId) return;
+
+                const itemData = downloadData.find(d => d.id === activeId);
+                const listItem = document.querySelector(`.list-item[data-id="${activeId}"]`);
+                const isAlreadySelected = listItem.classList.contains('selected') || listItem.classList.contains('wrong');
+
                 if (isAlreadySelected) return;
-                
-                const itemData = downloadData.find(dl => dl.id === downloadItem.dataset.id);
-                
-                if (isIoc) {
-                    downloadItem.classList.add('selected');
+
+                if (itemData.isIoc) {
+                    listItem.classList.add('selected');
                     gameState.iocsFound++;
                     if (typeof RoomIntegration !== 'undefined') {
                         RoomIntegration.updateProgress(ROOM_NAME, 100, 1);
                         RoomIntegration.showFeedback(`Correct! ${itemData.explanation}`, 'success');
                     }
                 } else {
-                    downloadItem.classList.add('wrong');
+                    listItem.classList.add('wrong');
                     if (typeof RoomIntegration !== 'undefined') {
                         RoomIntegration.updateProgress(ROOM_NAME, -50, 0);
-                        RoomIntegration.showFeedback('Wrong! This appears to be a legitimate download from a trusted source.', 'error');
+                        RoomIntegration.showFeedback('Analysis: This appears to be a legitimate file from a trusted source.', 'error');
                     }
                 }
-                updateProgressBar();
-            });
+                
+                setTimeout(hideModal, 800);
+            }
         });
-
-        function loadDownloadEntries() {
-            const downloadsList = document.getElementById('downloadsList');
-            downloadsList.innerHTML = `<div class="list-header">
-                                            <h3>Recent File Downloads</h3>
-                                            <span>Analyzing download patterns...</span>
-                                        </div>`;
-            
-            const sortedDownloads = [...downloadData].sort((a, b) => b.downloadTime.localeCompare(a.downloadTime));
-            
-            const getHostname = (source) => {
-                try {
-                    return new URL(source).hostname;
-                } catch (e) {
-                    return 'Local File System';
-                }
-            };
-
-            const formatHeaders = (headers) => {
-                return Object.entries(headers)
-                    .map(([key, value]) => `<div><span class="hash-label" style="color: #bbb;">${key}:</span> <span class="hash-value" style="color: var(--warning); word-break: break-all;">${value}</span></div>`)
-                    .join('');
-            };
-
-            sortedDownloads.forEach(download => {
-                const downloadItem = document.createElement('div');
-                const threatClass = download.threat.replace(' ', '-');
-                downloadItem.className = `download-item ${download.category}`;
-                downloadItem.dataset.id = download.id;
-                downloadItem.dataset.isIoc = download.isIoc;
-                
-                downloadItem.innerHTML = `
-                    <div class="threat-level threat-${threatClass}">${download.threat.toUpperCase()}</div>
-                    
-                    <div class="download-header">
-                        <div class="file-icon">${download.icon}</div>
-                        <div class="file-info">
-                            <div class="file-name">${download.fileName}</div>
-                            <div style="color: #888; font-size: 0.9rem;">Downloaded: ${download.downloadTime}</div>
-                        </div>
-                    </div>
-                    
-                    <div class="file-details">
-                        <div class="detail-item">
-                            <span class="detail-label">File Size:</span>
-                            <span class="detail-value">${download.size}</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Browser:</span>
-                            <span class="detail-value">${download.browser}</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">File Type:</span>
-                            <span class="detail-value">${download.fileName.split('.').pop().toUpperCase()}</span>
-                        </div>
-                         <div class="detail-item">
-                            <span class="detail-label">Source:</span>
-                            <span class="detail-value">${getHostname(download.source)}</span>
-                        </div>
-                    </div>
-                    
-                    <div class="hash-info">
-                         <div style="margin-bottom: 5px;">
-                            <span class="hash-label">SHA1:</span>
-                            <span class="hash-value">${download.sha1}</span>
-                        </div>
-                        <div style="margin-bottom: 5px;">
-                            <span class="hash-label">SHA256:</span>
-                            <span class="hash-value">${download.sha256}</span>
-                        </div>
-                        <div style="font-size: 0.7rem; color: #666; margin-top: 5px; word-break: break-all;">
-                            User-Agent: ${download.userAgent}
-                        </div>
-                    </div>
-                    
-                    <div class="hash-info" style="margin-top: 10px; background: rgba(0, 255, 255, 0.05);">
-                        <h4 style="color: var(--cyan); margin-bottom: 8px; border-bottom: 1px solid rgba(0,255,255,0.2); padding-bottom: 5px;">Analysis Headers</h4>
-                        ${formatHeaders(download.headers)}
-                    </div>
-                `;
-                
-                downloadsList.appendChild(downloadItem);
-            });
-        }
-
-        function updateProgressBar() {
-            const progress = (gameState.iocsFound / gameState.totalIocs) * 100;
-            const progressFill = document.getElementById('progressFill');
-            if (progressFill) progressFill.style.width = `${progress}%`;
-        }
     </script>
 </body>
 </html>
